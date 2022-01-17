@@ -1,0 +1,9 @@
+{
+    "name": "TrieLingual",
+    "short_name": "TrieLingual",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#121212",
+    "description": "Learn languages by studying how words relate to one another alongside example sentences that illustrate their use.",
+    "icons": []
+}
