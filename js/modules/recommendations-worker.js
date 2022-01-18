@@ -14,7 +14,6 @@ let getRecommendations = function () {
     let keys = Object.keys(trie);
     let best = 0;
     let result = [];
-    console.log('about to loop over all keys');
     for (let i = 0; i < keys.length; i++) {
         if (visited[keys[i]] || trie[keys[i]]['__l'] < minLevel || trie[keys[i]]['__l'] > maxLevel) {
             continue;
@@ -34,7 +33,6 @@ let getRecommendations = function () {
                 queue.push({ word: key, trie: curr.trie[key] });
             }
         }
-        console.log(total);
         if (best < total) {
             result = [currentWord];
         } else if (best === total) {
@@ -42,7 +40,6 @@ let getRecommendations = function () {
         }
         best = Math.max(best, total);
     }
-    console.log(result);
     result.sort((a, b) => {
         return trie[a]['__l'] - trie[b]['__l'];
     });
