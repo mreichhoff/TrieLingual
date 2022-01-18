@@ -1,5 +1,5 @@
 # TrieLingual
-A prototype site to help language learners study the building blocks of language.
+A [prototype site](https://mreichhoff.github.io/TrieLingual/) to help language learners study the building blocks of language.
 
 ## Summary
 A word-level trie was generated for multiple languages. It contains the 10,000 most common words from the language, and has a max depth of 3 (i.e., paths represent up to a trigram). The children at each level were the most commonly observed words following the root. The data was generated from ~10 million sentences per language.
