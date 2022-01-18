@@ -86,10 +86,19 @@ def main():
 
     seen = set()
 
+    blocklist = {}
+
     with open(args.target_sentences_filename) as target_sentences:
         with open(args.base_sentences_filename) as base_sentences:
             for line in target_sentences:
                 base = base_sentences.readline().strip()
+                base_to_check = base.lower().replace(' ', '')
+                skip = False
+                for word in blocklist:
+                    if word in base_to_check:
+                        skip = True
+                if skip:
+                    continue
                 target = line.strip()
                 words = get_words(args.language, target)
                 target_tokens = get_tokens(args.language, target)
