@@ -171,6 +171,8 @@ a {
 }
 #control-pane input[type=text]{
     width: 150px;
+    opacity: 0.85;
+    border-radius: 4px;
 }
 .faq-link {
     text-decoration: underline;
@@ -190,7 +192,7 @@ h1 {
     margin:2px 0 0 0;
 }
 h2 {
-    margin-bottom: 0;
+    margin-bottom: 4px;
     font-size: 28px;
 }
 h2 span {
@@ -236,8 +238,11 @@ p.example-line {
     margin-top: 4px;
     margin-bottom: 4px;
 }
+.base-example {
+    opacity: 0.85;
+}
 p.target-example {
-    font-size: 28px;
+    font-size: 24px;
     display: flex;
     cursor: pointer;
 }
@@ -245,6 +250,7 @@ p.target-example {
     margin: 0;
     margin-bottom: 12px;
     font-size: 14px;
+    opacity: 0.75;
 }
 .transcription-example {
     display: none;
@@ -277,6 +283,7 @@ p.target-example {
 }
 .sentence-container {
     max-width: 80%;
+    min-width: 80%;
 }
 .walkthrough p {
     margin-top: 20px;
@@ -286,6 +293,7 @@ p.target-example {
 .text-button {
     font-size: 16px;
     background-color: #eeee;
+    opacity: 0.85;
     margin-left: 4px;
     padding: 6px;
     color: black;
@@ -759,6 +767,7 @@ main.stats section p {
     .text-button {
         background-color: #eee;
         border: 1px solid #3333;
+        opacity: 1;
     }
     .tab {
         background-color: #eee;
