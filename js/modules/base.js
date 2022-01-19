@@ -2,9 +2,8 @@ import { faqTypes, showFaq } from "./faq.js";
 import { updateVisited, getVisited, addCards, getCardCount, inStudyList } from "./data-layer.js";
 import { initializeGraph, updateColorScheme } from "./graph.js";
 import { graphChanged, preferencesChanged } from "./recommendations.js";
-//TODO get definitions
-let definitions = {};
 
+window.definitions = window.definitions || {};
 //TODO break this down further
 //refactor badly needed...hacks on top of hacks at this point
 let maxExamples = 3;
@@ -146,11 +145,30 @@ let persistState = function () {
     }));
 };
 let setupDefinitions = function (definitionList, definitionHolder) {
+    if (!definitionList) {
+        return;
+    }
+    //TODO make this sane
     for (let i = 0; i < definitionList.length; i++) {
-        let definitionItem = document.createElement('li');
-        let definitionContent = definitionList[i].transcription || '' + ': ' + definitionList[i].b;
-        definitionItem.textContent = definitionContent;
-        definitionHolder.appendChild(definitionItem);
+        let currentWord = definitionList[i];
+        if (!currentWord.length) {
+            continue;
+        }
+        for (let j = 0; j < currentWord.length; j++) {
+            let currentItem = currentWord[j];
+            if (!currentItem.length) {
+                break;
+            }
+            for (let k = 0; k < currentItem.length; k++) {
+                let definitionItem = document.createElement('li');
+                if (currentItem[k].length >= 2) {
+                    definitionItem.innerText = `${currentItem[k][0]}: ${currentItem[k].slice(1).join(', ')}`;
+                } else {
+                    definitionItem.innerText = currentItem[k][0];
+                }
+                definitionHolder.appendChild(definitionItem);
+            }
+        }
     }
 };
 let findExamples = function (ngram) {
@@ -244,7 +262,12 @@ let setupExamples = function (words) {
 
     let definitionHolder = document.createElement('ul');
     definitionHolder.className = 'definition';
-    let definitionList = definitions[words] || [];
+    let definitionList = [];
+    words.forEach(x => {
+        if (definitions[x]) {
+            definitionList.push(definitions[x])
+        }
+    });
     setupDefinitions(definitionList, definitionHolder);
     item.appendChild(definitionHolder);
 

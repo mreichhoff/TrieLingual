@@ -25,7 +25,10 @@ let init = function () {
                 .then(data => window.trie = data),
             window.sentencesFetch
                 .then(response => response.json())
-                .then(data => window.sentences = data)
+                .then(data => window.sentences = data),
+            window.definitionsFetch
+                .then(response => response.json())
+                .then(data => window.definitions = data)
         ]
     ).then(_ => {
         landingContainer.style.display = 'none';
@@ -54,6 +57,7 @@ if (targetLang) {
             e.currentTarget.classList.add('language-selected');
             window.trieFetch = fetch(`./data/${targetLang}/trie.json`);
             window.sentencesFetch = fetch(`./data/${targetLang}/sentences.json`);
+            window.definitionsFetch = fetch(`./data/${targetLang}/definitions.json`);
             init();
         });
     });
