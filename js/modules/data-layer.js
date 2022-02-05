@@ -62,7 +62,7 @@ let addCards = function (currentExamples, text) {
     let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
     let newKeys = [];
     for (let i = 0; i < newCards.length; i++) {
-        let joined = newCards[i].t.join('');
+        let joined = newCards[i].t.join ? newCards[i].t.join('') : newCards[i].t;
         newKeys.push(joined);
         if (!studyList[joined] && newCards[i].b) {
             studyList[joined] = {

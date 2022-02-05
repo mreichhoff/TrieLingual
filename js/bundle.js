@@ -116,7 +116,7 @@
         let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
         let newKeys = [];
         for (let i = 0; i < newCards.length; i++) {
-            let joined = newCards[i].t.join('');
+            let joined = newCards[i].t.join ? newCards[i].t.join('') : newCards[i].t;
             newKeys.push(joined);
             if (!studyList[joined] && newCards[i].b) {
                 studyList[joined] = {
@@ -527,12 +527,8 @@
             let utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = targetLang;
             utterance.voice = tts;
-            let lastIndex = 0;
             utterance.addEventListener('boundary', function (event) {
-                lastIndex++;
-                if (anchors && lastIndex < anchors.length) {
-                    anchors[lastIndex].style.fontWeight = 'bold';
-                }
+                //TODO: highlighting
             });
             utterance.addEventListener('end', function () {
                 anchors.forEach(word => {
@@ -540,9 +536,6 @@
                 });
             });
             speechSynthesis.speak(utterance);
-            if (anchors && anchors.length) {
-                anchors[0].style.fontWeight = 'bold';
-            }
         }
     };
 
@@ -577,10 +570,14 @@
             graphPrefix: activeGraph.prefix
         }));
     };
-    let setupDefinitions = function (definitionList, definitionHolder) {
-        if (!definitionList) {
+    let setupDefinitions = function (words, definitionHolder, shown) {
+        if (!words) {
             return;
         }
+        let definitionList = [];
+        words.forEach(word => {
+            definitionList.push(definitions[word] || []);
+        });
         //TODO make this sane
         for (let i = 0; i < definitionList.length; i++) {
             let currentWord = definitionList[i];
@@ -593,7 +590,14 @@
                     break;
                 }
                 for (let k = 0; k < currentItem.length; k++) {
+                    if (!currentItem[k].length) {
+                        continue;
+                    }
                     let definitionItem = document.createElement('li');
+                    definitionItem.className = `${words[i]}-definition`;
+                    if (!shown) {
+                        definitionItem.style.display = 'none';
+                    }
                     if (currentItem[k].length >= 2) {
                         definitionItem.innerText = `${currentItem[k][0]}: ${currentItem[k].slice(1).join(', ')}`;
                     } else {
@@ -672,7 +676,6 @@
             exampleList.appendChild(exampleHolder);
         }
     };
-
     let setupExamples = function (words) {
         currentExamples = {};
         //TODO this mixes markup modification and example finding
@@ -688,21 +691,15 @@
 
         let item = document.createElement('li');
         let wordHolder = document.createElement('h2');
-        wordHolder.textContent = words.join(' ');
+        for (let i = 0; i < words.length; i++) {
+            let wordAnchor = document.createElement('a');
+            wordAnchor.innerText = `${words[i]} `;
+            wordHolder.appendChild(wordAnchor);
+        }
+        item.appendChild(wordHolder);
         addTextToSpeech(wordHolder, words, []);
         addSaveToListButton(wordHolder, words);
         item.appendChild(wordHolder);
-
-        let definitionHolder = document.createElement('ul');
-        definitionHolder.className = 'definition';
-        let definitionList = [];
-        words.forEach(x => {
-            if (definitions[x]) {
-                definitionList.push(definitions[x]);
-            }
-        });
-        setupDefinitions(definitionList, definitionHolder);
-        item.appendChild(definitionHolder);
 
         let contextHolder = document.createElement('p');
         //TODO not so thrilled with 'context' as the name here
@@ -720,7 +717,13 @@
         contextHolder.appendChild(contextFaqLink);
         item.appendChild(contextHolder);
 
-        currentExamples[words].push(getCardFromDefinitions(words, definitionList));
+        if (words.length === 1) {
+            let definitionHolder = document.createElement('ul');
+            definitionHolder.className = 'definition';
+            setupDefinitions(words, definitionHolder, words.length === 1);
+            item.appendChild(definitionHolder);
+        }
+
         //setup current examples for potential future export
         currentExamples[words].push(...examples);
 
@@ -735,19 +738,6 @@
     let updateUndoChain = function () {
         //push clones onto the stack
         undoChain.push({ root: currentRoot, ngram: (currentNgram ? [...currentNgram] : currentNgram) });
-    };
-
-    //TODO can this be combined with the definition rendering part?
-    let getCardFromDefinitions = function (text, definitionList) {
-        //this assumes definitionList non null
-        let result = { t: [text] };
-        let answer = '';
-        for (let i = 0; i < definitionList.length; i++) {
-            answer += definitionList[i].pinyin + ': ' + definitionList[i].en;
-            answer += i == definitionList.length - 1 ? '' : ', ';
-        }
-        result['b'] = answer;
-        return result;
     };
 
     let nodeTapHandler = function (evt) {
@@ -929,6 +919,11 @@
                 .then(response => response.json())
                 .then(function (data) {
                     window.sentences = data;
+                });
+            fetch(`./data/${targetLang}/definitions.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    window.definitions = data;
                 });
             persistState();
         }
