@@ -4,6 +4,7 @@ import { initialize as studyModeInit } from "./study-mode.js";
 import { initialize as statsInit } from "./stats.js";
 import { initialize as recommendationsInit } from "./recommendations.js";
 
+//TODO: adding a new language involves changing index.html, base.js, and main.js. refactor
 let languageOptions = [
     {
         element: document.getElementById('french-language-card'),
@@ -12,6 +13,14 @@ let languageOptions = [
     {
         element: document.getElementById('portuguese-language-card'),
         targetLang: 'pt-BR'
+    },
+    {
+        element: document.getElementById('italian-language-card'),
+        targetLang: 'it-IT'
+    },
+    {
+        element: document.getElementById('german-language-card'),
+        targetLang: 'de-DE'
     }
 ];
 const mainContainer = document.getElementById('container');

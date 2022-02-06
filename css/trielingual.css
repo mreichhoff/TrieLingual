@@ -497,7 +497,7 @@ select {
 .language-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 250px 40px;
+    grid-template-rows: 250px 250px 40px;
     margin-top: 20px;
     margin-bottom: 40px;
 }

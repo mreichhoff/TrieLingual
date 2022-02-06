@@ -25,16 +25,21 @@ let activeTab = tabs.explore;
 let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
 let punctuation = {
     'fr-FR': new Set([".", ",", '\'', '’']),
-    'pt-BR': new Set([".", ",", ":", "!", "?"])
+    'pt-BR': new Set([".", ",", ":", "!", "?"]),
+    'it-IT': new Set([".", ",", '\'', '’']),
+    'de-DE': new Set([".", ",", '\'', '’'])
 };
 const defaultWords = {
     'fr-FR': ['bras', 'travail', 'participation'],
-    'pt-BR': ['braço', 'trabalho', 'participação']
-}
-
+    'pt-BR': ['braço', 'trabalho', 'participação'],
+    'it-IT': ['braccio', 'lavoro', 'intervento'],
+    'de-DE': ['arm', 'arbeit', 'beteiligung']
+};
 let languageOptions = {
     'French': 'fr-FR',
-    'Portuguese': 'pt-BR'
+    'Portuguese': 'pt-BR',
+    'Italian': 'it-IT',
+    'German': 'de-DE'
 };
 
 //TODO: make specialized tries per language

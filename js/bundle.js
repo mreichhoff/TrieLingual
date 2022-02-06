@@ -458,16 +458,21 @@
     let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
     let punctuation = {
         'fr-FR': new Set([".", ",", '\'', '’']),
-        'pt-BR': new Set([".", ",", ":", "!", "?"])
+        'pt-BR': new Set([".", ",", ":", "!", "?"]),
+        'it-IT': new Set([".", ",", '\'', '’']),
+        'de-DE': new Set([".", ",", '\'', '’'])
     };
     const defaultWords = {
         'fr-FR': ['bras', 'travail', 'participation'],
-        'pt-BR': ['braço', 'trabalho', 'participação']
+        'pt-BR': ['braço', 'trabalho', 'participação'],
+        'it-IT': ['braccio', 'lavoro', 'intervento'],
+        'de-DE': ['arm', 'arbeit', 'beteiligung']
     };
-
     let languageOptions$1 = {
         'French': 'fr-FR',
-        'Portuguese': 'pt-BR'
+        'Portuguese': 'pt-BR',
+        'Italian': 'it-IT',
+        'German': 'de-DE'
     };
 
     //TODO: make specialized tries per language
@@ -1622,6 +1627,7 @@
         });
     };
 
+    //TODO: adding a new language involves changing index.html, base.js, and main.js. refactor
     let languageOptions = [
         {
             element: document.getElementById('french-language-card'),
@@ -1630,6 +1636,14 @@
         {
             element: document.getElementById('portuguese-language-card'),
             targetLang: 'pt-BR'
+        },
+        {
+            element: document.getElementById('italian-language-card'),
+            targetLang: 'it-IT'
+        },
+        {
+            element: document.getElementById('german-language-card'),
+            targetLang: 'de-DE'
         }
     ];
     const mainContainer = document.getElementById('container');
