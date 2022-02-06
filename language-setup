@@ -1,0 +1,30 @@
+#!/bin/zsh
+
+#usage: it-IT italian OpenSubtitles.en-it.it OpenSubtitles.en-it.en tatoeba-it-en-stripped.tsv
+mkdir data/$1
+mkdir data/$1/subtries
+python3 ./scripts/get_word_freq.py --language $2 --limit 20000 --file-list ./raw/$1/$3 > freqs.json 
+echo "done with freqs"
+python3 ./scripts/dummy.py > testfrq
+mv testfrq ./raw/$1/$1freq_20k
+head -n 10000 ./raw/$1/$1freq_20k > ./raw/$1/$1freq_10k
+shuf -n 10000000 ./raw/$1/$3 > raw/$1/trie-source 
+echo "done with trie-source"
+python3 scripts/build_trie.py --language $2 --allow-list-filename ./raw/$1/$1freq_10k --target-sentences-filename ./raw/$1/trie-source > test
+echo "built the trie"
+head -n 500 raw/$1/$1freq_10k | awk '{print$1"\t1"}' > raw/$1/$1levels
+head -n 1000 raw/$1/$1freq_10k | tail -n 500 | awk '{print$1"\t2"}' >> raw/$1/$1levels
+head -n 2000 raw/$1/$1freq_10k | tail -n 1000 | awk '{print$1"\t3"}' >> raw/$1/$1levels
+head -n 4000 raw/$1/$1freq_10k | tail -n 2000 | awk '{print$1"\t4"}' >> raw/$1/$1levels
+head -n 7000 raw/$1/$1freq_10k | tail -n 3000 | awk '{print$1"\t5"}' >> raw/$1/$1levels
+head -n 10000 raw/$1/$1freq_10k | tail -n 3000 | awk '{print$1"\t6"}' >> raw/$1/$1levels
+python3 ./scripts/trie_postprocess.py --trie-filename ./test --levels-filename raw/$1/$1levels --max-depth 2 > test2
+echo "post-processed the trie"
+jq -c '.' ./test2 > data/$1/trie.json
+echo "trie moved"
+python3 ./scripts/find_preferred_examples_for_set.py --language $2 --frequency-list-filename ./raw/$1/$1freq_20k --translations-filename ./raw/$1/$5 --word-set ./raw/$1/$1freq_10k > test2 
+echo "done with preferred examples"
+jq -c '.' ./test2 > data/$1/sentences.json
+echo "sentences moved"
+python3 ./scripts/get_examples_for_trie.py --language $2 --trie-filename data/$1/trie.json --frequency-list-filename ./raw/$1/$1freq_10k --target-sentences-filename raw/$1/$3 --base-sentences-filename ./raw/$1/$4 --no-top-level-only --output-dir data/$1/subtries
+echo "got the subtries"
