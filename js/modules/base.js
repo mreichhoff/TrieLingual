@@ -456,7 +456,7 @@ let makeSentenceNavigable = function (tokens, container, noExampleChange) {
 
 searchForm.addEventListener('submit', function (event) {
     event.preventDefault();
-    let value = searchBox.value;
+    let value = searchBox.value.toLocaleLowerCase();
     if (value && trie[value]) {
         updateUndoChain();
         updateGraph(value);
