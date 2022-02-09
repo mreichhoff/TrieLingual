@@ -30,8 +30,8 @@ let punctuation = {
     'de-DE': new Set([".", ",", '\'', '’'])
 };
 const defaultWords = {
-    'fr-FR': ['bras', 'travail', 'participation'],
-    'pt-BR': ['braço', 'trabalho', 'participação'],
+    'fr-FR': ['bras', 'numéro', 'participer'],
+    'pt-BR': ['braço', 'mercado', 'importância'],
     'it-IT': ['braccio', 'lavoro', 'intervento'],
     'de-DE': ['arm', 'arbeit', 'beteiligung']
 };
