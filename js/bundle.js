@@ -112,14 +112,14 @@
         }
         saveStudyList();
     };
-    let addCards = function (currentExamples, text) {
-        let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
+    let addCards = function (examples) {
+        let newCards = examples.map((x, i) => ({ ...x, due: Date.now() + i }));
         let newKeys = [];
         for (let i = 0; i < newCards.length; i++) {
-            let joined = newCards[i].t.join ? newCards[i].t.join('') : newCards[i].t;
-            newKeys.push(joined);
-            if (!studyList[joined] && newCards[i].b) {
-                studyList[joined] = {
+            let key = sanitizeKey(getKey(newCards[i].t));
+            newKeys.push(key);
+            if (!studyList[key] && newCards[i].b) {
+                studyList[key] = {
                     base: newCards[i].b,
                     due: newCards[i].due,
                     target: newCards[i].t,
@@ -135,16 +135,16 @@
         callbacks[dataTypes.studyList].forEach(x => x(studyList));
     };
 
-    let inStudyList = function (text) {
-        return studyList[text];
+    let inStudyList = function (tokens) {
+        return studyList[sanitizeKey(getKey(tokens))];
     };
 
-    let getCardCount = function (character) {
+    let getCardCount = function (word) {
         let count = 0;
         //TODO: if performance becomes an issue, we can pre-compute this
         //as-is, it performs fine even with larger flashcard decks
-        Object.keys(studyList || {}).forEach(x => {
-            if (x.indexOf(character) >= 0) {
+        Object.entries(studyList || {}).forEach(([_,value]) => {
+            if (value.target.some(token=>token.toLocaleLowerCase() === word.trim().toLocaleLowerCase())) {
                 count++;
             }
         });
@@ -155,8 +155,8 @@
         return studyList;
     };
     let findOtherCards = function (seeking, currentKey) {
-        let cards = Object.keys(studyList);
-        let candidates = cards.filter(x => x !== currentKey && x.includes(seeking)).sort((a, b) => studyList[b].rightCount - studyList[a].rightCount);
+        let candidates = Object.entries(studyList || {}).filter(([key, value]) => key!==currentKey && value.target.some(token=>token.toLocaleLowerCase() === seeking.trim().toLocaleLowerCase()));
+        candidates.sort((a, b) => b[1].rightCount - a[1].rightCount);
         return candidates;
     };
 
@@ -212,6 +212,12 @@
         }
         studyResults.daily[day][result]++;
         localStorage.setItem('studyResults', JSON.stringify(studyResults));
+    };
+    let getKey = function(tokens){
+        return tokens.join ? tokens.join('') : tokens;
+    };
+    let sanitizeKey = function (key) {
+        return key.replaceAll('.', '').replaceAll('#', '').replaceAll('$', '').replaceAll('/', '').replaceAll('[', '').replaceAll(']', '');
     };
 
     let cy = null;
@@ -551,18 +557,17 @@
         textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
         holder.appendChild(textToSpeechButton);
     };
-    let addSaveToListButton = function (holder, text) {
+    let addSaveToListButton = function (holder, examples) {
         let buttonTexts = ['In your study list!', 'Add to study list'];
         let saveToListButton = document.createElement('span');
         saveToListButton.className = 'text-button';
-        saveToListButton.textContent = inStudyList(text) ? buttonTexts[0] : buttonTexts[1];
+        saveToListButton.textContent = examples.every(x=>inStudyList(x.t)) ? buttonTexts[0] : buttonTexts[1];
         saveToListButton.addEventListener('click', function () {
-            addCards(currentExamples, text);
+            addCards(examples);
             saveToListButton.textContent = buttonTexts[0];
         });
         holder.appendChild(saveToListButton);
     };
-
     let persistState = function () {
         let localUndoChain = undoChain.length > 5 ? undoChain.slice(0, 5) : undoChain;
         localStorage.setItem('state', JSON.stringify({
@@ -703,7 +708,7 @@
         }
         item.appendChild(wordHolder);
         addTextToSpeech(wordHolder, words, []);
-        addSaveToListButton(wordHolder, words);
+        addSaveToListButton(wordHolder, examples);
         item.appendChild(wordHolder);
 
         let contextHolder = document.createElement('p');
@@ -965,7 +970,6 @@
     let displayRelatedCards = function (anchor) {
         let MAX_RELATED_CARDS = 3;
         let related = findOtherCards(anchor.textContent, currentKey);
-        let studyList = getStudyList();
         relatedCardQueryElement.innerText = anchor.textContent;
         if (!related || !related.length) {
             relatedCardsContainer.style.display = 'none';
@@ -975,10 +979,10 @@
         for (let i = 0; i < Math.min(MAX_RELATED_CARDS, related.length); i++) {
             let item = document.createElement('p');
             item.className = 'related-card';
-            item.innerText = related[i];
+            item.innerText = joinTokens(related[i][1].target);
             let relatedPerf = document.createElement('p');
             relatedPerf.className = 'related-card-performance';
-            relatedPerf.innerText = `(right ${studyList[related[i]].rightCount || 0}, wrong ${studyList[related[i]].wrongCount || 0})`;
+            relatedPerf.innerText = `(right ${related[i][1].rightCount || 0}, wrong ${related[i][1].wrongCount || 0})`;
             item.appendChild(relatedPerf);
             relatedCardsElement.appendChild(item);
         }
@@ -1293,7 +1297,7 @@
     let BarChartClickHandler = function (detail, totalsByLevel, prop, index, message) {
         detail.innerHTML = '';
         //TODO: why no built-in difference method?
-        let missingWords = new Set([...totalsByLevel[index + 1].characters].filter(x => !totalsByLevel[index + 1][prop].has(x)));
+        let missingWords = new Set([...totalsByLevel[index + 1].words].filter(x => !totalsByLevel[index + 1][prop].has(x)));
         let i = 0;
         for (let item of missingWords) {
             if (i < MAX_MISSING_WORDS) {
@@ -1312,21 +1316,21 @@
         Object.keys(trie).forEach(x => {
             let level = trie[x]['__l'];
             if (!(level in totalsByLevel)) {
-                totalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), characters: new Set() };
+                totalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), words: new Set() };
             }
             totalsByLevel[level].total++;
-            totalsByLevel[level].characters.add(x);
+            totalsByLevel[level].words.add(x);
         });
     };
     let createCardGraphs = function (studyList, legend) {
-        let studyListCharacters = new Set();
+        let studyListWords = new Set();
         Object.keys(studyList).forEach(x => {
             //TODO: object.entries likely better
             for (let i = 0; i < studyList[x].target.length; i++) {
-                studyListCharacters.add(studyList[x].target[i].toLowerCase());
+                studyListWords.add(studyList[x].target[i].toLowerCase());
             }
         });
-        studyListCharacters.forEach(x => {
+        studyListWords.forEach(x => {
             if (trie[x]) {
                 let level = trie[x]['__l'];
                 totalsByLevel[level].seen.add(x);
@@ -1363,23 +1367,23 @@
         let sortedCards = Object.values(studyList).sort((x, y) => {
             return (x.added || 0) - (y.added || 0);
         });
-        let seenCharacters = new Set();
+        let seenWords = new Set();
         for (const card of sortedCards) {
             //hacky, but truncate to day granularity this way
             if (card.added) {
                 let day = getLocalISODate(new Date(card.added));
                 if (!(day in addedByDay)) {
                     addedByDay[day] = {
-                        chars: new Set(),
+                        words: new Set(),
                         total: 0
                     };
                 }
                 addedByDay[day].total++;
                 card.target.forEach(rawWord => {
                     let word = rawWord.toLowerCase();
-                    if (trie[word] && !seenCharacters.has(word)) {
-                        addedByDay[day].chars.add(word);
-                        seenCharacters.add(word);
+                    if (trie[word] && !seenWords.has(word)) {
+                        addedByDay[day].words.add(word);
+                        seenWords.add(word);
                     }
                 });
             } else {
@@ -1387,7 +1391,7 @@
                 card.target.forEach(rawWord => {
                     let word = rawWord.toLowerCase();
                     if (trie[word]) {
-                        seenCharacters.add(word);
+                        seenWords.add(word);
                     }
                 });
             }
@@ -1396,12 +1400,12 @@
         for (const [date, result] of Object.entries(addedByDay)) {
             dailyAdds.push({
                 date: new Date(date),
-                chars: result.chars,
+                words: result.words,
                 total: result.total
             });
         }
 
-        fillGapDays(dailyAdds, addedByDay, { chars: new Set(), total: 0 });
+        fillGapDays(dailyAdds, addedByDay, { words: new Set(), total: 0 });
         dailyAdds.sort((x, y) => x.date - y.date);
 
         const addedCalendar = document.getElementById('added-calendar');
@@ -1430,10 +1434,10 @@
                     addedCalendarDetail.innerHTML = '';
 
                     let data = dailyAdds[i];
-                    let characters = '';
-                    data.chars.forEach(x => characters += x + ', ');
-                    if (data.total && data.chars.size) {
-                        addedCalendarDetail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with these new words: ${characters}`;
+                    let words = '';
+                    data.words.forEach(x => words += x + ', ');
+                    if (data.total && data.words.size) {
+                        addedCalendarDetail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with these new words: ${words}`;
                     } else if (data.total) {
                         addedCalendarDetail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with no new words.`;
                     } else {
@@ -1447,11 +1451,11 @@
             left: document.getElementById('added-calendar-today').offsetLeft
         });
     };
-    let createVisitedGraphs = function (visitedCharacters, legend) {
-        if (!visitedCharacters) {
+    let createVisitedGraphs = function (visitedWords, legend) {
+        if (!visitedWords) {
             return;
         }
-        Object.keys(visitedCharacters).forEach(x => {
+        Object.keys(visitedWords).forEach(x => {
             if (trie[x]) {
                 const level = trie[x]['__l'];
                 totalsByLevel[level].visited.add(x);

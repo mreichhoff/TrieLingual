@@ -57,15 +57,15 @@ let updateCard = function (result, key) {
         studyList[key].due = now.valueOf() + (nextJump * 24 * 60 * 60 * 1000);
     }
     saveStudyList([key]);
-}
-let addCards = function (currentExamples, text) {
-    let newCards = currentExamples[text].map((x, i) => ({ ...x, due: Date.now() + i }));
+};
+let addCards = function (examples) {
+    let newCards = examples.map((x, i) => ({ ...x, due: Date.now() + i }));
     let newKeys = [];
     for (let i = 0; i < newCards.length; i++) {
-        let joined = newCards[i].t.join ? newCards[i].t.join('') : newCards[i].t;
-        newKeys.push(joined);
-        if (!studyList[joined] && newCards[i].b) {
-            studyList[joined] = {
+        let key = sanitizeKey(getKey(newCards[i].t));
+        newKeys.push(key);
+        if (!studyList[key] && newCards[i].b) {
+            studyList[key] = {
                 base: newCards[i].b,
                 due: newCards[i].due,
                 target: newCards[i].t,
@@ -81,16 +81,16 @@ let addCards = function (currentExamples, text) {
     callbacks[dataTypes.studyList].forEach(x => x(studyList));
 };
 
-let inStudyList = function (text) {
-    return studyList[text];
+let inStudyList = function (tokens) {
+    return studyList[sanitizeKey(getKey(tokens))];
 };
 
-let getCardCount = function (character) {
+let getCardCount = function (word) {
     let count = 0;
     //TODO: if performance becomes an issue, we can pre-compute this
     //as-is, it performs fine even with larger flashcard decks
-    Object.keys(studyList || {}).forEach(x => {
-        if (x.indexOf(character) >= 0) {
+    Object.entries(studyList || {}).forEach(([_,value]) => {
+        if (value.target.some(token=>token.toLocaleLowerCase() === word.trim().toLocaleLowerCase())) {
             count++;
         }
     });
@@ -101,8 +101,8 @@ let getStudyList = function () {
     return studyList;
 }
 let findOtherCards = function (seeking, currentKey) {
-    let cards = Object.keys(studyList);
-    let candidates = cards.filter(x => x !== currentKey && x.includes(seeking)).sort((a, b) => studyList[b].rightCount - studyList[a].rightCount);
+    let candidates = Object.entries(studyList || {}).filter(([key, value]) => key!==currentKey && value.target.some(token=>token.toLocaleLowerCase() === seeking.trim().toLocaleLowerCase()));
+    candidates.sort((a, b) => b[1].rightCount - a[1].rightCount);
     return candidates;
 };
 
@@ -172,8 +172,11 @@ let mergeStudyLists = function (baseStudyList, targetStudyList) {
     }
     studyList = baseStudyList;
 };
+let getKey = function(tokens){
+    return tokens.join ? tokens.join('') : tokens;
+};
 let sanitizeKey = function (key) {
-    return key.replaceAll('.', '。').replaceAll('#', '').replaceAll('$', 'USD').replaceAll('/', '').replaceAll('[', '').replaceAll(']', '');
+    return key.replaceAll('.', '').replaceAll('#', '').replaceAll('$', '').replaceAll('/', '').replaceAll('[', '').replaceAll(']', '');
 };
 
 export { getVisited, updateVisited, registerCallback, saveStudyList, addCards, inStudyList, getCardCount, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, studyResult, dataTypes }

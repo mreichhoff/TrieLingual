@@ -193,7 +193,7 @@ let fillGapDays = function (daysWithData, originalData, defaultEntry) {
 let BarChartClickHandler = function (detail, totalsByLevel, prop, index, message) {
     detail.innerHTML = '';
     //TODO: why no built-in difference method?
-    let missingWords = new Set([...totalsByLevel[index + 1].characters].filter(x => !totalsByLevel[index + 1][prop].has(x)));
+    let missingWords = new Set([...totalsByLevel[index + 1].words].filter(x => !totalsByLevel[index + 1][prop].has(x)));
     let i = 0;
     for (let item of missingWords) {
         if (i < MAX_MISSING_WORDS) {
@@ -212,21 +212,21 @@ let updateTotalsByLevel = function () {
     Object.keys(trie).forEach(x => {
         let level = trie[x]['__l'];
         if (!(level in totalsByLevel)) {
-            totalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), characters: new Set() };
+            totalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), words: new Set() };
         }
         totalsByLevel[level].total++;
-        totalsByLevel[level].characters.add(x);
+        totalsByLevel[level].words.add(x);
     });
 }
 let createCardGraphs = function (studyList, legend) {
-    let studyListCharacters = new Set();
+    let studyListWords = new Set();
     Object.keys(studyList).forEach(x => {
         //TODO: object.entries likely better
         for (let i = 0; i < studyList[x].target.length; i++) {
-            studyListCharacters.add(studyList[x].target[i].toLowerCase());
+            studyListWords.add(studyList[x].target[i].toLowerCase());
         }
     });
-    studyListCharacters.forEach(x => {
+    studyListWords.forEach(x => {
         if (trie[x]) {
             let level = trie[x]['__l'];
             totalsByLevel[level].seen.add(x);
@@ -263,23 +263,23 @@ let createCardGraphs = function (studyList, legend) {
     let sortedCards = Object.values(studyList).sort((x, y) => {
         return (x.added || 0) - (y.added || 0);
     });
-    let seenCharacters = new Set();
+    let seenWords = new Set();
     for (const card of sortedCards) {
         //hacky, but truncate to day granularity this way
         if (card.added) {
             let day = getLocalISODate(new Date(card.added));
             if (!(day in addedByDay)) {
                 addedByDay[day] = {
-                    chars: new Set(),
+                    words: new Set(),
                     total: 0
                 };
             }
             addedByDay[day].total++;
             card.target.forEach(rawWord => {
                 let word = rawWord.toLowerCase();
-                if (trie[word] && !seenCharacters.has(word)) {
-                    addedByDay[day].chars.add(word);
-                    seenCharacters.add(word);
+                if (trie[word] && !seenWords.has(word)) {
+                    addedByDay[day].words.add(word);
+                    seenWords.add(word);
                 }
             });
         } else {
@@ -287,7 +287,7 @@ let createCardGraphs = function (studyList, legend) {
             card.target.forEach(rawWord => {
                 let word = rawWord.toLowerCase();
                 if (trie[word]) {
-                    seenCharacters.add(word);
+                    seenWords.add(word);
                 }
             });
         }
@@ -296,12 +296,12 @@ let createCardGraphs = function (studyList, legend) {
     for (const [date, result] of Object.entries(addedByDay)) {
         dailyAdds.push({
             date: new Date(date),
-            chars: result.chars,
+            words: result.words,
             total: result.total
         });
     }
 
-    fillGapDays(dailyAdds, addedByDay, { chars: new Set(), total: 0 });
+    fillGapDays(dailyAdds, addedByDay, { words: new Set(), total: 0 });
     dailyAdds.sort((x, y) => x.date - y.date);
 
     const addedCalendar = document.getElementById('added-calendar');
@@ -330,10 +330,10 @@ let createCardGraphs = function (studyList, legend) {
                 addedCalendarDetail.innerHTML = '';
 
                 let data = dailyAdds[i];
-                let characters = '';
-                data.chars.forEach(x => characters += x + ', ');
-                if (data.total && data.chars.size) {
-                    addedCalendarDetail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with these new words: ${characters}`;
+                let words = '';
+                data.words.forEach(x => words += x + ', ');
+                if (data.total && data.words.size) {
+                    addedCalendarDetail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with these new words: ${words}`;
                 } else if (data.total) {
                     addedCalendarDetail.innerText = `On ${getUTCISODate(data.date)}, you added ${data.total} cards, with no new words.`;
                 } else {
@@ -347,11 +347,11 @@ let createCardGraphs = function (studyList, legend) {
         left: document.getElementById('added-calendar-today').offsetLeft
     });
 }
-let createVisitedGraphs = function (visitedCharacters, legend) {
-    if (!visitedCharacters) {
+let createVisitedGraphs = function (visitedWords, legend) {
+    if (!visitedWords) {
         return;
     }
-    Object.keys(visitedCharacters).forEach(x => {
+    Object.keys(visitedWords).forEach(x => {
         if (trie[x]) {
             const level = trie[x]['__l'];
             totalsByLevel[level].visited.add(x);

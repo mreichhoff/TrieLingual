@@ -31,7 +31,6 @@ let currentKey = null;
 let displayRelatedCards = function (anchor) {
     let MAX_RELATED_CARDS = 3;
     let related = findOtherCards(anchor.textContent, currentKey);
-    let studyList = getStudyList();
     relatedCardQueryElement.innerText = anchor.textContent;
     if (!related || !related.length) {
         relatedCardsContainer.style.display = 'none';
@@ -41,10 +40,10 @@ let displayRelatedCards = function (anchor) {
     for (let i = 0; i < Math.min(MAX_RELATED_CARDS, related.length); i++) {
         let item = document.createElement('p');
         item.className = 'related-card';
-        item.innerText = related[i];
+        item.innerText = joinTokens(related[i][1].target);
         let relatedPerf = document.createElement('p');
         relatedPerf.className = 'related-card-performance';
-        relatedPerf.innerText = `(right ${studyList[related[i]].rightCount || 0}, wrong ${studyList[related[i]].wrongCount || 0})`;
+        relatedPerf.innerText = `(right ${related[i][1].rightCount || 0}, wrong ${related[i][1].wrongCount || 0})`;
         item.appendChild(relatedPerf);
         relatedCardsElement.appendChild(item);
     }

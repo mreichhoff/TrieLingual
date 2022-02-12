@@ -511,7 +511,7 @@ select {
     text-align: center;
     margin-left: 40px;
     margin-right: 40px;
-    border: 1px solid #eeee;
+    border: 1px solid #3333;
     font-size: 30px;
     margin-bottom: 40px;
     cursor: pointer;
@@ -798,9 +798,6 @@ main.stats section p {
     }
     .bar-chart-separator {
         background: black;
-    }
-    .language-card {
-        border: 1px solid #3333;
     }
 }
 @media (prefers-color-scheme: light) and (max-width:664px) {

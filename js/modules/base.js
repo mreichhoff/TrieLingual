@@ -118,18 +118,17 @@ let addTextToSpeech = function (holder, text, aList) {
     textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
     holder.appendChild(textToSpeechButton);
 };
-let addSaveToListButton = function (holder, text) {
+let addSaveToListButton = function (holder, examples) {
     let buttonTexts = ['In your study list!', 'Add to study list'];
     let saveToListButton = document.createElement('span');
     saveToListButton.className = 'text-button';
-    saveToListButton.textContent = inStudyList(text) ? buttonTexts[0] : buttonTexts[1];
+    saveToListButton.textContent = examples.every(x=>inStudyList(x.t)) ? buttonTexts[0] : buttonTexts[1];
     saveToListButton.addEventListener('click', function () {
-        addCards(currentExamples, text);
+        addCards(examples);
         saveToListButton.textContent = buttonTexts[0];
     });
     holder.appendChild(saveToListButton);
 };
-
 let persistState = function () {
     let localUndoChain = undoChain.length > 5 ? undoChain.slice(0, 5) : undoChain;
     localStorage.setItem('state', JSON.stringify({
@@ -270,7 +269,7 @@ let setupExamples = function (words) {
     }
     item.appendChild(wordHolder);
     addTextToSpeech(wordHolder, words, []);
-    addSaveToListButton(wordHolder, words);
+    addSaveToListButton(wordHolder, examples);
     item.appendChild(wordHolder);
 
     let contextHolder = document.createElement('p');
