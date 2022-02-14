@@ -561,7 +561,7 @@
         let buttonTexts = ['In your study list!', 'Add to study list'];
         let saveToListButton = document.createElement('span');
         saveToListButton.className = 'text-button';
-        saveToListButton.textContent = examples.every(x=>inStudyList(x.t)) ? buttonTexts[0] : buttonTexts[1];
+        saveToListButton.textContent = examples.every(x => inStudyList(x.t)) ? buttonTexts[0] : buttonTexts[1];
         saveToListButton.addEventListener('click', function () {
             addCards(examples);
             saveToListButton.textContent = buttonTexts[0];
@@ -1075,9 +1075,9 @@
         exportStudyListButton.addEventListener('click', function () {
             let studyList = getStudyList();
             let content = "data:text/plain;charset=utf-8,";
-            for (const [key, value] of Object.entries(studyList)) {
+            for (const [_, value] of Object.entries(studyList)) {
                 //replace is a hack for flashcard field separator...TODO could escape
-                content += [key.replace(';', ''), value.base.replace(';', '')].join(';');
+                content += [joinTokens(value.target).replace(';', ''), value.base.replace(';', '')].join(';');
                 content += '\n';
             }
             //wow, surely it can't be this absurd

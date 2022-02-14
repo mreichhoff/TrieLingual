@@ -122,7 +122,7 @@ let addSaveToListButton = function (holder, examples) {
     let buttonTexts = ['In your study list!', 'Add to study list'];
     let saveToListButton = document.createElement('span');
     saveToListButton.className = 'text-button';
-    saveToListButton.textContent = examples.every(x=>inStudyList(x.t)) ? buttonTexts[0] : buttonTexts[1];
+    saveToListButton.textContent = examples.every(x => inStudyList(x.t)) ? buttonTexts[0] : buttonTexts[1];
     saveToListButton.addEventListener('click', function () {
         addCards(examples);
         saveToListButton.textContent = buttonTexts[0];

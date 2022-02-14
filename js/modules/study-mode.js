@@ -136,9 +136,9 @@ let initialize = function () {
     exportStudyListButton.addEventListener('click', function () {
         let studyList = getStudyList();
         let content = "data:text/plain;charset=utf-8,";
-        for (const [key, value] of Object.entries(studyList)) {
+        for (const [_, value] of Object.entries(studyList)) {
             //replace is a hack for flashcard field separator...TODO could escape
-            content += [key.replace(';', ''), value.base.replace(';', '')].join(';');
+            content += [joinTokens(value.target).replace(';', ''), value.base.replace(';', '')].join(';');
             content += '\n';
         }
         //wow, surely it can't be this absurd
