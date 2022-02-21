@@ -12,9 +12,9 @@ const studyResult = {
     CORRECT: 'correct',
     INCORRECT: 'incorrect'
 };
-let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
-let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
-let visited = JSON.parse(localStorage.getItem('visited') || '{}');
+let studyList = JSON.parse(localStorage.getItem(`studyList/${targetLang}`) || '{}');
+let studyResults = JSON.parse(localStorage.getItem(`studyResults/${targetLang}`) || '{"hourly":{},"daily":{}}');
+let visited = JSON.parse(localStorage.getItem(`visited/${targetLang}`) || '{}');
 
 let getStudyResults = function () {
     return studyResults;
@@ -32,7 +32,7 @@ let updateVisited = function (nodes) {
         }
         visited[nodes[i]]++;
     }
-    localStorage.setItem('visited', JSON.stringify(visited));
+    localStorage.setItem(`visited/${targetLang}`, JSON.stringify(visited));
     callbacks[dataTypes.visited].forEach(x => x(visited));
 };
 
@@ -42,7 +42,7 @@ let registerCallback = function (dataType, callback) {
 
 //keeping keys/localStudyList for parity with current hacked together firebase version
 let saveStudyList = function (keys, localStudyList) {
-    localStorage.setItem('studyList', JSON.stringify(studyList));
+    localStorage.setItem(`studyList/${targetLang}`, JSON.stringify(studyList));
 };
 let updateCard = function (result, key) {
     let now = new Date();
@@ -89,8 +89,8 @@ let getCardCount = function (word) {
     let count = 0;
     //TODO: if performance becomes an issue, we can pre-compute this
     //as-is, it performs fine even with larger flashcard decks
-    Object.entries(studyList || {}).forEach(([_,value]) => {
-        if (value.target.some(token=>token.toLocaleLowerCase() === word.trim().toLocaleLowerCase())) {
+    Object.entries(studyList || {}).forEach(([_, value]) => {
+        if (value.target.some(token => token.toLocaleLowerCase() === word.trim().toLocaleLowerCase())) {
             count++;
         }
     });
@@ -101,7 +101,7 @@ let getStudyList = function () {
     return studyList;
 }
 let findOtherCards = function (seeking, currentKey) {
-    let candidates = Object.entries(studyList || {}).filter(([key, value]) => key!==currentKey && value.target.some(token=>token.toLocaleLowerCase() === seeking.trim().toLocaleLowerCase()));
+    let candidates = Object.entries(studyList || {}).filter(([key, value]) => key !== currentKey && value.target.some(token => token.toLocaleLowerCase() === seeking.trim().toLocaleLowerCase()));
     candidates.sort((a, b) => b[1].rightCount - a[1].rightCount);
     return candidates;
 };
@@ -157,7 +157,7 @@ let recordEvent = function (result) {
         studyResults.daily[day][result] = 0;
     }
     studyResults.daily[day][result]++;
-    localStorage.setItem('studyResults', JSON.stringify(studyResults));
+    localStorage.setItem(`studyResults/${targetLang}`, JSON.stringify(studyResults));
 };
 
 //TODO: unused stuff from the firebase side
@@ -172,11 +172,17 @@ let mergeStudyLists = function (baseStudyList, targetStudyList) {
     }
     studyList = baseStudyList;
 };
-let getKey = function(tokens){
+let getKey = function (tokens) {
     return tokens.join ? tokens.join('') : tokens;
 };
 let sanitizeKey = function (key) {
     return key.replaceAll('.', '').replaceAll('#', '').replaceAll('$', '').replaceAll('/', '').replaceAll('[', '').replaceAll(']', '');
 };
 
-export { getVisited, updateVisited, registerCallback, saveStudyList, addCards, inStudyList, getCardCount, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, studyResult, dataTypes }
+let initialize = function () {
+    studyList = JSON.parse(localStorage.getItem(`studyList/${targetLang}`) || '{}');
+    studyResults = JSON.parse(localStorage.getItem(`studyResults/${targetLang}`) || '{"hourly":{},"daily":{}}');
+    visited = JSON.parse(localStorage.getItem(`visited/${targetLang}`) || '{}');
+};
+
+export { initialize, getVisited, updateVisited, registerCallback, saveStudyList, addCards, inStudyList, getCardCount, getStudyList, removeFromStudyList, findOtherCards, updateCard, recordEvent, getStudyResults, studyResult, dataTypes }

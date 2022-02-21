@@ -1,3 +1,4 @@
+import { initialize as dataInit } from "./data-layer.js";
 import { initialize as baseInit } from "./base.js";
 import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
@@ -21,6 +22,14 @@ let languageOptions = [
     {
         element: document.getElementById('german-language-card'),
         targetLang: 'de-DE'
+    },
+    {
+        element: document.getElementById('spanish-language-card'),
+        targetLang: 'es-ES'
+    },
+    {
+        element: document.getElementById('norwegian-language-card'),
+        targetLang: 'nb-NO'
     }
 ];
 const mainContainer = document.getElementById('container');
@@ -37,11 +46,15 @@ let init = function () {
                 .then(data => window.sentences = data),
             window.definitionsFetch
                 .then(response => response.json())
-                .then(data => window.definitions = data)
+                .then(data => window.definitions = data),
+            // window.invertedTrieFetch
+            //     .then(response => response.json())
+            //     .then(data => window.invertedTrie = data)
         ]
     ).then(_ => {
         landingContainer.style.display = 'none';
         mainContainer.removeAttribute('style');
+        dataInit();
         studyModeInit();
         baseInit();
         statsInit();
@@ -67,6 +80,7 @@ if (targetLang) {
             window.trieFetch = fetch(`./data/${targetLang}/trie.json`);
             window.sentencesFetch = fetch(`./data/${targetLang}/sentences.json`);
             window.definitionsFetch = fetch(`./data/${targetLang}/definitions.json`);
+            // window.invertedTrieFetch = fetch(`./data/${targetLang}/inverted-trie.json`);
             init();
         });
     });

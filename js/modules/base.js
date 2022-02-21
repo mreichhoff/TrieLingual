@@ -1,5 +1,5 @@
 import { faqTypes, showFaq } from "./faq.js";
-import { updateVisited, getVisited, addCards, getCardCount, inStudyList } from "./data-layer.js";
+import { updateVisited, getVisited, addCards, getCardCount, inStudyList, initialize } from "./data-layer.js";
 import { initializeGraph, updateColorScheme } from "./graph.js";
 import { graphChanged, preferencesChanged } from "./recommendations.js";
 
@@ -27,19 +27,25 @@ let punctuation = {
     'fr-FR': new Set([".", ",", '\'', '’']),
     'pt-BR': new Set([".", ",", ":", "!", "?"]),
     'it-IT': new Set([".", ",", '\'', '’']),
-    'de-DE': new Set([".", ",", '\'', '’'])
+    'de-DE': new Set([".", ",", '\'', '’']),
+    'es-ES': new Set([".", ",", ":", "!", "?"]),
+    'nb-NO': new Set([".", ",", ":", "!", "?"])
 };
 const defaultWords = {
     'fr-FR': ['bras', 'numéro', 'participer'],
     'pt-BR': ['braço', 'mercado', 'importância'],
     'it-IT': ['braccio', 'lavoro', 'intervento'],
-    'de-DE': ['arm', 'arbeit', 'beteiligung']
+    'de-DE': ['arm', 'arbeit', 'beteiligung'],
+    'es-ES': ['brazo', 'trabajo', 'participar'],
+    'nb-NO': ['væpnet', 'jobb', 'delta']
 };
 let languageOptions = {
     'French': 'fr-FR',
     'Portuguese': 'pt-BR',
     'Italian': 'it-IT',
-    'German': 'de-DE'
+    'German': 'de-DE',
+    'Spanish': 'es-ES',
+    'Norwegian': 'nb-NO'
 };
 
 //TODO: make specialized tries per language
@@ -533,6 +539,12 @@ let switchLanguage = function () {
             .then(function (data) {
                 window.definitions = data;
             });
+        initialize();
+        // fetch(`./data/${targetLang}/inverted-trie.json`)
+        //     .then(response => response.json())
+        //     .then(function (data) {
+        //         window.invertedTrie = data;
+        //     });
         persistState();
     }
 }

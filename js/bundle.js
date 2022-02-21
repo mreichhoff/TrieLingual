@@ -1,57 +1,6 @@
 (function () {
     'use strict';
 
-    //TODO may want to stop this and just have it stay shown, with faq over top via absolute position/z-index
-    const mainContainer$3 = document.getElementById('container');
-    //faq items
-    const faqContainer = document.getElementById('faq-container');
-    const faqSingleCharWarning = document.getElementById('faq-single-char-warning');
-    const faqStudyMode = document.getElementById('faq-study-mode');
-    const faqRecommendations = document.getElementById('faq-recommendations');
-    const faqContext = document.getElementById('faq-context');
-    const faqGeneral = document.getElementById('faq-general');
-    const faqExitButton = document.getElementById('faq-exit-button');
-    const showStudyFaq = document.getElementById('show-study-faq');
-    const showGeneralFaq = document.getElementById('show-general-faq');
-
-    //TODO should combine with faqTypes
-    const faqTypesToElement = {
-        singleCharWarning: faqSingleCharWarning,
-        studyMode: faqStudyMode,
-        context: faqContext,
-        general: faqGeneral,
-        recommendations: faqRecommendations
-    };
-    const faqTypes = {
-        singleCharWarning: 'singleCharWarning',
-        studyMode: 'studyMode',
-        context: 'context',
-        general: 'general',
-        recommendations: 'recommendations'
-    };
-
-    let showFaq = function (faqType) {
-        mainContainer$3.style.display = 'none';
-        faqContainer.removeAttribute('style');
-        faqTypesToElement[faqType].removeAttribute('style');
-    };
-
-    let initialize$4 = function () {
-        faqExitButton.addEventListener('click', function () {
-            faqContainer.style.display = 'none';
-            mainContainer$3.removeAttribute('style');
-            Object.values(faqTypesToElement).forEach(x => {
-                x.style.display = 'none';
-            });
-        });
-        showStudyFaq.addEventListener('click', function () {
-            showFaq(faqTypes.studyMode);
-        });
-        showGeneralFaq.addEventListener('click', function () {
-            showFaq(faqTypes.general);
-        });
-    };
-
     const dataTypes = {
         visited: 'visited',
         studyList: 'studyList',
@@ -66,9 +15,9 @@
         CORRECT: 'correct',
         INCORRECT: 'incorrect'
     };
-    let studyList = JSON.parse(localStorage.getItem('studyList') || '{}');
-    let studyResults = JSON.parse(localStorage.getItem('studyResults') || '{"hourly":{},"daily":{}}');
-    let visited = JSON.parse(localStorage.getItem('visited') || '{}');
+    let studyList = JSON.parse(localStorage.getItem(`studyList/${targetLang}`) || '{}');
+    let studyResults = JSON.parse(localStorage.getItem(`studyResults/${targetLang}`) || '{"hourly":{},"daily":{}}');
+    let visited = JSON.parse(localStorage.getItem(`visited/${targetLang}`) || '{}');
 
     let getStudyResults = function () {
         return studyResults;
@@ -86,7 +35,7 @@
             }
             visited[nodes[i]]++;
         }
-        localStorage.setItem('visited', JSON.stringify(visited));
+        localStorage.setItem(`visited/${targetLang}`, JSON.stringify(visited));
         callbacks[dataTypes.visited].forEach(x => x(visited));
     };
 
@@ -96,7 +45,7 @@
 
     //keeping keys/localStudyList for parity with current hacked together firebase version
     let saveStudyList = function (keys, localStudyList) {
-        localStorage.setItem('studyList', JSON.stringify(studyList));
+        localStorage.setItem(`studyList/${targetLang}`, JSON.stringify(studyList));
     };
     let updateCard = function (result, key) {
         let now = new Date();
@@ -143,8 +92,8 @@
         let count = 0;
         //TODO: if performance becomes an issue, we can pre-compute this
         //as-is, it performs fine even with larger flashcard decks
-        Object.entries(studyList || {}).forEach(([_,value]) => {
-            if (value.target.some(token=>token.toLocaleLowerCase() === word.trim().toLocaleLowerCase())) {
+        Object.entries(studyList || {}).forEach(([_, value]) => {
+            if (value.target.some(token => token.toLocaleLowerCase() === word.trim().toLocaleLowerCase())) {
                 count++;
             }
         });
@@ -155,7 +104,7 @@
         return studyList;
     };
     let findOtherCards = function (seeking, currentKey) {
-        let candidates = Object.entries(studyList || {}).filter(([key, value]) => key!==currentKey && value.target.some(token=>token.toLocaleLowerCase() === seeking.trim().toLocaleLowerCase()));
+        let candidates = Object.entries(studyList || {}).filter(([key, value]) => key !== currentKey && value.target.some(token => token.toLocaleLowerCase() === seeking.trim().toLocaleLowerCase()));
         candidates.sort((a, b) => b[1].rightCount - a[1].rightCount);
         return candidates;
     };
@@ -211,13 +160,70 @@
             studyResults.daily[day][result] = 0;
         }
         studyResults.daily[day][result]++;
-        localStorage.setItem('studyResults', JSON.stringify(studyResults));
+        localStorage.setItem(`studyResults/${targetLang}`, JSON.stringify(studyResults));
     };
-    let getKey = function(tokens){
+    let getKey = function (tokens) {
         return tokens.join ? tokens.join('') : tokens;
     };
     let sanitizeKey = function (key) {
         return key.replaceAll('.', '').replaceAll('#', '').replaceAll('$', '').replaceAll('/', '').replaceAll('[', '').replaceAll(']', '');
+    };
+
+    let initialize$5 = function () {
+        studyList = JSON.parse(localStorage.getItem(`studyList/${targetLang}`) || '{}');
+        studyResults = JSON.parse(localStorage.getItem(`studyResults/${targetLang}`) || '{"hourly":{},"daily":{}}');
+        visited = JSON.parse(localStorage.getItem(`visited/${targetLang}`) || '{}');
+    };
+
+    //TODO may want to stop this and just have it stay shown, with faq over top via absolute position/z-index
+    const mainContainer$3 = document.getElementById('container');
+    //faq items
+    const faqContainer = document.getElementById('faq-container');
+    const faqSingleCharWarning = document.getElementById('faq-single-char-warning');
+    const faqStudyMode = document.getElementById('faq-study-mode');
+    const faqRecommendations = document.getElementById('faq-recommendations');
+    const faqContext = document.getElementById('faq-context');
+    const faqGeneral = document.getElementById('faq-general');
+    const faqExitButton = document.getElementById('faq-exit-button');
+    const showStudyFaq = document.getElementById('show-study-faq');
+    const showGeneralFaq = document.getElementById('show-general-faq');
+
+    //TODO should combine with faqTypes
+    const faqTypesToElement = {
+        singleCharWarning: faqSingleCharWarning,
+        studyMode: faqStudyMode,
+        context: faqContext,
+        general: faqGeneral,
+        recommendations: faqRecommendations
+    };
+    const faqTypes = {
+        singleCharWarning: 'singleCharWarning',
+        studyMode: 'studyMode',
+        context: 'context',
+        general: 'general',
+        recommendations: 'recommendations'
+    };
+
+    let showFaq = function (faqType) {
+        mainContainer$3.style.display = 'none';
+        faqContainer.removeAttribute('style');
+        faqTypesToElement[faqType].removeAttribute('style');
+    };
+
+    let initialize$4 = function () {
+        faqExitButton.addEventListener('click', function () {
+            faqContainer.style.display = 'none';
+            mainContainer$3.removeAttribute('style');
+            Object.values(faqTypesToElement).forEach(x => {
+                x.style.display = 'none';
+            });
+        });
+        showStudyFaq.addEventListener('click', function () {
+            showFaq(faqTypes.studyMode);
+        });
+        showGeneralFaq.addEventListener('click', function () {
+            showFaq(faqTypes.general);
+        });
     };
 
     let cy = null;
@@ -466,19 +472,25 @@
         'fr-FR': new Set([".", ",", '\'', '’']),
         'pt-BR': new Set([".", ",", ":", "!", "?"]),
         'it-IT': new Set([".", ",", '\'', '’']),
-        'de-DE': new Set([".", ",", '\'', '’'])
+        'de-DE': new Set([".", ",", '\'', '’']),
+        'es-ES': new Set([".", ",", ":", "!", "?"]),
+        'nb-NO': new Set([".", ",", ":", "!", "?"])
     };
     const defaultWords = {
         'fr-FR': ['bras', 'numéro', 'participer'],
         'pt-BR': ['braço', 'mercado', 'importância'],
         'it-IT': ['braccio', 'lavoro', 'intervento'],
-        'de-DE': ['arm', 'arbeit', 'beteiligung']
+        'de-DE': ['arm', 'arbeit', 'beteiligung'],
+        'es-ES': ['brazo', 'trabajo', 'participar'],
+        'nb-NO': ['væpnet', 'jobb', 'delta']
     };
     let languageOptions$1 = {
         'French': 'fr-FR',
         'Portuguese': 'pt-BR',
         'Italian': 'it-IT',
-        'German': 'de-DE'
+        'German': 'de-DE',
+        'Spanish': 'es-ES',
+        'Norwegian': 'nb-NO'
     };
 
     //TODO: make specialized tries per language
@@ -935,6 +947,11 @@
                 .then(function (data) {
                     window.definitions = data;
                 });
+            // fetch(`./data/${targetLang}/inverted-trie.json`)
+            //     .then(response => response.json())
+            //     .then(function (data) {
+            //         window.invertedTrie = data;
+            //     });
             persistState();
         }
     };
@@ -1648,6 +1665,14 @@
         {
             element: document.getElementById('german-language-card'),
             targetLang: 'de-DE'
+        },
+        {
+            element: document.getElementById('spanish-language-card'),
+            targetLang: 'es-ES'
+        },
+        {
+            element: document.getElementById('norwegian-language-card'),
+            targetLang: 'nb-NO'
         }
     ];
     const mainContainer = document.getElementById('container');
@@ -1664,11 +1689,15 @@
                     .then(data => window.sentences = data),
                 window.definitionsFetch
                     .then(response => response.json())
-                    .then(data => window.definitions = data)
+                    .then(data => window.definitions = data),
+                // window.invertedTrieFetch
+                //     .then(response => response.json())
+                //     .then(data => window.invertedTrie = data)
             ]
         ).then(_ => {
             landingContainer.style.display = 'none';
             mainContainer.removeAttribute('style');
+            initialize$5();
             initialize$1();
             initialize$2();
             initialize();
@@ -1694,6 +1723,7 @@
                 window.trieFetch = fetch(`./data/${targetLang}/trie.json`);
                 window.sentencesFetch = fetch(`./data/${targetLang}/sentences.json`);
                 window.definitionsFetch = fetch(`./data/${targetLang}/definitions.json`);
+                // window.invertedTrieFetch = fetch(`./data/${targetLang}/inverted-trie.json`);
                 init();
             });
         });
