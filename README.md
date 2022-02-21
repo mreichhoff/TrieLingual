@@ -17,9 +17,8 @@ More languages may be added in the future.
 Sentence and definition data was pulled from:
 * [tatoeba](https://tatoeba.org/), which releases data under [CC-BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/)
 * [wiktionary](https://www.wiktionary.org/), which releases data under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/)
+  * Due to the sharealike clause, please treat the `definition.json` content in `data/` as also released under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
 * [OpenSubtitles](http://www.opensubtitles.org/)
 * [CommonCrawl](https://opus.nlpl.eu/CCAligned.php)
 
 The latter two were accessed via [Opus](https://opus.nlpl.eu/).
-
-Due to the sharealike clause, please treat the content in `data/` as released under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/).
