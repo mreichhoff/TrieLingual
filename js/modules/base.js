@@ -1,5 +1,5 @@
 import { faqTypes, showFaq } from "./faq.js";
-import { updateVisited, getVisited, addCards, getCardCount, inStudyList, initialize } from "./data-layer.js";
+import { updateVisited, getVisited, addCards, getCardCount, inStudyList, initialize as dataInit } from "./data-layer.js";
 import { initializeGraph, updateColorScheme } from "./graph.js";
 import { graphChanged, preferencesChanged } from "./recommendations.js";
 
@@ -539,7 +539,8 @@ let switchLanguage = function () {
             .then(function (data) {
                 window.definitions = data;
             });
-        initialize();
+        dataInit();
+        exploreTab.click();
         // fetch(`./data/${targetLang}/inverted-trie.json`)
         //     .then(response => response.json())
         //     .then(function (data) {

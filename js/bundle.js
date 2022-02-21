@@ -947,6 +947,8 @@
                 .then(function (data) {
                     window.definitions = data;
                 });
+            initialize$5();
+            exploreTab.click();
             // fetch(`./data/${targetLang}/inverted-trie.json`)
             //     .then(response => response.json())
             //     .then(function (data) {
