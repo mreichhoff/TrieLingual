@@ -652,7 +652,7 @@ select {
         font-size: 24px;
     }
     .language-grid {
-        grid-template-rows: 200px 200px 40px;
+        grid-template-rows: 200px 200px 200px 40px;
     }
     .language-name {
         height: 120px;
