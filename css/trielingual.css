@@ -487,7 +487,7 @@ select {
 }
 #landing {
     text-align: center;
-    max-width: 80%;
+    max-width: 60%;
     margin-left: auto;
     margin-right: auto;
     height: 100%;
@@ -496,7 +496,7 @@ select {
 .language-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 250px 250px 250px 40px;
+    grid-template-rows: 200px 200px 200px 40px;
     margin-top: 20px;
     margin-bottom: 40px;
 }
@@ -509,8 +509,7 @@ select {
 }
 .language-card {
     text-align: center;
-    margin-left: 40px;
-    margin-right: 40px;
+    margin: 8px;
     border: 1px solid #3333;
     font-size: 30px;
     margin-bottom: 40px;
@@ -518,10 +517,8 @@ select {
     color:#121212;
 }
 .language-name {
-    font-size: 30px;
-    /* 250 for the total grid row, subtract 60 for the margins, give 20 to the nickname = 170 */
-    height: 170px;
-    line-height: 170px;
+    font-size: 24px;
+    height: 120px;
     margin: 0;
 }
 .language-nickname {
@@ -644,18 +641,6 @@ select {
 
     #landing {
         max-width: 98%;
-    }
-    .language-card {
-        margin: 8px;
-    }
-    .language-name {
-        font-size: 24px;
-    }
-    .language-grid {
-        grid-template-rows: 200px 200px 200px 40px;
-    }
-    .language-name {
-        height: 120px;
     }
 }
 @media (max-width:360px)  {
