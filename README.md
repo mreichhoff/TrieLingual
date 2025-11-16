@@ -1,6 +1,18 @@
 # TrieLingual
 A [prototype site](https://mreichhoff.github.io/TrieLingual/) to help language learners study the building blocks of language.
 
+
+
+https://github.com/user-attachments/assets/a98e3248-32f3-4327-ad47-0c54413fc507
+
+
+## Features
+* Interactive prefix trie
+* Example sentences for each node, pulled from movie and TV subtitles
+* Word frequency color coding
+* Flashcard creation (exportable to Anki)
+* A series of puns to represent each language (e.g., PorTRIEguese, French Tries, Trietalian)
+
 ## Summary
 A word-level trie was generated for multiple languages. It contains the 10,000 most common words from the language, and has a max depth of 3 (i.e., paths represent up to a trigram). The children at each level were the most commonly observed words following the root. The data was generated from ~10 million sentences per language.
 
@@ -12,6 +24,8 @@ The idea came from another project of mine, [HanziGraph](https://github.com/mrei
 This project is a prototype. Content moderation (including further screening for offensive content; a rudimentary blocklist has already been applied, but it's far from perfect) and improvement of the translations are both ongoing efforts. Please do not treat any of this code or content as production-ready.
 
 More languages may be added in the future.
+
+Future work will include prettying the UI, adding variable depth (instead of hardcoded 3), AI sentence generation, and Anki Connect for flashcards.
 
 ## Acknowledgements
 Sentence and definition data was pulled from:
