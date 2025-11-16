@@ -1,5 +1,5 @@
 # TrieLingual
-A [prototype site](https://mreichhoff.github.io/TrieLingual/) to help language learners study the building blocks of language.
+A [prototype site](https://trielingual.com) to help language learners study the building blocks of language.
 
 
 
