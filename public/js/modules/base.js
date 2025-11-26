@@ -10,7 +10,6 @@ let currentExamples = {};
 let currentRoot = null;
 //the ngram for which we're showing examples
 let currentNgram = null;
-let undoChain = [];
 
 let subtries = {};
 
@@ -32,12 +31,12 @@ const defaultWords = {
     'nb-NO': ['væpnet', 'jobb', 'delta']
 };
 let languageOptions = {
-    'French': 'fr-FR',
-    'Portuguese': 'pt-BR',
-    'Italian': 'it-IT',
-    'German': 'de-DE',
-    'Spanish': 'es-ES',
-    'Norwegian': 'nb-NO'
+    'French': { targetLang: 'fr-FR', urlPath: 'french' },
+    'Portuguese': { targetLang: 'pt-BR', urlPath: 'portuguese' },
+    'Italian': { targetLang: 'it-IT', urlPath: 'italian' },
+    'German': { targetLang: 'de-DE', urlPath: 'german' },
+    'Spanish': { targetLang: 'es-ES', urlPath: 'spanish' },
+    'Norwegian': { targetLang: 'nb-NO', urlPath: 'norwegian' }
 };
 
 //TODO: make specialized tries per language
@@ -148,17 +147,6 @@ let addSaveToListButton = function (holder, examples) {
         btn.innerHTML = svgSaved;
     });
     holder.appendChild(btn);
-};
-let persistState = function () {
-    let localUndoChain = undoChain.length > 5 ? undoChain.slice(0, 5) : undoChain;
-    localStorage.setItem('state', JSON.stringify({
-        root: currentRoot,
-        ngram: currentNgram,
-        undoChain: localUndoChain,
-        targetLang: targetLang,
-        currentGraph: activeGraph.display,
-        graphPrefix: activeGraph.prefix
-    }));
 };
 let setupDefinitions = function (words, definitionHolder, shown) {
     if (!words) {
@@ -318,12 +306,19 @@ let setupExamples = function (words) {
     examplesList.append(item);
 
     currentNgram = words;
-};
-let updateUndoChain = function () {
-    //push clones onto the stack
-    undoChain.push({ root: currentRoot, ngram: (currentNgram ? [...currentNgram] : currentNgram) });
-};
 
+    // Update URL to reflect the current language and word for deep-linking
+    if (words && words.length > 0) {
+        const langOption = Object.values(languageOptions).find(opt => opt.targetLang === targetLang);
+        if (langOption && langOption.urlPath) {
+            const word = words[0]; // Use the first word in the ngram
+            const newUrl = `/${langOption.urlPath}/${encodeURIComponent(word)}`;
+            if (document.location.pathname !== newUrl) {
+                history.pushState({}, '', newUrl);
+            }
+        }
+    }
+};
 //TODO can this be combined with the definition rendering part?
 let getCardsFromDefinitions = function (words, definitionList) {
     let results = [];
@@ -362,9 +357,7 @@ let getCardsFromDefinitions = function (words, definitionList) {
 };
 
 let nodeTapHandler = function (evt) {
-    updateUndoChain();
     setupExamples(evt.target.data('path'));
-    persistState();
 };
 let edgeTapHandler = function () { };
 let updateGraph = function (value) {
@@ -388,40 +381,83 @@ let updateGraph = function (value) {
             });
         initializeGraph(value, nextGraph, nodeTapHandler, edgeTapHandler);
         currentRoot = value;
-        persistState();
     }
     return result;
 };
 
 let initialize = function () {
-    let oldState = JSON.parse(localStorage.getItem('state'));
     //TODO: make specialized tries
     for (const [key, value] of Object.entries(languageOptions)) {
-        if (value === targetLang) {
+        if (value.targetLang === targetLang) {
             languageSelector.value = key;
             break;
         }
     }
-    if (oldState) {
-        //note: would already have loaded objects as part of data-load.js
-        let result = updateGraph(oldState.root);
-        if (oldState.ngram) {
-            if (result) {
-                result.then(() => {
-                    setupExamples(oldState.ngram);
-                })
-            } else {
-                //TODO: is this actually what we want?
-                setupExamples(oldState.ngram);
-            }
+    // If word is in URL, display it with examples; otherwise just load the graph for a random default
+    if (window.urlPath && window.urlPath.word) {
+        const word = window.urlPath.word;
+        let result = updateGraph(word);
+        if (result) {
+            result.then(() => {
+                setupExamples([word]);
+            });
+        } else {
+            setupExamples([word]);
         }
-        undoChain = oldState.undoChain;
-        persistState();
     } else {
         updateGraph(defaultWords[targetLang][Math.floor(Math.random() * defaultWords[targetLang].length)]);
     }
-    matchMedia("(prefers-color-scheme: light)").addEventListener("change", updateColorScheme);
+
+    // Handle browser back/forward navigation
+    window.addEventListener('popstate', function () {
+        const updated = parseUrlPath();
+        if (updated.lang && updated.lang === targetLang && updated.word) {
+            // Same language, just update the word/examples
+            let result = updateGraph(updated.word);
+            if (result) {
+                result.then(() => {
+                    setupExamples([updated.word]);
+                });
+            } else {
+                setupExamples([updated.word]);
+            }
+        } else if (updated.lang && updated.lang !== targetLang) {
+            // Language changed; reload the page to pick up new language data
+            location.reload();
+        } else if (!updated.word && !updated.lang) {
+            // back to root; show landing page
+            location.reload();
+        }
+    });
 };
+
+// Parse URL path function (duplicated from data-load.js for use in popstate handler)
+function parseUrlPath() {
+    const slugToLang = {
+        'french': 'fr-FR',
+        'portuguese': 'pt-BR',
+        'italian': 'it-IT',
+        'german': 'de-DE',
+        'spanish': 'es-ES',
+        'norwegian': 'nb-NO'
+    };
+    const pathname = window.location.pathname || '';
+    const parts = pathname.split('/').filter(p => p.length);
+    const result = { lang: null, word: null };
+
+    if (parts.length >= 1) {
+        const slug = parts[0].toLowerCase();
+        if (slugToLang[slug]) {
+            result.lang = slugToLang[slug];
+        }
+    }
+
+    if (parts.length >= 2) {
+        result.word = decodeURIComponent(parts[1]);
+    }
+
+    return result;
+}
 
 let makeSentenceNavigable = function (tokens, container, noExampleChange) {
     let sentenceContainer = document.createElement('span');
@@ -442,18 +478,13 @@ let makeSentenceNavigable = function (tokens, container, noExampleChange) {
                 if (trie[cleanWord]) {
                     let updated = false;
                     if (currentRoot && currentRoot !== word) {
-                        updateUndoChain();
                         updated = true;
                         updateGraph(cleanWord);
                     }
                     //enable seamless switching, but don't update if we're already showing examples for character
                     if (!noExampleChange && (!currentNgram || (currentNgram.length !== 1 || currentNgram[0] !== word))) {
-                        if (!updated) {
-                            updateUndoChain();
-                        }
                         setupExamples([cleanWord]);
                     }
-                    persistState();
                 }
             });
             anchorList.push(a);
@@ -468,10 +499,8 @@ searchForm.addEventListener('submit', function (event) {
     event.preventDefault();
     let value = searchBox.value.toLocaleLowerCase();
     if (value && trie[value]) {
-        updateUndoChain();
         updateGraph(value);
         setupExamples([value]);
-        persistState();
     }
 });
 
@@ -485,37 +514,8 @@ menuExitButton.addEventListener('click', function () {
 });
 
 let switchLanguage = function () {
-    let value = languageSelector.value;
-    let selectedLanguage = languageOptions[value];
-    if (targetLang !== selectedLanguage) {
-        window.targetLang = selectedLanguage;
-        //fetch regardless...allow service worker and/or browser cache to optimize
-        fetch(`/data/${targetLang}/trie.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                window.trie = data;
-                graphChanged();
-                updateGraph();
-                setupExamples();
-            });
-        fetch(`/data/${targetLang}/sentences.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                window.sentences = data;
-            });
-        fetch(`/data/${targetLang}/definitions.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                window.definitions = data;
-            });
-        dataInit();
-        // fetch(`/data/${targetLang}/inverted-trie.json`)
-        //     .then(response => response.json())
-        //     .then(function (data) {
-        //         window.invertedTrie = data;
-        //     });
-        persistState();
-    }
+    const value = languageSelector.value;
+    document.location.href = `/${languageOptions[value].urlPath}`;
 }
 languageSelector.addEventListener('change', switchLanguage);
 

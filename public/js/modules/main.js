@@ -75,6 +75,21 @@ if (targetLang) {
             });
             grid.classList.add('language-grid-selected');
             e.currentTarget.classList.add('language-selected');
+
+            // Update URL to reflect the selected language
+            const langToSlugMap = {
+                'fr-FR': 'french',
+                'pt-BR': 'portuguese',
+                'it-IT': 'italian',
+                'de-DE': 'german',
+                'es-ES': 'spanish',
+                'nb-NO': 'norwegian'
+            };
+            const slug = langToSlugMap[targetLang];
+            if (slug) {
+                history.pushState({}, '', `/${slug}`);
+            }
+
             window.trieFetch = fetch(`/data/${targetLang}/trie.json`);
             window.sentencesFetch = fetch(`/data/${targetLang}/sentences.json`);
             window.definitionsFetch = fetch(`/data/${targetLang}/definitions.json`);
