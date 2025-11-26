@@ -381,7 +381,7 @@ let updateGraph = function (value) {
 
     let result = null;
     if (value && trie[value]) {
-        result = fetch(`./data/${targetLang}/subtries/${value}.json`)
+        result = fetch(`/data/${targetLang}/subtries/${value}.json`)
             .then(response => response.json())
             .then(function (data) {
                 subtries[value] = data;
@@ -490,7 +490,7 @@ let switchLanguage = function () {
     if (targetLang !== selectedLanguage) {
         window.targetLang = selectedLanguage;
         //fetch regardless...allow service worker and/or browser cache to optimize
-        fetch(`./data/${targetLang}/trie.json`)
+        fetch(`/data/${targetLang}/trie.json`)
             .then(response => response.json())
             .then(function (data) {
                 window.trie = data;
@@ -498,18 +498,18 @@ let switchLanguage = function () {
                 updateGraph();
                 setupExamples();
             });
-        fetch(`./data/${targetLang}/sentences.json`)
+        fetch(`/data/${targetLang}/sentences.json`)
             .then(response => response.json())
             .then(function (data) {
                 window.sentences = data;
             });
-        fetch(`./data/${targetLang}/definitions.json`)
+        fetch(`/data/${targetLang}/definitions.json`)
             .then(response => response.json())
             .then(function (data) {
                 window.definitions = data;
             });
         dataInit();
-        // fetch(`./data/${targetLang}/inverted-trie.json`)
+        // fetch(`/data/${targetLang}/inverted-trie.json`)
         //     .then(response => response.json())
         //     .then(function (data) {
         //         window.invertedTrie = data;

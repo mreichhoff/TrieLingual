@@ -75,10 +75,10 @@ if (targetLang) {
             });
             grid.classList.add('language-grid-selected');
             e.currentTarget.classList.add('language-selected');
-            window.trieFetch = fetch(`./data/${targetLang}/trie.json`);
-            window.sentencesFetch = fetch(`./data/${targetLang}/sentences.json`);
-            window.definitionsFetch = fetch(`./data/${targetLang}/definitions.json`);
-            // window.invertedTrieFetch = fetch(`./data/${targetLang}/inverted-trie.json`);
+            window.trieFetch = fetch(`/data/${targetLang}/trie.json`);
+            window.sentencesFetch = fetch(`/data/${targetLang}/sentences.json`);
+            window.definitionsFetch = fetch(`/data/${targetLang}/definitions.json`);
+            // window.invertedTrieFetch = fetch(`/data/${targetLang}/inverted-trie.json`);
             init();
         });
     });

@@ -1,3 +1,5 @@
+import cytoscape from "cytoscape";
+
 let cy = null;
 let root = null;
 let resizeTimer = null;
