@@ -31,7 +31,7 @@ let languageOptions = [
         targetLang: 'nb-NO'
     }
 ];
-const mainContainer = document.getElementById('container');
+const mainContainer = document.getElementById('main-container');
 const landingContainer = document.getElementById('landing');
 
 let init = function () {
