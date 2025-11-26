@@ -4,7 +4,6 @@ const mainContainer = document.getElementById('container');
 const faqContainer = document.getElementById('faq-container');
 const faqSingleCharWarning = document.getElementById('faq-single-char-warning');
 const faqStudyMode = document.getElementById('faq-study-mode');
-const faqRecommendations = document.getElementById('faq-recommendations');
 const faqContext = document.getElementById('faq-context');
 const faqGeneral = document.getElementById('faq-general');
 const faqExitButton = document.getElementById('faq-exit-button');
@@ -16,15 +15,13 @@ const faqTypesToElement = {
     singleCharWarning: faqSingleCharWarning,
     studyMode: faqStudyMode,
     context: faqContext,
-    general: faqGeneral,
-    recommendations: faqRecommendations
+    general: faqGeneral
 };
 const faqTypes = {
     singleCharWarning: 'singleCharWarning',
     studyMode: 'studyMode',
     context: 'context',
-    general: 'general',
-    recommendations: 'recommendations'
+    general: 'general'
 };
 
 let showFaq = function (faqType) {

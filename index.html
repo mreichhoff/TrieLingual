@@ -25,151 +25,149 @@
                 <h2>Choose a language</h2>
             </section>
             <section id="language-grid" class="language-grid">
-                <div id="french-language-card" class="language-card blue">
-                    <p class="language-name">French 🇫🇷</p>
+                <div id="french-language-card" class="language-card blue" data-lang="fr-FR">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇫🇷</span> French</p>
                     <p class="language-nickname">(FrenchTries🍟)</p>
                 </div>
-                <div id="portuguese-language-card" class="language-card green">
-                    <p class="language-name">Portuguese 🇧🇷</p>
+                <div id="portuguese-language-card" class="language-card green" data-lang="pt-BR">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇧🇷</span> Portuguese</p>
                     <p class="language-nickname">(Portrieguese)</p>
                 </div>
-                <div id="italian-language-card" class="language-card red">
-                    <p class="language-name">Italian 🇮🇹</p>
+                <div id="italian-language-card" class="language-card red" data-lang="it-IT">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇮🇹</span> Italian</p>
                     <p class="language-nickname">(Trietalian)</p>
                 </div>
-                <div id="german-language-card" class="language-card yellow">
-                    <p class="language-name">German 🇩🇪</p>
+                <div id="german-language-card" class="language-card yellow" data-lang="de-DE">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇩🇪</span> German</p>
                     <p class="language-nickname">(Triedesco, I guess?)</p>
                 </div>
-                <div id="spanish-language-card" class="language-card yellow">
-                    <p class="language-name">Spanish 🇪🇸🇲🇽</p>
+                <div id="spanish-language-card" class="language-card orange" data-lang="es-ES">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇪🇸</span> Spanish</p>
                     <p class="language-nickname">(espárbol)</p>
                 </div>
-                <div id="norwegian-language-card" class="language-card red">
-                    <p class="language-name">Norwegian 🇳🇴</p>
+                <div id="norwegian-language-card" class="language-card red" data-lang="nb-NO">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇳🇴</span> Norwegian</p>
                     <p class="language-nickname">(Nortreegian)</p>
-                </div>
-                <div class="language-message">
-                    More languages will be added as corresponding puns are discovered. <a href="https://github.com/mreichhoff/TrieLingual/blob/main/README.md">See the README for more information.</a>
                 </div>
             </section>
         </main>
     </div>
-    <div id="container">
-        <script>
-            if (!targetLang) {
-                document.getElementById('container').style.display = 'none';
-                document.getElementById('landing').removeAttribute('style');
-            }
-        </script>
-        <!-- lol, like control plane -->
-        <div id="control-pane">
+    <div id="main-container">
+        <div id="header-container">
             <header class="header">
                 <div class="menu-container">
                     <label id="menu-button">
                         <i class="menu-expand"></i>
                     </label>
                 </div>
-                <!--TODO get rid of this ID-->
-                <h1 id="main-header" class="main-header">TrieLingual</h1>
+                <div id="controls">
+                    <form id="search-form" class="control" role="search">
+                        <!-- i18n? what's that? -->
+                        <label class="visually-hidden" for="search-box">Choose a word</label>
+                        <div class="search-field">
+                            <input id="search-box" type="text" placeholder="Search a word" maxlength="40"
+                                aria-label="Choose a word" />
+                            <button type="submit" class="icon-button search-button" aria-label="Search">
+                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path
+                                        d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM10 14a4 4 0 110-8 4 4 0 010 8z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
                 <div class="stats-container"><a id="stats-show"><i class="stats-button"></i></a></div>
             </header>
-            <div class="tabs">
-                <div id="show-explore" class="tab active">Explore</div>
-                <div id="show-study" class="tab">Study</div>
-            </div>
-            <div id="example-container">
-                <div id="controls">
-                    <form id="search-form" class="control">
-                        <!-- i18n? what's that? -->
-                        <label style="display:none" for="search-box">Choose a word:</label>
-                        <input id="search-box" type="text" placeholder="Choose a word" maxlength="20" />
-                        <input type="submit" value="Go!" />
-                    </form>
-                    <div class="control center">
-                        <span class="text-button" id="previousButton">Previous</span>
-                    </div>
-                </div>
-                <div id="recommendations-container" class="recommendations" style="display:none"></div>
-                <ul id="examples">
-                    <li class="walkthrough">
-                        <!-- i18n :-( -->
-                        <p>
-                            To begin, enter a word above, or explore the example.
-                            You can click on words to see example sentences.
-                        </p>
-                        <p>
-                            Examples can be exported into your flashcard app of choice (e.g., Anki).
-                            Simply click the "Add to study list" button on whichever words you'd like,
-                            and then the "Export" button once you're done, for
-                            an import-ready download.
-                        </p>
-                        <p>
-                            Circles (nodes) correspond to individual words.
-                        </p>
-                        <p>
-                            Connecting lines (edges) represent a relationship among words.
-                            Namely, millions of sentences have been analyzed to find the words most commonly used
-                            after your chosen word. In other words, a connecting line in the diagram can be used to
-                            form a phrase, which is a building block to help build sentences.
-                        </p>
-                        <p>
-                            Note that you can also zoom, drag, and re-arrange the diagram however you please.
-                        </p>
-                        <p>
-                            <a class="faq-link" id="show-general-faq">See the FAQ for more information.</a>
-                        </p>
-                    </li>
-                </ul>
-            </div>
-            <div id="study-container" style="display:none">
-                <p id="explain-text">Not sure how this works? <a class="faq-link" id="show-study-faq">Learn
-                        more.</a></p>
-                <p id="cards-due">
-                    Cards due: <span id="card-due-count"></span>
-                </p>
-                <p id="study-call-to-action" class="study-call-to-action">
-                    <span id="task-description">What does the text below mean?</span>
-                    <span id="task-complete">Studying complete. Check back later for more reviews. <br />You can also
-                        add more cards by exploring the graph!</span>
-                </p>
-                <p id="card-question-container"></p>
-                <span id="show-answer-button" class="study-call-to-action">Show Answer</span>
-                <div id="card-answer-container" style="display:none">
-                    <p id="card-answer"></p>
-                    <ul id="result-buttons">
-                        <li id="wrong-button">I didn't know that</li>
-                        <li id="right-button">I knew that!</li>
+        </div>
+        <div id="container">
+            <script>
+                if (!targetLang) {
+                    document.getElementById('container').style.display = 'none';
+                    document.getElementById('landing').removeAttribute('style');
+                }
+            </script>
+            <!-- lol, like control plane -->
+            <div id="control-pane">
+                <div id="example-container">
+                    <ul id="examples">
+                        <li class="walkthrough">
+                            <h2 class="walkthrough-title">TrieLingual</h2>
+                            <h3 class="walkthrough-heading">Learn by Exploring Word Connections</h3>
+                            <p>
+                                Enter a word above to see how it connects to others. <strong>Boxes</strong> represent
+                                words, and <strong>lines</strong> show which words commonly follow.
+                            </p>
+                            <p>
+                                Click any word to view real example sentences. Build your study list by adding sentences
+                                you
+                                want to master, then export them to Anki or your favorite flashcard app.
+                            </p>
+                            <p>
+                                Zoom, drag, and rearrange the graph freely. Colors indicate word frequency—find more at
+                                <a class="faq-link" id="show-general-faq">the FAQ</a>.
+                            </p>
+                        </li>
                     </ul>
-                    <p id="delete-card-button" class="text-button">Delete this card</p>
-                    <div id="past-performance-container" class="card-detail">
-                        <p id="card-new-message" style="display:none">This is a new card!</p>
-                        <div id="card-old-message" style="display: none;">
-                            <p>Previous attempts: <span id="card-percentage"></span>% correct.</p>
-                            <p>Right <span id="card-right-count"></span>; Wrong <span id="card-wrong-count"></span>.</p>
+                </div>
+                <div id="study-container" style="display:none">
+                    <p id="explain-text">Not sure how this works? <a class="faq-link" id="show-study-faq">Learn
+                            more.</a></p>
+                    <p id="cards-due">
+                        Cards due: <span id="card-due-count"></span>
+                    </p>
+                    <p id="study-call-to-action" class="study-call-to-action">
+                        <span id="task-description">What does the text below mean?</span>
+                        <span id="task-complete">Studying complete. Check back later for more reviews. <br />You can
+                            also
+                            add more cards by exploring the graph!</span>
+                    </p>
+                    <p id="card-question-container"></p>
+                    <span id="show-answer-button" class="study-call-to-action">Show Answer</span>
+                    <div id="card-answer-container" style="display:none">
+                        <p id="card-answer"></p>
+                        <ul id="result-buttons">
+                            <li id="wrong-button">I didn't know that</li>
+                            <li id="right-button">I knew that!</li>
+                        </ul>
+                        <p id="delete-card-button" class="text-button">Delete this card</p>
+                        <div id="past-performance-container" class="card-detail">
+                            <p id="card-new-message" style="display:none">This is a new card!</p>
+                            <div id="card-old-message" style="display: none;">
+                                <p>Previous attempts: <span id="card-percentage"></span>% correct.</p>
+                                <p>Right <span id="card-right-count"></span>; Wrong <span id="card-wrong-count"></span>.
+                                </p>
+                            </div>
+                        </div>
+                        <div id="related-cards-container" class="card-detail" style="display:none">
+                            Other cards with <span id="related-card-query"></span>:
+                            <div id="related-cards" class="related-cards"></div>
                         </div>
                     </div>
-                    <div id="related-cards-container" class="card-detail" style="display:none">
-                        Other cards with <span id="related-card-query"></span>:
-                        <div id="related-cards" class="related-cards"></div>
-                    </div>
                 </div>
+                <!-- legend moved to graph-area so it sits below the visualization -->
             </div>
-            <div id="legend">
-                <p>
-                    The color of a word indicates its frequency.
-                </p>
-                <div id="level-container">
-                    <div class="circle" style="background:#ff635f">Top500</div>
-                    <div class="circle" style="background:#ff9b35">Top1k</div>
-                    <div class="circle" style="background:#fff249">Top2k</div>
-                    <div class="circle" style="background:#6de200">Top4k</div>
-                    <div class="circle" style="background:#de68ee">Top7k</div>
-                    <div class="circle" style="background:#68aaee">Top10k</div>
+            <div id="graph-area">
+                <div id="graph"></div>
+                <div id="graph-legend">
+                    <div>
+                        The color of a word indicates its frequency.
+                    </div>
+                    <div id="level-container">
+                        <div id="gradient-labels">
+                            <span>More common</span>
+                            <div id="gradient-legend"></div>
+                            <span>Less common</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="graph"></div>
     </div>
     <div id="stats-container" style="display:none">
         <header class="header">
@@ -179,17 +177,9 @@
         </header>
         <main class="stats">
             <section>
-                <div id="visited-container" style="display:none">
-                    <h2>Words Seen</h2>
-                    <h3>You've viewed examples for:</h3>
-                    <div id="visited-graph"></div>
-                    <p id="visited-graph-detail" class="stats-detail">Click a bar
-                        in the chart for details.</p>
-                </div>
                 <h3>You've studied examples for:</h3>
                 <div id="studied-graph"></div>
-                <p id="studied-graph-detail" class="stats-detail">Click a bar in
-                    the chart for details.</p>
+                <p id="studied-graph-detail" class="stats-detail">Click a bar in the chart for details.</p>
             </section>
             <section>
                 <h2>Study Stats</h2>
@@ -351,32 +341,6 @@
                     </li>
                 </ul>
             </section>
-            <section id="faq-recommendations" style="display:none">
-                <ul>
-                    <li>
-                        <h3>How do recommendations work?</h3>
-                        <ul>
-                            <li>Recommendations are based on what words you&#39;ve already viewed examples for.
-                                For instance, if you&#39;ve viewed examples for "I" and "am",
-                                but you haven&#39;t yet visited "the", we might
-                                recommend you visit "the", since "the" is common, and you&#39;ve seen words commonly
-                                used alongside it.
-                            </li>
-                        </ul>
-                    </li>
-                    <li>
-                        <h3>How can I stop seeing so many easy recommendations?</h3>
-                        <ul>
-                            <li>You can choose via the menu in the upper left. The choice of &#39;easy&#39; means
-                                you&#39;ll not be shown anything harder than level 3 of your chosen wordlist. The choice
-                                of &#39;hard&#39; means
-                                you&#39;ll only be shown level4-level6 words. Levels are determined by word frequency
-                                (when viewing the top 10k words).
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-            </section>
         </main>
     </div>
     <div id="menu-container" style="display:none">
@@ -386,17 +350,6 @@
             <div class="stats-container"></div>
         </header>
         <main class="menu">
-            <div class="menu-item">
-                <span class="menu-item-text">Recommendations:</span>
-                <label for="recommendations-difficulty">
-                    show me
-                    <select id="recommendations-difficulty">
-                        <option selected>any</option>
-                        <option>easy</option>
-                        <option>hard</option>
-                    </select>
-                    words</label>
-            </div>
             <div class="menu-item">
                 <label class="menu-item-text" for="language-selector">Language:</label>
                 <select id="language-selector">
@@ -412,7 +365,8 @@
                 Export study list
             </div>
             <div class="menu-item">
-                <span class="menu-item-text"><a href="https://github.com/mreichhoff/TrieLingual/blob/main/README.md">See the README for more information.</a></span>
+                <span class="menu-item-text"><a href="https://github.com/mreichhoff/TrieLingual/blob/main/README.md">See
+                        the README for more information.</a></span>
             </div>
         </main>
     </div>

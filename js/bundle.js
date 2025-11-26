@@ -2,12 +2,10 @@
     'use strict';
 
     const dataTypes = {
-        visited: 'visited',
         studyList: 'studyList',
         studyResults: 'studyResults'
     };
     let callbacks = {
-        visited: [],
         studyList: [],
         studyResults: []
     };
@@ -17,26 +15,9 @@
     };
     let studyList = JSON.parse(localStorage.getItem(`studyList/${targetLang}`) || '{}');
     let studyResults = JSON.parse(localStorage.getItem(`studyResults/${targetLang}`) || '{"hourly":{},"daily":{}}');
-    let visited = JSON.parse(localStorage.getItem(`visited/${targetLang}`) || '{}');
 
     let getStudyResults = function () {
         return studyResults;
-    };
-    let getVisited = function () {
-        return visited;
-    };
-    //note: nodes will be marked visited when the user searches for or taps a node in the graph
-    //for now, avoiding marking nodes visited via clicking a hanzi in an example or card
-    //because in those cases no examples are shown
-    let updateVisited = function (nodes) {
-        for (let i = 0; i < nodes.length; i++) {
-            if (!visited[nodes[i]]) {
-                visited[nodes[i]] = 0;
-            }
-            visited[nodes[i]]++;
-        }
-        localStorage.setItem(`visited/${targetLang}`, JSON.stringify(visited));
-        callbacks[dataTypes.visited].forEach(x => x(visited));
     };
 
     let registerCallback = function (dataType, callback) {
@@ -63,10 +44,8 @@
     };
     let addCards = function (examples) {
         let newCards = examples.map((x, i) => ({ ...x, due: Date.now() + i }));
-        let newKeys = [];
         for (let i = 0; i < newCards.length; i++) {
             let key = sanitizeKey(getKey(newCards[i].t));
-            newKeys.push(key);
             if (!studyList[key] && newCards[i].b) {
                 studyList[key] = {
                     base: newCards[i].b,
@@ -86,18 +65,6 @@
 
     let inStudyList = function (tokens) {
         return studyList[sanitizeKey(getKey(tokens))];
-    };
-
-    let getCardCount = function (word) {
-        let count = 0;
-        //TODO: if performance becomes an issue, we can pre-compute this
-        //as-is, it performs fine even with larger flashcard decks
-        Object.entries(studyList || {}).forEach(([_, value]) => {
-            if (value.target.some(token => token.toLocaleLowerCase() === word.trim().toLocaleLowerCase())) {
-                count++;
-            }
-        });
-        return count;
     };
 
     let getStudyList = function () {
@@ -169,64 +136,14 @@
         return key.replaceAll('.', '').replaceAll('#', '').replaceAll('$', '').replaceAll('/', '').replaceAll('[', '').replaceAll(']', '');
     };
 
-    let initialize$5 = function () {
+    let initialize$4 = function () {
         studyList = JSON.parse(localStorage.getItem(`studyList/${targetLang}`) || '{}');
         studyResults = JSON.parse(localStorage.getItem(`studyResults/${targetLang}`) || '{"hourly":{},"daily":{}}');
-        visited = JSON.parse(localStorage.getItem(`visited/${targetLang}`) || '{}');
-    };
-
-    //TODO may want to stop this and just have it stay shown, with faq over top via absolute position/z-index
-    const mainContainer$3 = document.getElementById('container');
-    //faq items
-    const faqContainer = document.getElementById('faq-container');
-    const faqSingleCharWarning = document.getElementById('faq-single-char-warning');
-    const faqStudyMode = document.getElementById('faq-study-mode');
-    const faqRecommendations = document.getElementById('faq-recommendations');
-    const faqContext = document.getElementById('faq-context');
-    const faqGeneral = document.getElementById('faq-general');
-    const faqExitButton = document.getElementById('faq-exit-button');
-    const showStudyFaq = document.getElementById('show-study-faq');
-    const showGeneralFaq = document.getElementById('show-general-faq');
-
-    //TODO should combine with faqTypes
-    const faqTypesToElement = {
-        singleCharWarning: faqSingleCharWarning,
-        studyMode: faqStudyMode,
-        context: faqContext,
-        general: faqGeneral,
-        recommendations: faqRecommendations
-    };
-    const faqTypes = {
-        singleCharWarning: 'singleCharWarning',
-        studyMode: 'studyMode',
-        context: 'context',
-        general: 'general',
-        recommendations: 'recommendations'
-    };
-
-    let showFaq = function (faqType) {
-        mainContainer$3.style.display = 'none';
-        faqContainer.removeAttribute('style');
-        faqTypesToElement[faqType].removeAttribute('style');
-    };
-
-    let initialize$4 = function () {
-        faqExitButton.addEventListener('click', function () {
-            faqContainer.style.display = 'none';
-            mainContainer$3.removeAttribute('style');
-            Object.values(faqTypesToElement).forEach(x => {
-                x.style.display = 'none';
-            });
-        });
-        showStudyFaq.addEventListener('click', function () {
-            showFaq(faqTypes.studyMode);
-        });
-        showGeneralFaq.addEventListener('click', function () {
-            showFaq(faqTypes.general);
-        });
     };
 
     let cy = null;
+    let resizeTimer = null;
+    let resizeListenerAdded = false;
     let bfs = function (value, elements) {
         if (!value) {
             return;
@@ -263,30 +180,28 @@
     //this file meant to hold all cytoscape-related code
     let levelColor = function (element) {
         let level = element.data('level');
+        // Warm to cool gradient: level 1 (most frequent) = warm red, level 6 (least frequent) = cool blue
         switch (level) {
-            case 6:
-                return '#68aaee';
-            case 5:
-                return '#de68ee';
-            case 4:
-                return '#6de200';
-            case 3:
-                return '#fff249';
-            case 2:
-                return '#ff9b35';
             case 1:
-                return '#ff635f';
+                return '#ff4444';  // Warm red (most frequent)
+            case 2:
+                return '#ff8833';  // Warm orange
+            case 3:
+                return '#ffcc22';  // Warm yellow
+            case 4:
+                return '#88dd44';  // Lime green
+            case 5:
+                return '#44ddbb';  // Cool cyan
+            case 6:
+                return '#4488ff';  // Cool blue (least frequent)
         }
     };
     let nodeWidth = function (element) {
         let word = element.data('word');
-        if (word.length <= 6) {
-            return '45px';
-        } else if (word.length <= 8) {
-            return '60px';
-        } else {
-            return '80px';
-        }
+        return `${Math.max(30, (word.length * 10) + 12)}px`;
+    };
+    let nodeHeight = function (element) {
+        return '32px';
     };
 
     let layout = function (root) {
@@ -299,7 +214,7 @@
     };
     let getStylesheet = function () {
         //TODO make this injectable
-        window.matchMedia("(prefers-color-scheme: light)").matches;
+        let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
         return [
             {
                 selector: 'node',
@@ -307,9 +222,11 @@
                     'background-color': levelColor,
                     'label': 'data(word)',
                     'color': 'black',
-                    'font-size': '12px',
-                    'shape': 'round-rectangle',
+                    'font-size': '13px',
+                    'font-family': 'monospace',
+                    'shape': 'rectangle',
                     'width': nodeWidth,
+                    'height': nodeHeight,
                     'text-valign': 'center',
                     'text-halign': 'center'
                 }
@@ -317,13 +234,17 @@
             {
                 selector: 'edge',
                 style: {
-                    'target-arrow-shape': 'none',
-                    'curve-style': 'straight'
+                    'target-arrow-shape': 'triangle',
+                    'curve-style': 'straight',
+                    'arrow-scale': '0.9',
+                    'line-color': prefersLight ? '#121212' : '#666',
+                    'target-arrow-color': prefersLight ? '#121212' : '#aaa'
                 }
             }
         ];
     };
     let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
+        root = root;
         cy = cytoscape({
             container: graphContainer,
             elements: elements,
@@ -334,118 +255,33 @@
         });
         cy.on('tap', 'node', nodeEventHandler);
         cy.on('tap', 'edge', edgeEventHandler);
+        // Add a debounced window resize handler to re-run the layout when the viewport changes.
+        // Ensure we only add one global listener even if setupCytoscape is called multiple times.
+        if (!resizeListenerAdded) {
+            window.addEventListener('resize', function () {
+                if (resizeTimer) {
+                    clearTimeout(resizeTimer);
+                }
+                resizeTimer = setTimeout(function () {
+                    if (cy) {
+                        // Re-apply the layout to redraw nodes/edges responsively
+                        cy.layout(layout(root)).run();
+                    }
+                }, 150);
+            });
+            resizeListenerAdded = true;
+        }
     };
     let initializeGraph = function (value, containerElement, nodeEventHandler, edgeEventHandler) {
         let result = { 'nodes': [], 'edges': [] };
         bfs(value, result);
         setupCytoscape(value, result, containerElement, nodeEventHandler, edgeEventHandler);
     };
-    let isInGraph = function (node) {
-        return cy && cy.getElementById(node).length;
-    };
     let updateColorScheme = function () {
         if (!cy) {
             return;
         }
         cy.style(getStylesheet());
-    };
-
-    //TODO: like in other files, remove these dups
-    const recommendationsContainer = document.getElementById('recommendations-container');
-    const searchBox$1 = document.getElementById('search-box');
-    let recommendationsWorker = null;
-
-    let initialize$3 = function () {
-        recommendationsWorker = new Worker('js/modules/recommendations-worker.js');
-        recommendationsWorker.postMessage({
-            type: 'graph',
-            payload: window.trie
-        });
-        recommendationsWorker.postMessage({
-            type: 'visited',
-            payload: getVisited()
-        });
-        registerCallback(dataTypes.visited, function (visited) {
-            recommendationsWorker.postMessage({
-                type: 'visited',
-                payload: visited
-            });
-        });
-        recommendationsWorker.onmessage = function (e) {
-            //this whole function could really use a refactor
-            if (e.data.recommendations && e.data.recommendations.length) {
-                recommendationsContainer.innerHTML = '';
-                let recommendationMessage = document.createElement('span');
-                recommendationMessage.style.display = 'none';
-                recommendationMessage.innerText = "Recommended:";
-                recommendationMessage.className = "recommendation-message";
-                recommendationsContainer.appendChild(recommendationMessage);
-                recommendationsContainer.removeAttribute('style');
-                let usedRecommendation = false;
-                for (let i = 0; i < e.data.recommendations.length; i++) {
-                    //don't bother recommending items already being shown in the graph
-                    if (isInGraph(e.data.recommendations[i])) {
-                        continue;
-                    }
-                    recommendationMessage.removeAttribute('style');
-                    let curr = document.createElement('a');
-                    curr.innerText = e.data.recommendations[i];
-                    curr.className = 'recommendation';
-                    curr.addEventListener('click', function (event) {
-                        //can I do this?
-                        searchBox$1.value = event.target.innerText;
-                        document.querySelector('#search-form input[type=submit]').click();
-                        event.target.style.display = 'none';
-                        let otherRecs = document.querySelectorAll('.recommendation');
-                        let stillShown = false;
-                        for (let i = 0; i < otherRecs.length; i++) {
-                            if (!otherRecs[i].style.display || otherRecs[i].style.display !== 'none') {
-                                stillShown = true;
-                                break;
-                            }
-                        }
-                        if (!stillShown) {
-                            recommendationsContainer.style.display = 'none';
-                        }
-                    });
-                    recommendationsContainer.appendChild(curr);
-                    usedRecommendation = true;
-                }
-                let recommendationsFaqLink = document.createElement('a');
-                recommendationsFaqLink.className = 'faq-link';
-                recommendationsFaqLink.innerText = "Why?";
-                recommendationsFaqLink.addEventListener('click', function () {
-                    showFaq(faqTypes.recommendations);
-                });
-                if (usedRecommendation) {
-                    recommendationsContainer.appendChild(recommendationsFaqLink);
-                }
-            } else {
-                recommendationsContainer.style.display = 'none';
-            }
-        };
-    };
-    let graphChanged = function () {
-        recommendationsWorker.postMessage({
-            type: 'graph',
-            payload: window.trie
-        });
-    };
-    let preferencesChanged = function (val) {
-        let minLevel = 1;
-        let maxLevel = 6;
-        if (val === 'easy') {
-            maxLevel = 3;
-        } else if (val === 'hard') {
-            minLevel = 4;
-        }
-        recommendationsWorker.postMessage({
-            type: 'levelPreferences',
-            payload: {
-                minLevel: minLevel,
-                maxLevel: maxLevel
-            }
-        });
     };
 
     window.definitions = window.definitions || {};
@@ -458,14 +294,8 @@
     //the ngram for which we're showing examples
     let currentNgram = null;
     let undoChain = [];
-    let tabs = {
-        explore: 'explore',
-        study: 'study'
-    };
 
     let subtries = {};
-
-    let activeTab = tabs.explore;
 
     let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
     let punctuation = {
@@ -505,25 +335,17 @@
     };
 
     //top-level section container
-    const mainContainer$2 = document.getElementById('container');
+    const mainContainer$3 = document.getElementById('main-container');
 
-    const exploreTab = document.getElementById('show-explore');
-    const studyTab$1 = document.getElementById('show-study');
 
-    const mainHeader = document.getElementById('main-header');
+    document.getElementById('main-header');
 
     //study items...these may not belong in this file
-    const studyContainer = document.getElementById('study-container');
+    document.getElementById('study-container');
 
-    //explore tab items
     const examplesList = document.getElementById('examples');
-    const exampleContainer = document.getElementById('example-container');
-    //explore tab navigation controls
     const searchBox = document.getElementById('search-box');
     const searchForm = document.getElementById('search-form');
-    const previousButton = document.getElementById('previousButton');
-    //recommendations
-    const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
     //menu items
     const languageSelector = document.getElementById('language-selector');
@@ -563,22 +385,52 @@
     };
 
     let addTextToSpeech = function (holder, text, aList) {
-        let textToSpeechButton = document.createElement('span');
-        textToSpeechButton.className = 'text-button listen';
-        textToSpeechButton.textContent = 'Listen';
-        textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
-        holder.appendChild(textToSpeechButton);
+        // create accessible icon button for TTS
+        let btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'icon-button listen';
+        btn.setAttribute('aria-label', 'Listen');
+        btn.title = 'Listen';
+        btn.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M5 9v6h4l5 5V4L9 9H5z"></path>
+            <path d="M16.5 8.5a4.5 4.5 0 010 7" stroke="none" fill="currentColor"></path>
+        </svg>
+    `;
+        btn.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
+        holder.appendChild(btn);
     };
     let addSaveToListButton = function (holder, examples) {
-        let buttonTexts = ['In your study list!', 'Add to study list'];
-        let saveToListButton = document.createElement('span');
-        saveToListButton.className = 'text-button';
-        saveToListButton.textContent = examples.every(x => inStudyList(x.t)) ? buttonTexts[0] : buttonTexts[1];
-        saveToListButton.addEventListener('click', function () {
+        // create compact icon button to add examples to study list (bookmark/plus)
+        let btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'icon-button save';
+        // determine initial state: are all examples already in study list?
+        let allSaved = examples.length && examples.every(x => inStudyList(x.t));
+        btn.setAttribute('aria-pressed', allSaved ? 'true' : 'false');
+        btn.title = allSaved ? 'In your study list' : 'Add to study list';
+        btn.setAttribute('aria-label', btn.title);
+        const svgAdd = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z"></path>
+            <path d="M18 6v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 8h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+        const svgSaved = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z"></path>
+            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>`;
+        btn.innerHTML = allSaved ? svgSaved : svgAdd;
+        btn.addEventListener('click', function () {
             addCards(examples);
-            saveToListButton.textContent = buttonTexts[0];
+            // update visual state to saved
+            btn.setAttribute('aria-pressed', 'true');
+            btn.title = 'In your study list';
+            btn.setAttribute('aria-label', btn.title);
+            btn.innerHTML = svgSaved;
         });
-        holder.appendChild(saveToListButton);
+        holder.appendChild(btn);
     };
     let persistState = function () {
         let localUndoChain = undoChain.length > 5 ? undoChain.slice(0, 5) : undoChain;
@@ -586,7 +438,6 @@
             root: currentRoot,
             ngram: currentNgram,
             undoChain: localUndoChain,
-            activeTab: activeTab,
             targetLang: targetLang,
             currentGraph: activeGraph.display,
             graphPrefix: activeGraph.prefix
@@ -723,23 +574,12 @@
         addSaveToListButton(wordHolder, examples);
         item.appendChild(wordHolder);
 
-        let contextHolder = document.createElement('p');
-        //TODO not so thrilled with 'context' as the name here
-        contextHolder.className = 'context';
-        contextHolder.innerText += "Previously: ";
-        [...words].forEach(x => {
-            contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${getCardCount(x)} flash cards. `;
-        });
-        let contextFaqLink = document.createElement('a');
-        contextFaqLink.className = 'faq-link';
-        contextFaqLink.textContent = "Learn more.";
-        contextFaqLink.addEventListener('click', function () {
-            showFaq(faqTypes.context);
-        });
-        contextHolder.appendChild(contextFaqLink);
-        item.appendChild(contextHolder);
-
         if (words.length === 1) {
+            let definitionHeading = document.createElement('h3');
+            definitionHeading.className = 'section-heading';
+            definitionHeading.innerText = 'Definitions';
+            item.appendChild(definitionHeading);
+
             let definitionHolder = document.createElement('ul');
             definitionHolder.className = 'definition';
             setupDefinitions(words, definitionHolder, words.length === 1);
@@ -748,6 +588,11 @@
 
         //setup current examples for potential future export
         currentExamples[words].push(...examples);
+
+        let examplesHeading = document.createElement('h3');
+        examplesHeading.className = 'section-heading';
+        examplesHeading.innerText = 'Examples';
+        item.appendChild(examplesHeading);
 
         let exampleList = document.createElement('ul');
         item.appendChild(exampleList);
@@ -766,17 +611,20 @@
         updateUndoChain();
         setupExamples(evt.target.data('path'));
         persistState();
-        exploreTab.click();
-        mainHeader.scrollIntoView();
-        updateVisited(evt.target.data('path'));
     };
     let edgeTapHandler = function () { };
     let updateGraph = function (value) {
-        document.getElementById('graph').remove();
+        const oldGraph = document.getElementById('graph');
+        if (oldGraph) {
+            oldGraph.remove();
+        }
         let nextGraph = document.createElement("div");
         nextGraph.id = 'graph';
-        //TODO: makes assumption about markup order
-        mainContainer$2.append(nextGraph);
+        // Insert the new graph into the #graph-area before the legend so it sits above it.
+        const graphArea = document.getElementById('graph-area');
+        const graphLegend = document.getElementById('graph-legend');
+        graphArea.insertBefore(nextGraph, graphLegend);
+
         let result = null;
         if (value && trie[value]) {
             result = fetch(`./data/${targetLang}/subtries/${value}.json`)
@@ -791,7 +639,7 @@
         return result;
     };
 
-    let initialize$2 = function () {
+    let initialize$3 = function () {
         let oldState = JSON.parse(localStorage.getItem('state'));
         //TODO: make specialized tries
         for (const [key, value] of Object.entries(languageOptions$1)) {
@@ -814,11 +662,6 @@
                 }
             }
             undoChain = oldState.undoChain;
-            if (oldState.activeTab === tabs.study) {
-                //reallllllly need a toggle method
-                //this does set up the current card, etc.
-                studyTab$1.click();
-            }
             persistState();
         } else {
             updateGraph(defaultWords[targetLang][Math.floor(Math.random() * defaultWords[targetLang].length)]);
@@ -875,52 +718,16 @@
             updateGraph(value);
             setupExamples([value]);
             persistState();
-            updateVisited([value]);
         }
-    });
-
-    previousButton.addEventListener('click', function () {
-        if (!undoChain.length) {
-            return;
-        }
-        let next = undoChain.pop();
-        updateGraph(next.root);
-        if (next.ngram) {
-            setupExamples(next.ngram);
-        }
-        persistState();
-    });
-    exploreTab.addEventListener('click', function () {
-        exampleContainer.removeAttribute('style');
-        studyContainer.style.display = 'none';
-        //TODO could likely do all of this with CSS
-        exploreTab.classList.add('active');
-        studyTab$1.classList.remove('active');
-        activeTab = tabs.explore;
-        persistState();
-    });
-
-    studyTab$1.addEventListener('click', function () {
-        exampleContainer.style.display = 'none';
-        studyContainer.removeAttribute('style');
-        studyTab$1.classList.add('active');
-        exploreTab.classList.remove('active');
-        activeTab = tabs.study;
-        persistState();
-    });
-
-    recommendationsDifficultySelector.addEventListener('change', function () {
-        let val = recommendationsDifficultySelector.value;
-        preferencesChanged(val);
     });
 
     menuButton.addEventListener('click', function () {
-        mainContainer$2.style.display = 'none';
+        mainContainer$3.style.display = 'none';
         menuContainer.removeAttribute('style');
     });
     menuExitButton.addEventListener('click', function () {
         menuContainer.style.display = 'none';
-        mainContainer$2.removeAttribute('style');
+        mainContainer$3.removeAttribute('style');
     });
 
     let switchLanguage = function () {
@@ -947,8 +754,7 @@
                 .then(function (data) {
                     window.definitions = data;
                 });
-            initialize$5();
-            exploreTab.click();
+            initialize$4();
             // fetch(`./data/${targetLang}/inverted-trie.json`)
             //     .then(response => response.json())
             //     .then(function (data) {
@@ -959,8 +765,53 @@
     };
     languageSelector.addEventListener('change', switchLanguage);
 
-    //TODO probably doesn't belong here and should instead be indirected (could also just export from base)
-    const studyTab = document.getElementById('show-study');
+    //TODO may want to stop this and just have it stay shown, with faq over top via absolute position/z-index
+    const mainContainer$2 = document.getElementById('container');
+    //faq items
+    const faqContainer = document.getElementById('faq-container');
+    const faqSingleCharWarning = document.getElementById('faq-single-char-warning');
+    const faqStudyMode = document.getElementById('faq-study-mode');
+    const faqContext = document.getElementById('faq-context');
+    const faqGeneral = document.getElementById('faq-general');
+    const faqExitButton = document.getElementById('faq-exit-button');
+    const showStudyFaq = document.getElementById('show-study-faq');
+    const showGeneralFaq = document.getElementById('show-general-faq');
+
+    //TODO should combine with faqTypes
+    const faqTypesToElement = {
+        singleCharWarning: faqSingleCharWarning,
+        studyMode: faqStudyMode,
+        context: faqContext,
+        general: faqGeneral
+    };
+    const faqTypes = {
+        singleCharWarning: 'singleCharWarning',
+        studyMode: 'studyMode',
+        context: 'context',
+        general: 'general'
+    };
+
+    let showFaq = function (faqType) {
+        mainContainer$2.style.display = 'none';
+        faqContainer.removeAttribute('style');
+        faqTypesToElement[faqType].removeAttribute('style');
+    };
+
+    let initialize$2 = function () {
+        faqExitButton.addEventListener('click', function () {
+            faqContainer.style.display = 'none';
+            mainContainer$2.removeAttribute('style');
+            Object.values(faqTypesToElement).forEach(x => {
+                x.style.display = 'none';
+            });
+        });
+        showStudyFaq.addEventListener('click', function () {
+            showFaq(faqTypes.studyMode);
+        });
+        showGeneralFaq.addEventListener('click', function () {
+            showFaq(faqTypes.general);
+        });
+    };
 
     const exportStudyListButton = document.getElementById('exportStudyListButton');
     const cardQuestionContainer = document.getElementById('card-question-container');
@@ -1119,13 +970,10 @@
                 exportStudyListButton.style.display = 'none';
             }
         });
-        studyTab.addEventListener('click', function () {
-            setupStudyMode();
-        });
     };
 
     //TODO move these to a central spot
-    const mainContainer$1 = document.getElementById('container');
+    const mainContainer$1 = document.getElementById('main-container');
     const statsContainer = document.getElementById('stats-container');
 
     const statsShow = document.getElementById('stats-show');
@@ -1135,7 +983,6 @@
     const addedCalendarDetail = document.getElementById('added-calendar-detail');
     const studyCalendarDetail = document.getElementById('study-calendar-detail');
     const studyGraphDetail = document.getElementById('studied-graph-detail');
-    const visitedGraphDetail = document.getElementById('visited-graph-detail');
 
     const MAX_MISSING_WORDS = 100;
 
@@ -1335,7 +1182,7 @@
         Object.keys(trie).forEach(x => {
             let level = trie[x]['__l'];
             if (!(level in totalsByLevel)) {
-                totalsByLevel[level] = { seen: new Set(), total: 0, visited: new Set(), words: new Set() };
+                totalsByLevel[level] = { seen: new Set(), total: 0, words: new Set() };
             }
             totalsByLevel[level].total++;
             totalsByLevel[level].words.add(x);
@@ -1470,43 +1317,6 @@
             left: document.getElementById('added-calendar-today').offsetLeft
         });
     };
-    let createVisitedGraphs = function (visitedWords, legend) {
-        if (!visitedWords) {
-            return;
-        }
-        Object.keys(visitedWords).forEach(x => {
-            if (trie[x]) {
-                const level = trie[x]['__l'];
-                totalsByLevel[level].visited.add(x);
-            }
-        });
-        let levelData = [];
-        //safe since we don't add keys in the read of /decks/
-        Object.keys(totalsByLevel).sort().forEach(x => {
-            levelData.push({
-                count: totalsByLevel[x].visited.size || 0,
-                total: totalsByLevel[x].total
-            });
-        });
-        const visitedGraph = document.getElementById('visited-graph');
-        visitedGraph.innerHTML = '';
-        visitedGraph.appendChild(
-            BarChart(levelData, {
-                labelText: (i) => legend[i],
-                color: () => "#68aaee",
-                clickHandler: function (i) {
-                    BarChartClickHandler(
-                        visitedGraphDetail,
-                        totalsByLevel,
-                        'visited',
-                        i,
-                        `In ${legend[i]}, you haven't yet visited:<br>`
-                    );
-                }
-            })
-        );
-        document.getElementById('visited-container').removeAttribute('style');
-    };
 
     let createStudyResultGraphs = function (results) {
         let hourlyData = [];
@@ -1633,7 +1443,6 @@
             }
             mainContainer$1.style.display = 'none';
             statsContainer.removeAttribute('style');
-            createVisitedGraphs(getVisited(), activeGraph.legend);
             createCardGraphs(getStudyList(), activeGraph.legend);
             createStudyResultGraphs(getStudyResults());
         });
@@ -1644,7 +1453,6 @@
             //TODO this is silly
             studyGraphDetail.innerText = '';
             addedCalendarDetail.innerText = '';
-            visitedGraphDetail.innerText = '';
             studyCalendarDetail.innerText = '';
             hourlyGraphDetail.innerText = '';
         });
@@ -1699,12 +1507,11 @@
         ).then(_ => {
             landingContainer.style.display = 'none';
             mainContainer.removeAttribute('style');
-            initialize$5();
-            initialize$1();
-            initialize$2();
-            initialize();
             initialize$4();
+            initialize$1();
             initialize$3();
+            initialize();
+            initialize$2();
         });
     };
 

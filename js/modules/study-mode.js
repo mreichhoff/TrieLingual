@@ -1,9 +1,6 @@
 import { makeSentenceNavigable, addTextToSpeech, joinTokens } from "./base.js";
 import { dataTypes, registerCallback, saveStudyList, getStudyList, findOtherCards, removeFromStudyList, recordEvent, studyResult, updateCard } from "./data-layer.js";
 
-//TODO probably doesn't belong here and should instead be indirected (could also just export from base)
-const studyTab = document.getElementById('show-study');
-
 const exportStudyListButton = document.getElementById('exportStudyListButton');
 const cardQuestionContainer = document.getElementById('card-question-container');
 const cardAnswerContainer = document.getElementById('card-answer-container');
@@ -160,9 +157,6 @@ let initialize = function () {
         } else {
             exportStudyListButton.style.display = 'none';
         }
-    });
-    studyTab.addEventListener('click', function () {
-        setupStudyMode();
     });
 };
 

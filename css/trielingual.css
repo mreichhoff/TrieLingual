@@ -1,70 +1,120 @@
 html {
     height: 100%;
 }
-body { 
+
+:root {
+    /* app background gradient -- overridden in light-mode media query */
+    --app-bg: linear-gradient(180deg, #071024, #121212);
+    --header-height: 50px;
+}
+
+body {
     width: 100%;
     height: 100%;
     margin: 0;
     padding: 0;
     color: #eee;
-    background: #121212;
-    font-family: Times, serif;
+    background: var(--app-bg);
+    background-attachment: fixed;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
+
+/* Make UI headings and controls use the same modern stack */
+h1,
+h2,
+.menu-item,
+.text-button,
+label,
+select,
+input,
+button {
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
 a {
     color: #eee;
 }
+
+#header-container {
+    height: var(--header-height);
+}
+
+#main-container {
+    height: 100%;
+}
+
 #container {
     display: flex;
     width: 100%;
-    height: 100%;
+    height: calc(100% - var(--header-height));
 }
+
 #control-pane {
-    width: 35%;
+    width: 50%;
     height: 100%;
     display: flex;
     flex-direction: column;
     overflow: auto;
-    border-right: 1px solid #333;
 }
-#graph {
-    width: 65%;
+
+/* New graph-area wraps the visualization and the legend placed beneath it */
+#graph-area {
+    width: 50%;
     height: 100%;
-    background: #3336;
+    display: flex;
+    flex-direction: column;
+    background: var(--app-bg);
+    background-attachment: fixed;
+}
+
+#graph {
+    width: 100%;
+    flex: 1 1 auto;
+    /* take remaining space above the legend */
+    min-height: 0;
+    /* allow proper flexbox shrinking */
 }
 
 .header {
     display: flex;
     margin-bottom: 4px;
 }
+
 .menu-container {
-    flex:1;
-    text-align: left;
-    margin-left:8px;
-    margin-top:4px;
-    cursor: pointer;
-}
-.menu-expand {
-    width: 20px;
-    height: 2px;
-    box-shadow: inset 0 0 0 32px,0 -6px,0 6px;
-    display: inline-block;
-    margin-top: 14px;
-}
-.main-header {
-    flex:1;
-    text-align: center;
-}
-.stats-container {
-    flex:1;
-    text-align: right;
-    margin-right: 8px;
-}
-.exit-container {
     flex: 1;
     text-align: left;
     margin-left: 8px;
-    margin-top: 2px;
+    margin-top: 4px;
+    cursor: pointer;
 }
+
+.menu-expand {
+    width: 20px;
+    height: 2px;
+    box-shadow: inset 0 0 0 32px, 0 -6px, 0 6px;
+    display: inline-block;
+    margin-top: 14px;
+}
+
+.main-header {
+    flex: 1;
+    text-align: center;
+}
+
+.stats-container {
+    flex: 1;
+    text-align: right;
+    margin-right: 8px;
+}
+
+.exit-container {
+    flex: 1;
+    text-align: left;
+    margin: 8px 0 0 8px;
+}
+
 .stats-button {
     position: relative;
     display: inline-block;
@@ -74,12 +124,13 @@ a {
     box-shadow: -2px 2px;
     width: 30px;
     height: 22px;
-    margin: 4px 0 8px 4px;
+    margin: 12px 6px;
     overflow: hidden;
     box-sizing: border-box;
     cursor: pointer;
     padding: 0;
 }
+
 .stats-button::before {
     content: '';
     position: absolute;
@@ -87,8 +138,9 @@ a {
     bottom: 0;
     width: 4px;
     height: 15px;
-    box-shadow: inset 0 -8px 0 0,6px 0,12px 7px,18px 5px;
+    box-shadow: inset 0 -8px 0 0, 6px 0, 12px 7px, 18px 5px;
 }
+
 .exit-arrow {
     cursor: pointer;
     box-sizing: border-box;
@@ -99,6 +151,7 @@ a {
     border: 2px solid;
     border-radius: 4px
 }
+
 .exit-arrow::after,
 .exit-arrow::before {
     content: "";
@@ -107,6 +160,7 @@ a {
     position: absolute;
     left: 6px
 }
+
 .exit-arrow::after {
     width: 10px;
     height: 10px;
@@ -115,181 +169,359 @@ a {
     transform: rotate(45deg);
     bottom: 8px
 }
+
 .exit-arrow::before {
     width: 14px;
     height: 2px;
     bottom: 12px;
     background: #eee;
 }
-.tabs {
-    display: flex;
-    margin-bottom: 10px;
-}
-.tabs div {
-    flex: 1;
-    padding: 12px;
-}
+
 .menu {
     width: 80%;
     margin-left: auto;
     margin-right: auto;
     margin-top: 20px;
 }
+
 .menu-item {
     font-size: 22px;
     height: 60px;
     cursor: pointer;
 }
+
 .menu-item-text {
     cursor: pointer;
 }
+
 .menu-item-clickable {
     text-decoration: underline;
 }
+
 #menu-button {
     display: block;
     width: 25%;
     height: 100%;
     cursor: pointer;
+    margin: 6px;
 }
+
 .authn-button {
     text-decoration: underline;
     cursor: pointer;
 }
-.recommendations {
-    margin:0;
-    max-width: 98%;
-    overflow-wrap: break-word;
-}
-.recommendation {
-    margin-right: 6px;
-    cursor: pointer;
-    font-size: 20px;
-}
-.recommendation-message {
-    font-size: 16px;
-    margin-right: 4px;
-}
-#control-pane input[type=text]{
+
+#control-pane input[type=text] {
     width: 150px;
     opacity: 0.85;
     border-radius: 4px;
 }
+
 .faq-link {
     text-decoration: underline;
     cursor: pointer;
 }
+
 .faq {
     margin-left: auto;
     margin-right: auto;
     max-width: 80%;
     font-size: 18px
 }
+
 ul {
     list-style-type: none;
     padding: 0;
 }
+
 h1 {
-    margin:2px 0 0 0;
+    margin: 2px 0 0 0;
 }
+
 h2 {
     margin-bottom: 4px;
     font-size: 26px;
 }
+
 h2 span {
     font-weight: normal;
 }
-.circle {
-    width: 46px;
-    height: 44px;
-    border-radius: 50%;
-    margin-bottom: 4px;
-    font-size: 14px;
+
+
+
+#graph-legend {
+    font-size: 13px;
     text-align: center;
-    line-height: 44px;
-    color: black;
-    margin: 0 1px;
+    margin: 8px;
+    padding: 6px 12px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.02));
+    border-radius: 8px;
+    align-self: stretch;
 }
-#legend {
-    font-size: 14px;
-    text-align: center;
-    margin-left: 8px;
-    margin-right: 8px;
-}
+
 #level-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+}
+
+#gradient-legend {
+    width: 160px;
+    height: 16px;
+    background: linear-gradient(to right, #ff4444, #ff8833, #ffcc22, #88dd44, #44ddbb, #4488ff);
+    border-radius: 5px;
+}
+
+#gradient-labels {
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    opacity: 0.85;
+    color: #999;
 }
+
 /*TODO: use classes to make this sane again*/
 #examples {
     margin-top: 0;
 }
+
 #examples h2 {
     margin-top: 16px;
+    margin-bottom: 16px;
+    font-size: 24px;
 }
+
+.section-heading {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 12px 0 6px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+    color: rgba(238, 238, 238, 0.8);
+}
+
 #examples ul li {
-    font-size: 16px;
+    font-size: 15px;
     margin-bottom: 12px;
+    padding: 4px 8px;
+    background: rgba(100, 150, 255, 0.1);
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 3px 3px 3px #3333;
 }
+
 #examples ul {
     margin-left: 0px;
     margin-right: 4px;
 }
+
 p.example-line {
-    margin-top: 4px;
-    margin-bottom: 4px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    line-height: 1.6;
 }
+
+.section-heading {
+    font-size: 12px;
+    font-weight: 600;
+    margin: 12px 0 6px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+    color: rgba(238, 238, 238, 0.8);
+}
+
 .base-example {
-    opacity: 0.85;
+    opacity: 0.8;
+    font-size: 15px;
+    padding: 4px;
+    border-left: 3px solid #666;
 }
+
 p.target-example {
-    font-size: 22px;
+    font-size: 18px;
     display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
 }
+
 .context {
     margin: 0;
-    margin-bottom: 12px;
-    font-size: 14px;
-    opacity: 0.8;
+    margin-bottom: 16px;
+    padding: 12px;
+    font-size: 13px;
+    opacity: 0.75;
+    background-color: rgba(255, 255, 255, 0.03);
+    border-left: 3px solid #666;
+    border-radius: 4px;
+    line-height: 1.5;
 }
+
 .transcription-example {
     display: none;
 }
+
 #controls {
-    margin-bottom: 0;
-    margin-top: 0;
     display: flex;
+    flex-grow: 1;
+    max-width: 80%;
+    margin: 0 auto;
+    padding: 10px 0 0 0;
 }
+
+/* Search form styling: full-width, modern input and icon button */
+#search-form {
+    width: 100%;
+    display: block;
+    box-sizing: border-box;
+    /* keep a small gap on the right so the search button isn't flush with the graph */
+    padding-right: 12px;
+}
+
+.search-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#search-box {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 0;
+    background: rgba(255, 255, 255, 0.04);
+    color: inherit;
+    font-size: 16px;
+    box-shadow: 0 6px 18px rgba(2, 6, 23, 0.45);
+    outline: none;
+}
+
+#search-box::placeholder {
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.search-button {
+    width: 44px;
+    height: 44px;
+    padding: 6px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #ffffff, #f1f4f8);
+    color: #111;
+}
+
+/* visually-hidden helper for accessible labels */
+.visually-hidden {
+    position: absolute !important;
+    height: 1px;
+    width: 1px;
+    overflow: hidden;
+    clip: rect(1px, 1px, 1px, 1px);
+    white-space: nowrap;
+    /* added line */
+}
+
 .control {
     margin: 0;
     line-height: 28px;
 }
+
 .control.center {
-    margin-left:auto;
+    margin-left: auto;
     margin-right: auto;
 }
+
 #example-container {
     flex-grow: 1;
-    margin-left: 8px;
-    margin-right: 8px;
+    margin-left: 12px;
+    margin-right: 12px;
+    overflow-y: auto;
+    padding: 12px 0;
 }
+
 #study-container {
     flex-grow: 1;
     margin-left: 8px;
     margin-right: 8px;
 }
+
 #cards-due {
     max-width: fit-content;
 }
+
 .sentence-container {
-    max-width: 80%;
-    min-width: 80%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    align-items: center;
+    flex: 1 1 auto;
+    /* take remaining space */
+    min-width: 0;
+    /* allow shrinking inside flex parents */
 }
+
+.sentence-container a {
+    padding: 2px 6px;
+    background-color: rgba(100, 150, 255, 0.2);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 200ms, transform 100ms;
+    border-bottom: 2px solid transparent;
+}
+
+.sentence-container a:hover {
+    background-color: rgba(110, 226, 0, 0.3);
+    border-bottom-color: #6de200;
+    transform: scale(1.05);
+}
+
+.walkthrough {
+    background: linear-gradient(135deg, rgba(100, 150, 255, 0.08), rgba(50, 200, 150, 0.08));
+    border-left: 4px solid #6de200;
+    border-radius: 8px;
+    padding: 20px 18px;
+    margin: 16px 0 !important;
+}
+
+.walkthrough-heading {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 14px 0;
+    color: #fff;
+    letter-spacing: -0.3px;
+}
+
+.walkthrough-title {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0 0 18px 0;
+    color: #6de200;
+    letter-spacing: -0.5px;
+    background: none;
+    padding: 0;
+}
+
 .walkthrough p {
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-top: 12px;
+    margin-bottom: 12px;
+    line-height: 1.6;
+    font-size: 15px;
+    color: rgba(238, 238, 238, 0.94);
+}
+
+.walkthrough p strong {
+    font-weight: 600;
+    color: #6de200;
 }
 
 .text-button {
@@ -303,39 +535,83 @@ p.target-example {
     white-space: nowrap;
     -webkit-user-select: none;
 }
+
+/* Icon buttons: small circular buttons with inline SVG icons */
+.icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #111;
+    border: 0;
+    padding: 4px;
+    margin-left: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.icon-button {
+    flex: 0 0 auto;
+}
+
+.icon-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
+}
+
+.icon-button:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+.icon-button svg {
+    width: 18px;
+    height: 18px;
+    display: block;
+    fill: currentColor;
+}
+
+.icon-button.listen {
+    background: linear-gradient(180deg, #ffffff, #f1f4f8);
+}
+
+.icon-button.save {
+    background: linear-gradient(180deg, #ffffff, #f7fff2);
+    color: #0a6f3a;
+}
+
+/* Keep text-button available for other UI; icon-button is the compact replacement */
+
 p .text-button.listen {
     align-self: flex-start;
     vertical-align: top;
 }
+
 h2 .text-button {
     vertical-align: middle;
 }
+
 /*TODO refactor this...too much repetition, selectors too specific */
 #examples ul.definition li {
-    margin-top: 4px;
-    margin-bottom: 4px;
-    font-size: 18px;
-}
-
-.tab {
-    font-size: 18px;
-    text-align: center;
-    cursor: pointer;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-.tab.active {
-    font-weight: bold;
-    border-bottom: 1px solid #eee;
-    background-color: #333;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    padding: 10px 12px;
+    background-color: rgba(100, 150, 255, 0.2);
+    border-left: 3px solid #6de200;
+    border-radius: 4px;
+    line-height: 1.6;
 }
 
 #study-call-to-action {
     cursor: default;
 }
+
 #study-call-to-action span a {
-    color:black;
+    color: black;
 }
 
 .study-call-to-action {
@@ -349,9 +625,11 @@ h2 .text-button {
     user-select: none;
     -webkit-user-select: none;
 }
-#result-buttons{
+
+#result-buttons {
     width: 100%;
 }
+
 #result-buttons li {
     width: 75%;
     padding: 8px;
@@ -363,6 +641,7 @@ h2 .text-button {
     margin-left: auto;
     font-size: 20px;
 }
+
 #wrong-button {
     background-color: #ff635f;
     color: black;
@@ -370,43 +649,53 @@ h2 .text-button {
     user-select: none;
     -webkit-user-select: none;
 }
+
 #right-button {
     background-color: #6de200;
-    border:1px solid #3333;
+    border: 1px solid #3333;
     color: black;
     user-select: none;
     -webkit-user-select: none;
 }
+
 #card-question-container {
     display: flex;
 }
+
 #card-question-container a {
     font-size: 28px;
     vertical-align: text-top;
     cursor: pointer;
 }
+
 #card-answer {
     font-size: 24px;
     width: 95%;
 }
+
 .card-detail {
     font-size: 16px;
     margin: 10px auto;
     text-align: center;
     width: 80%;
 }
+
 .card-detail p {
     margin: 0 2px;
 }
+
 .related-cards {
     font-size: 20px;
 }
+
 p.related-card {
     margin: 6px auto;
 }
+
 .related-card-performance {
     font-size: 16px;
 }
+
 #delete-card-button {
     margin-right: auto;
     margin-left: auto;
@@ -414,53 +703,66 @@ p.related-card {
     width: 50%;
     margin-top: 30px;
 }
+
 #explain-text {
     margin-top: 0;
 }
+
 main.auth-form {
     width: 275px;
-    margin-left:auto;
-    margin-right:auto;
+    margin-left: auto;
+    margin-right: auto;
 }
+
 .auth-form li {
-    margin-bottom:30px;
+    margin-bottom: 30px;
     margin-top: 12px;
 }
+
 .auth-form input {
     font-size: 16px;
 }
+
 .auth-form input[type=email] {
-    height:28px;
-    width:270px;
+    height: 28px;
+    width: 270px;
 }
+
 .auth-form input[type=password] {
-    height:28px;
-    width:270px;
+    height: 28px;
+    width: 270px;
 }
+
 .auth-form input[type=submit] {
     width: 100%;
     height: 28px;
     font-size: 18px;
     cursor: pointer;
 }
+
 .auth-form label {
     font-size: 22px;
 }
+
 .auth-form img {
     cursor: pointer;
 }
+
 .auth-form h1 {
     font-size: 30px;
 }
+
 .auth-form #forgot-password {
     font-size: 18px;
     text-decoration: underline;
     text-align: center;
     cursor: pointer;
 }
+
 .auth-form #alternate-signins {
     font-size: 18px;
 }
+
 .auth-form .secondary-signin-link {
     text-decoration: underline;
     cursor: pointer;
@@ -468,23 +770,29 @@ main.auth-form {
     line-height: 28px;
     max-width: 130px;
 }
+
 .example-warning {
     max-width: 95%;
 }
+
 #controls input {
     font-size: 16px;
 }
+
 select {
     font-size: 16px;
 }
+
 .result-indicator-wrong {
     background-color: #ff635f;
     color: black;
 }
+
 .result-indicator-right {
     background-color: #6de200;
     color: black;
 }
+
 #landing {
     text-align: center;
     max-width: 60%;
@@ -492,44 +800,109 @@ select {
     margin-right: auto;
     height: 100%;
 }
+
 /* TODO make this auto-updating */
 .language-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: 200px 200px 200px 40px;
-    margin-top: 20px;
-    margin-bottom: 40px;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    grid-auto-rows: 1fr;
+    gap: 18px;
+    margin-top: 18px;
+    margin-bottom: 32px;
+    align-items: stretch;
 }
+
 .language-grid-selected {
     grid-template-columns: 1fr;
     transition: grid-template-columns 1s;
 }
+
 .language-selected {
     grid-column: 1/2;
 }
+
 .language-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
     text-align: center;
-    margin: 8px;
-    border: 1px solid #3333;
-    font-size: 30px;
-    margin-bottom: 40px;
+    padding: 18px 16px;
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
     cursor: pointer;
-    color:#121212;
+    transition: transform 150ms ease, box-shadow 150ms ease;
+    aspect-ratio: 4 / 3;
+    min-height: 140px;
+    color: white;
 }
+
+.language-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+}
+
+.language-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.language-flag {
+    margin-right: 8px;
+}
+
+/* per-language accent stripes */
+.language-card[data-lang="fr-FR"] .card-accent {
+    background: linear-gradient(90deg, #003f84, #0070bf);
+}
+
+.language-card[data-lang="pt-BR"] .card-accent {
+    background: linear-gradient(90deg, #005a3b, #007a55);
+}
+
+.language-card[data-lang="it-IT"] .card-accent {
+    background: linear-gradient(90deg, #b4001d, #d42b31);
+}
+
+.language-card[data-lang="de-DE"] .card-accent {
+    background: linear-gradient(90deg, #ffd300, #ffb700);
+}
+
+.language-card[data-lang="es-ES"] .card-accent {
+    background: linear-gradient(90deg, #e65210, #ff8a00);
+}
+
+.language-card[data-lang="nb-NO"] .card-accent {
+    background: linear-gradient(90deg, #b4001d, #d42b31);
+}
+
+
 .language-name {
-    font-size: 24px;
-    height: 120px;
-    margin: 0;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-size: 20px;
+    font-weight: 700;
+    margin: 6px 0 4px 0;
+    color: inherit;
 }
+
 .language-nickname {
-    font-size: 16px;
-    height: 20px;
-    line-height: 20px;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    font-size: 13px;
     margin: 0;
+    color: rgba(255, 255, 255, 0.92);
+    opacity: 0.95;
 }
-.language-message {
-    grid-column: 1/3;
-}
+
 @media (hover: hover) {
     .text-button:hover {
         color: black;
@@ -537,21 +910,18 @@ select {
         background-color: #68aaee;
         transition: background-color 300ms;
     }
-    .tab:hover {
-        background-color: #3333;
-    }
-    .tab.active:hover {
-        background-color: #333;
-    }
+
     #result-buttons li:hover {
         border: 1px solid white;
         transition: border 500ms;
     }
+
     #show-answer-button:hover {
         background-color: #68aaee;
         transition: background-color 300ms;
     }
 }
+
 .bar-chart {
     display: grid;
     width: 600px;
@@ -561,78 +931,93 @@ select {
     column-gap: 6px;
     font-size: 14px;
 }
+
 .hours.bar-chart {
     height: 300px;
     width: 85%;
     overflow-x: scroll;
     overflow-y: hidden;
 }
+
 .bar-chart-separator {
     background: white;
 }
+
 .bar-chart-x-label {
     margin-top: 2px;
 }
+
 .bar-chart-y-label {
     grid-column: 1;
     text-align: right;
 }
-@media (max-width:1024px)  {
-    #control-pane {
-        width: 50%;
-    }
-    #graph {
-        width: 50%;
-    }
-    .tab {
-        font-size: 16px;
-    }
+
+@media (max-width:1024px) {
     .hours.bar-chart {
         height: 250px;
         width: 100%;
     }
 }
-@media (max-width:664px)  {
+
+@media (max-width:664px) {
     #container {
         display: block;
     }
+
     #control-pane {
         width: 100%;
         height: 50%;
         border-right: 0;
         border-bottom: 1px solid #333;
     }
-    #graph {
+
+    /* On small screens, the graph-area (which contains the graph and legend)
+       should take 50% of the viewport height and the graph fill that area. */
+    #graph-area {
         width: 100%;
         height: 50%;
+        display: flex;
+        flex-direction: column;
     }
+
+    #graph {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        flex: 1 1 auto;
+    }
+
     h1 {
         font-size: 26px;
     }
-    .tab {
-        font-size: 16px;
-    }
+
     .study-call-to-action {
         font-size: 18px;
     }
+
     #result-buttons li {
         padding: 10px;
         font-size: 22px;
     }
+
     h2 {
         font-size: 30px;
     }
+
     #card-question-container a {
         font-size: 30px;
     }
+
     .bar-chart {
         width: 100%;
         height: 250px;
         font-size: 12px;
     }
+
     .menu-item {
         font-size: 20px;
     }
+
     .menu {
         width: 98%;
         margin-left: auto;
@@ -643,50 +1028,64 @@ select {
         max-width: 98%;
     }
 }
-@media (max-width:360px)  {
+
+@media (max-width:360px) {
     .text-button {
         font-size: 12px;
     }
+
     .study-call-to-action {
         font-size: 14px;
     }
+
     h2 {
         font-size: 24px;
     }
+
     .menu-item {
         font-size: 18px;
     }
+
     #controls input[type=submit] {
         font-size: 12px;
     }
+
     #control-pane input[type=text] {
         width: 30px;
     }
 }
+
 header.stats-header {
     text-align: center;
 }
+
 header.stats-header a {
     text-decoration: none;
 }
+
 main.stats {
     margin-left: auto;
     margin-right: auto;
     text-align: center;
-    max-width:98%;
+    max-width: 98%;
 }
+
 main.stats section h2 {
     font-size: 20px;
 }
+
 main.stats section p {
     font-size: 18px;
 }
+
 #hourly-graph {
     padding-bottom: 40px;
 }
+
 .month-indicator {
     width: 16px;
 }
+
 .calendar-day {
     border: 1px solid black;
     color: black;
@@ -696,108 +1095,157 @@ main.stats section p {
     margin: 3px;
     border-radius: 4px;
 }
+
 .calendar-day.s {
     background-color: #4000bf;
 }
+
 .calendar-day.m {
     background-color: #6a0095;
 }
+
 .calendar-day.l {
     background-color: #95006a;
 }
+
 .calendar-day.xl {
     background-color: #bf0040;
 }
+
 .calendar-day.xxl {
     background-color: #ff0000;
 }
+
 .calendar-day.epic {
     background-color: #ff00ff;
 }
+
 .calendar-day.future {
     opacity: 0.4;
 }
+
 .calendar-day-dummy {
     opacity: 0;
 }
+
 .calendar {
     display: grid;
     max-width: 95%;
     overflow: scroll;
     margin: 0 auto;
 }
+
 /* TODO probably should be like .level1, .level2 or something */
 .blue {
-    background-color: #68aaee;
+    background: linear-gradient(135deg, #003f84 0%, #0070bf 100%);
 }
+
 .green {
-    background-color: #6de200;
+    background: linear-gradient(135deg, #005a3b 0%, #007a55 100%);
 }
+
 .yellow {
-    background-color: #fff249;
+    background: linear-gradient(135deg, #ffd300 0%, #ffb700 100%);
 }
+
 .red {
-    background-color: #ff635f;
+    background: linear-gradient(135deg, #b4001d 0%, #d42b31 100%);
 }
+
 .orange {
-    background-color: #ff9b35;
+    background: linear-gradient(135deg, #e65210 0%, #ff8a00 100%);
 }
+
 .purple {
-    background-color: #de68ee;
+    background: linear-gradient(135deg, #8a44bb 0%, #c77be6 100%);
 }
+
 @media (prefers-color-scheme: light) {
-    #control-pane {
-        border-right: 1px solid #3333;
+
+    /* light-mode override for the app background variable so body and #graph match */
+    :root {
+        --app-bg: linear-gradient(180deg, #ffffff, #f3f8ff);
     }
+
+    .section-heading {
+        color: #555;
+        opacity: 1;
+    }
+
     .text-button {
         background-color: #eee;
         border: 1px solid #3333;
         opacity: 1;
     }
-    .tab {
-        background-color: #eee;
-    }
-    .tab.active {
-        border-bottom: 1px solid #3333;
-        background-color: white;
-    }
+
     .study-call-to-action {
         background-color: #eee;
         border: 1px solid #3333;
     }
+
     body {
         color: black;
-        background: white;
+        background: var(--app-bg);
     }
+
+    #search-box {
+        background: rgba(255, 255, 255, 0.95);
+        color: #111;
+        box-shadow: 0 4px 8px rgba(2, 6, 23, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    /* Ensure placeholder text is visible in light mode */
+    #search-box::placeholder,
+    #search-box::-webkit-input-placeholder,
+    #search-box::-moz-placeholder {
+        color: rgba(0, 0, 0, 0.45);
+    }
+
     a {
         color: black;
     }
-    #graph {
-        background: #f9f9f9;
-    }
+
     .exit-arrow::before {
         background: black;
     }
+
     .calendar-day {
         background-color: #eee;
     }
+
     .bar-chart-separator {
         background: black;
     }
 }
+
 @media (prefers-color-scheme: light) and (max-width:664px) {
     #control-pane {
         border-bottom: 1px solid #3333;
         border-right: 0;
     }
 }
-@media (prefers-color-scheme: light) and (hover: hover){
-    .tab:hover {
-        background-color: #f5f5f5;
+
+@media (prefers-color-scheme: light) {
+    .walkthrough {
+        background: linear-gradient(135deg, rgba(100, 150, 255, 0.12), rgba(50, 200, 150, 0.12));
+        border-left-color: #2d8f3a;
     }
-    .tab.active:hover {
-        background-color: white;
+
+    .walkthrough-heading {
+        color: #1a1a1a;
     }
+
+    .walkthrough p {
+        color: #333;
+    }
+
+    .walkthrough p strong {
+        color: #2d8f3a;
+    }
+}
+
+@media (prefers-color-scheme: light) and (hover: hover) {
     #result-buttons li:hover {
         transition: border 500ms;
     }

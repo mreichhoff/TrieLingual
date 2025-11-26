@@ -1,7 +1,5 @@
-import { faqTypes, showFaq } from "./faq.js";
-import { updateVisited, getVisited, addCards, getCardCount, inStudyList, initialize as dataInit } from "./data-layer.js";
+import { addCards, getCardCount, inStudyList, initialize as dataInit } from "./data-layer.js";
 import { initializeGraph, updateColorScheme } from "./graph.js";
-import { graphChanged, preferencesChanged } from "./recommendations.js";
 
 window.definitions = window.definitions || {};
 //TODO break this down further
@@ -13,14 +11,8 @@ let currentRoot = null;
 //the ngram for which we're showing examples
 let currentNgram = null;
 let undoChain = [];
-let tabs = {
-    explore: 'explore',
-    study: 'study'
-};
 
 let subtries = {};
-
-let activeTab = tabs.explore;
 
 let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
 let punctuation = {
@@ -60,25 +52,17 @@ let getActiveGraph = function () {
 }
 
 //top-level section container
-const mainContainer = document.getElementById('container');
+const mainContainer = document.getElementById('main-container');
 
-const exploreTab = document.getElementById('show-explore');
-const studyTab = document.getElementById('show-study');
 
 const mainHeader = document.getElementById('main-header');
 
 //study items...these may not belong in this file
 const studyContainer = document.getElementById('study-container');
 
-//explore tab items
 const examplesList = document.getElementById('examples');
-const exampleContainer = document.getElementById('example-container');
-//explore tab navigation controls
 const searchBox = document.getElementById('search-box');
 const searchForm = document.getElementById('search-form');
-const previousButton = document.getElementById('previousButton');
-//recommendations
-const recommendationsDifficultySelector = document.getElementById('recommendations-difficulty');
 
 //menu items
 const languageSelector = document.getElementById('language-selector');
@@ -118,22 +102,52 @@ let runTextToSpeech = function (text, anchors) {
 };
 
 let addTextToSpeech = function (holder, text, aList) {
-    let textToSpeechButton = document.createElement('span');
-    textToSpeechButton.className = 'text-button listen';
-    textToSpeechButton.textContent = 'Listen';
-    textToSpeechButton.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
-    holder.appendChild(textToSpeechButton);
+    // create accessible icon button for TTS
+    let btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'icon-button listen';
+    btn.setAttribute('aria-label', 'Listen');
+    btn.title = 'Listen';
+    btn.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M5 9v6h4l5 5V4L9 9H5z"></path>
+            <path d="M16.5 8.5a4.5 4.5 0 010 7" stroke="none" fill="currentColor"></path>
+        </svg>
+    `;
+    btn.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
+    holder.appendChild(btn);
 };
 let addSaveToListButton = function (holder, examples) {
-    let buttonTexts = ['In your study list!', 'Add to study list'];
-    let saveToListButton = document.createElement('span');
-    saveToListButton.className = 'text-button';
-    saveToListButton.textContent = examples.every(x => inStudyList(x.t)) ? buttonTexts[0] : buttonTexts[1];
-    saveToListButton.addEventListener('click', function () {
+    // create compact icon button to add examples to study list (bookmark/plus)
+    let btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'icon-button save';
+    // determine initial state: are all examples already in study list?
+    let allSaved = examples.length && examples.every(x => inStudyList(x.t));
+    btn.setAttribute('aria-pressed', allSaved ? 'true' : 'false');
+    btn.title = allSaved ? 'In your study list' : 'Add to study list';
+    btn.setAttribute('aria-label', btn.title);
+    const svgAdd = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z"></path>
+            <path d="M18 6v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M16 8h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>`;
+    const svgSaved = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z"></path>
+            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>`;
+    btn.innerHTML = allSaved ? svgSaved : svgAdd;
+    btn.addEventListener('click', function () {
         addCards(examples);
-        saveToListButton.textContent = buttonTexts[0];
+        // update visual state to saved
+        btn.setAttribute('aria-pressed', 'true');
+        btn.title = 'In your study list';
+        btn.setAttribute('aria-label', btn.title);
+        btn.innerHTML = svgSaved;
     });
-    holder.appendChild(saveToListButton);
+    holder.appendChild(btn);
 };
 let persistState = function () {
     let localUndoChain = undoChain.length > 5 ? undoChain.slice(0, 5) : undoChain;
@@ -141,7 +155,6 @@ let persistState = function () {
         root: currentRoot,
         ngram: currentNgram,
         undoChain: localUndoChain,
-        activeTab: activeTab,
         targetLang: targetLang,
         currentGraph: activeGraph.display,
         graphPrefix: activeGraph.prefix
@@ -278,23 +291,12 @@ let setupExamples = function (words) {
     addSaveToListButton(wordHolder, examples);
     item.appendChild(wordHolder);
 
-    let contextHolder = document.createElement('p');
-    //TODO not so thrilled with 'context' as the name here
-    contextHolder.className = 'context';
-    contextHolder.innerText += "Previously: ";
-    [...words].forEach(x => {
-        contextHolder.innerText += `${x} seen ${getVisited()[x] || 0} times; in ${getCardCount(x)} flash cards. `;
-    });
-    let contextFaqLink = document.createElement('a');
-    contextFaqLink.className = 'faq-link';
-    contextFaqLink.textContent = "Learn more.";
-    contextFaqLink.addEventListener('click', function () {
-        showFaq(faqTypes.context);
-    });
-    contextHolder.appendChild(contextFaqLink);
-    item.appendChild(contextHolder);
-
     if (words.length === 1) {
+        let definitionHeading = document.createElement('h3');
+        definitionHeading.className = 'section-heading';
+        definitionHeading.innerText = 'Definitions';
+        item.appendChild(definitionHeading);
+
         let definitionHolder = document.createElement('ul');
         definitionHolder.className = 'definition';
         setupDefinitions(words, definitionHolder, words.length === 1);
@@ -303,6 +305,11 @@ let setupExamples = function (words) {
 
     //setup current examples for potential future export
     currentExamples[words].push(...examples);
+
+    let examplesHeading = document.createElement('h3');
+    examplesHeading.className = 'section-heading';
+    examplesHeading.innerText = 'Examples';
+    item.appendChild(examplesHeading);
 
     let exampleList = document.createElement('ul');
     item.appendChild(exampleList);
@@ -358,17 +365,20 @@ let nodeTapHandler = function (evt) {
     updateUndoChain();
     setupExamples(evt.target.data('path'));
     persistState();
-    exploreTab.click();
-    mainHeader.scrollIntoView();
-    updateVisited(evt.target.data('path'));
 };
 let edgeTapHandler = function () { };
 let updateGraph = function (value) {
-    document.getElementById('graph').remove();
+    const oldGraph = document.getElementById('graph');
+    if (oldGraph) {
+        oldGraph.remove();
+    }
     let nextGraph = document.createElement("div");
     nextGraph.id = 'graph';
-    //TODO: makes assumption about markup order
-    mainContainer.append(nextGraph);
+    // Insert the new graph into the #graph-area before the legend so it sits above it.
+    const graphArea = document.getElementById('graph-area');
+    const graphLegend = document.getElementById('graph-legend');
+    graphArea.insertBefore(nextGraph, graphLegend);
+
     let result = null;
     if (value && trie[value]) {
         result = fetch(`./data/${targetLang}/subtries/${value}.json`)
@@ -406,11 +416,6 @@ let initialize = function () {
             }
         }
         undoChain = oldState.undoChain;
-        if (oldState.activeTab === tabs.study) {
-            //reallllllly need a toggle method
-            //this does set up the current card, etc.
-            studyTab.click();
-        }
         persistState();
     } else {
         updateGraph(defaultWords[targetLang][Math.floor(Math.random() * defaultWords[targetLang].length)]);
@@ -467,43 +472,7 @@ searchForm.addEventListener('submit', function (event) {
         updateGraph(value);
         setupExamples([value]);
         persistState();
-        updateVisited([value]);
     }
-});
-
-previousButton.addEventListener('click', function () {
-    if (!undoChain.length) {
-        return;
-    }
-    let next = undoChain.pop();
-    updateGraph(next.root);
-    if (next.ngram) {
-        setupExamples(next.ngram);
-    }
-    persistState();
-});
-exploreTab.addEventListener('click', function () {
-    exampleContainer.removeAttribute('style');
-    studyContainer.style.display = 'none';
-    //TODO could likely do all of this with CSS
-    exploreTab.classList.add('active');
-    studyTab.classList.remove('active');
-    activeTab = tabs.explore;
-    persistState();
-});
-
-studyTab.addEventListener('click', function () {
-    exampleContainer.style.display = 'none';
-    studyContainer.removeAttribute('style');
-    studyTab.classList.add('active');
-    exploreTab.classList.remove('active');
-    activeTab = tabs.study;
-    persistState();
-});
-
-recommendationsDifficultySelector.addEventListener('change', function () {
-    let val = recommendationsDifficultySelector.value;
-    preferencesChanged(val);
 });
 
 menuButton.addEventListener('click', function () {
@@ -540,7 +509,6 @@ let switchLanguage = function () {
                 window.definitions = data;
             });
         dataInit();
-        exploreTab.click();
         // fetch(`./data/${targetLang}/inverted-trie.json`)
         //     .then(response => response.json())
         //     .then(function (data) {

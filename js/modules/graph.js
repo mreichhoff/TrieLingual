@@ -1,4 +1,7 @@
 let cy = null;
+let root = null;
+let resizeTimer = null;
+let resizeListenerAdded = false;
 let bfs = function (value, elements) {
     if (!value) {
         return;
@@ -35,30 +38,28 @@ let bfs = function (value, elements) {
 //this file meant to hold all cytoscape-related code
 let levelColor = function (element) {
     let level = element.data('level');
+    // Warm to cool gradient: level 1 (most frequent) = warm red, level 6 (least frequent) = cool blue
     switch (level) {
-        case 6:
-            return '#68aaee';
-        case 5:
-            return '#de68ee';
-        case 4:
-            return '#6de200';
-        case 3:
-            return '#fff249';
-        case 2:
-            return '#ff9b35';
         case 1:
-            return '#ff635f';
+            return '#ff4444';  // Warm red (most frequent)
+        case 2:
+            return '#ff8833';  // Warm orange
+        case 3:
+            return '#ffcc22';  // Warm yellow
+        case 4:
+            return '#88dd44';  // Lime green
+        case 5:
+            return '#44ddbb';  // Cool cyan
+        case 6:
+            return '#4488ff';  // Cool blue (least frequent)
     }
 };
 let nodeWidth = function (element) {
     let word = element.data('word');
-    if (word.length <= 6) {
-        return '45px';
-    } else if (word.length <= 8) {
-        return '60px';
-    } else {
-        return '80px';
-    }
+    return `${Math.max(30, (word.length * 10) + 12)}px`;
+};
+let nodeHeight = function (element) {
+    return '32px';
 };
 
 let layout = function (root) {
@@ -79,9 +80,11 @@ let getStylesheet = function () {
                 'background-color': levelColor,
                 'label': 'data(word)',
                 'color': 'black',
-                'font-size': '12px',
-                'shape': 'round-rectangle',
+                'font-size': '13px',
+                'font-family': 'monospace',
+                'shape': 'rectangle',
                 'width': nodeWidth,
+                'height': nodeHeight,
                 'text-valign': 'center',
                 'text-halign': 'center'
             }
@@ -89,13 +92,17 @@ let getStylesheet = function () {
         {
             selector: 'edge',
             style: {
-                'target-arrow-shape': 'none',
-                'curve-style': 'straight'
+                'target-arrow-shape': 'triangle',
+                'curve-style': 'straight',
+                'arrow-scale': '0.9',
+                'line-color': prefersLight ? '#121212' : '#666',
+                'target-arrow-color': prefersLight ? '#121212' : '#aaa'
             }
         }
     ];
 }
 let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
+    root = root;
     cy = cytoscape({
         container: graphContainer,
         elements: elements,
@@ -106,6 +113,22 @@ let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler,
     });
     cy.on('tap', 'node', nodeEventHandler);
     cy.on('tap', 'edge', edgeEventHandler);
+    // Add a debounced window resize handler to re-run the layout when the viewport changes.
+    // Ensure we only add one global listener even if setupCytoscape is called multiple times.
+    if (!resizeListenerAdded) {
+        window.addEventListener('resize', function () {
+            if (resizeTimer) {
+                clearTimeout(resizeTimer);
+            }
+            resizeTimer = setTimeout(function () {
+                if (cy) {
+                    // Re-apply the layout to redraw nodes/edges responsively
+                    cy.layout(layout(root)).run();
+                }
+            }, 150);
+        });
+        resizeListenerAdded = true;
+    }
 };
 let initializeGraph = function (value, containerElement, nodeEventHandler, edgeEventHandler) {
     let result = { 'nodes': [], 'edges': [] };
