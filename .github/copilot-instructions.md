@@ -61,14 +61,20 @@ Hardcoded in `main.js`, `base.js`, `index.html`:
 ## Build & Deployment
 
 ### Development
-- **Bundle**: `rollup -c` (rollup.config.ts) → `js/bundle.js` (IIFE format)
+- **NPM scripts** (see `package.json`):
+  - `npm run build`: Bundle once with Rollup → `js/bundle.js` (IIFE format)
+  - `npm run watch`: Rollup in watch mode (live rebuild on source changes)
+  - `npm run serve`: Start Firebase emulators (local dev server)
 - **Source entry**: `js/modules/main.js`
-- **No build server**: Static site (works offline via Service Worker)
+- **Bundler config**: `rollup.config.ts`
+- **Firebase config**: `firebase.json`, `firestore.rules`, `firestore.indexes.json`
 
 ### Production
-- Deploy to GitHub Pages (`gh-pages` branch or `/docs`)
-- Service Worker: `asset-service-worker.js` caches all assets
+- Deploy via Firebase Hosting (configured in `firebase.json`)
+- Deploy command: `firebase deploy`
+- Service Worker: `asset-service-worker.js` caches all assets for PWA offline support
 - Manifest: `manifest.json` enables PWA install
+- Functions: Cloud Functions (`functions/src/index.ts`) available for backend logic
 
 ## Testing & Debugging
 
