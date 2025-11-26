@@ -73,8 +73,6 @@ let layout = function (root) {
     };
 };
 let getStylesheet = function () {
-    //TODO make this injectable
-    let prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
     return [
         {
             selector: 'node',
@@ -97,8 +95,8 @@ let getStylesheet = function () {
                 'target-arrow-shape': 'triangle',
                 'curve-style': 'straight',
                 'arrow-scale': '0.9',
-                'line-color': prefersLight ? '#121212' : '#666',
-                'target-arrow-color': prefersLight ? '#121212' : '#aaa'
+                'line-color': '#444',
+                'target-arrow-color': '#777'
             }
         }
     ];
