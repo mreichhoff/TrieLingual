@@ -51,8 +51,6 @@ let init = function () {
             //     .then(data => window.invertedTrie = data)
         ]
     ).then(_ => {
-        landingContainer.style.display = 'none';
-        mainContainer.removeAttribute('style');
         dataInit();
         studyModeInit();
         baseInit();
@@ -61,6 +59,60 @@ let init = function () {
     });
 };
 
+let initWithMinimumDelay = function (minDelay) {
+    const startTime = Date.now();
+    const promise = Promise.all(
+        [
+            window.trieFetch
+                .then(response => response.json())
+                .then(data => window.trie = data),
+            window.sentencesFetch
+                .then(response => response.json())
+                .then(data => window.sentences = data),
+            window.definitionsFetch
+                .then(response => response.json())
+                .then(data => window.definitions = data),
+        ]
+    );
+
+    promise.then(_ => {
+        const elapsed = Date.now() - startTime;
+        const remaining = minDelay - elapsed;
+        const delayTime = Math.max(0, remaining);
+
+        setTimeout(() => {
+            revealApp(() => {
+                dataInit();
+                studyModeInit();
+                baseInit();
+                statsInit();
+                faqInit();
+            });
+        }, delayTime);
+    });
+};
+
+function revealApp(callback) {
+    // make sure main container is available for animation
+    mainContainer.style.display = '';
+    // force reflow so animations will run
+    void mainContainer.offsetWidth;
+    landingContainer.classList.add('slide-out-left');
+    mainContainer.classList.add('slide-in-right');
+
+    const onEnd = function (e) {
+        if (e.target !== mainContainer) return;
+        mainContainer.removeEventListener('animationend', onEnd);
+        landingContainer.classList.remove('slide-out-left');
+        mainContainer.classList.remove('slide-in-right');
+        // hide landing after animation
+        landingContainer.style.display = 'none';
+        if (typeof callback === 'function') callback();
+    };
+
+    mainContainer.addEventListener('animationend', onEnd);
+}
+
 if (targetLang) {
     init();
 } else {
@@ -68,11 +120,6 @@ if (targetLang) {
     languageOptions.forEach(x => {
         x.element.addEventListener('click', function (e) {
             window.targetLang = x.targetLang;
-            languageOptions.forEach(item => {
-                if (item.targetLang !== targetLang) {
-                    item.element.style.display = 'none';
-                }
-            });
             grid.classList.add('language-grid-selected');
             e.currentTarget.classList.add('language-selected');
 
@@ -94,7 +141,9 @@ if (targetLang) {
             window.sentencesFetch = fetch(`/data/${targetLang}/sentences.json`);
             window.definitionsFetch = fetch(`/data/${targetLang}/definitions.json`);
             // window.invertedTrieFetch = fetch(`/data/${targetLang}/inverted-trie.json`);
-            init();
+
+            // Enforce minimum 0.5 second animation delay before showing app
+            initWithMinimumDelay(500);
         });
     });
 }

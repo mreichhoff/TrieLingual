@@ -51,6 +51,39 @@ a {
     height: calc(100% - var(--header-height));
 }
 
+/* Animation helpers for transitioning from landing -> main app */
+.slide-out-left {
+    animation: slideOutLeft 450ms ease-in-out forwards;
+}
+
+.slide-in-right {
+    animation: slideInRight 450ms ease-in-out forwards;
+}
+
+@keyframes slideOutLeft {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(-30%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(30%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 #control-pane {
     width: 50%;
     height: 100%;
@@ -252,8 +285,8 @@ h2 span {
 #graph-legend {
     font-size: 13px;
     text-align: center;
-    margin: 8px;
-    padding: 6px 12px;
+    margin: 0;
+    padding: 2px;
     background: linear-gradient(180deg, rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.02));
     border-radius: 8px;
     align-self: stretch;
@@ -397,7 +430,7 @@ p.target-example {
     padding: 10px 14px;
     border-radius: 12px;
     border: 0;
-    background: rgba(255, 255, 255, 0.04);
+    background: rgba(255, 255, 255, 0.15);
     color: inherit;
     font-size: 16px;
     box-shadow: 0 6px 18px rgba(2, 6, 23, 0.45);
@@ -812,13 +845,16 @@ select {
     align-items: stretch;
 }
 
-.language-grid-selected {
-    grid-template-columns: 1fr;
-    transition: grid-template-columns 1s;
+/* Fade and dim non-selected language cards while keeping the selected one prominent */
+.language-grid-selected .language-card:not(.language-selected) {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 350ms ease;
 }
 
-.language-selected {
-    grid-column: 1/2;
+.language-grid-selected .language-card.language-selected {
+    transform: translateY(-6px) scale(1.02);
+    transition: transform 350ms ease;
 }
 
 .language-card {
