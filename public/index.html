@@ -81,7 +81,15 @@
                         </div>
                     </form>
                 </div>
-                <div class="stats-container"><a id="stats-show"><i class="stats-button"></i></a></div>
+                <div class="mode-toggle-container">
+                    <button id="mode-toggle" class="icon-button mode-toggle-button" aria-label="Switch to study mode"
+                        title="Study mode">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path
+                                d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                        </svg>
+                    </button>
+                </div>
             </header>
         </div>
         <div id="container">
@@ -115,38 +123,63 @@
                     </ul>
                 </div>
                 <div id="study-container" style="display:none">
-                    <p id="explain-text">Not sure how this works? <a class="faq-link" id="show-study-faq">Learn
-                            more.</a></p>
-                    <p id="cards-due">
-                        Cards due: <span id="card-due-count"></span>
-                    </p>
-                    <p id="study-call-to-action" class="study-call-to-action">
-                        <span id="task-description">What does the text below mean?</span>
-                        <span id="task-complete">Studying complete. Check back later for more reviews. <br />You can
-                            also
-                            add more cards by exploring the graph!</span>
-                    </p>
-                    <p id="card-question-container"></p>
-                    <span id="show-answer-button" class="study-call-to-action">Show Answer</span>
-                    <div id="card-answer-container" style="display:none">
-                        <p id="card-answer"></p>
-                        <ul id="result-buttons">
-                            <li id="wrong-button">I didn't know that</li>
-                            <li id="right-button">I knew that!</li>
-                        </ul>
-                        <p id="delete-card-button" class="text-button">Delete this card</p>
-                        <div id="past-performance-container" class="card-detail">
-                            <p id="card-new-message" style="display:none">This is a new card!</p>
-                            <div id="card-old-message" style="display: none;">
-                                <p>Previous attempts: <span id="card-percentage"></span>% correct.</p>
-                                <p>Right <span id="card-right-count"></span>; Wrong <span id="card-wrong-count"></span>.
-                                </p>
+                    <div class="study-card">
+                        <header class="study-card-header">
+                            <div class="study-info">
+                                <p id="explain-text">Not sure how this works? <a class="faq-link"
+                                        id="show-study-faq">Learn more.</a></p>
                             </div>
-                        </div>
-                        <div id="related-cards-container" class="card-detail" style="display:none">
-                            Other cards with <span id="related-card-query"></span>:
-                            <div id="related-cards" class="related-cards"></div>
-                        </div>
+                            <div class="cards-badge" id="cards-due" aria-live="polite">
+                                <span class="badge-label">Cards due</span>
+                                <span class="badge-count" id="card-due-count"></span>
+                            </div>
+                        </header>
+
+                        <section class="study-cta" id="study-call-to-action">
+                            <div class="cta-text">
+                                <span id="task-description">What does the text below mean?</span>
+                                <span id="task-complete">All caught up. Check back later or add more cards to your
+                                    list.</span>
+                            </div>
+                        </section>
+
+                        <section class="study-question" id="card-question-section">
+                            <p id="card-question-container"></p>
+                            <button id="show-answer-button" class="primary-button" aria-label="Show the answer">Show
+                                Answer</button>
+                        </section>
+
+                        <section class="study-answer" id="card-answer-section">
+                            <div id="card-answer-container" style="display:none">
+                                <p id="card-answer"></p>
+                                <ul id="result-buttons" class="result-buttons">
+                                    <li>
+                                        <button id="wrong-button" class="result-button result-wrong"
+                                            aria-label="Review again">Review again</button>
+                                    </li>
+                                    <li>
+                                        <button id="right-button" class="result-button result-right"
+                                            aria-label="Got it">Got it</button>
+                                    </li>
+                                </ul>
+                                <p id="delete-card-button" class="link-button">Delete this card</p>
+
+                                <div id="past-performance-container" class="card-detail">
+                                    <p id="card-new-message" style="display:none">This is a new card!</p>
+                                    <div id="card-old-message" style="display: none;">
+                                        <p>Previous attempts: <span id="card-percentage"></span>% correct.</p>
+                                        <p>Right <span id="card-right-count"></span>; Wrong <span
+                                                id="card-wrong-count"></span>.</p>
+                                    </div>
+                                </div>
+
+                                <div id="related-cards-container" class="card-detail" style="display:none">
+                                    <div class="related-header">Other cards with <span id="related-card-query"></span>:
+                                    </div>
+                                    <div id="related-cards" class="related-cards"></div>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
                 <!-- legend moved to graph-area so it sits below the visualization -->
@@ -360,12 +393,15 @@
                     <option>Norwegian</option>
                 </select>
             </div>
+            <div class="menu-item menu-item-clickable" id="stats-show">
+                View study stats
+            </div>
             <div class="menu-item menu-item-clickable" id="exportStudyListButton" style="display:none">
                 Export study list
             </div>
             <div class="menu-item">
-                <span class="menu-item-text"><a href="https://github.com/mreichhoff/TrieLingual/blob/main/README.md">See
-                        the README for more information.</a></span>
+                <span class="menu-item-text"><a href="https://github.com/mreichhoff/TrieLingual/blob/main/README.md">GitHub
+                        has more information.</a></span>
             </div>
         </main>
     </div>

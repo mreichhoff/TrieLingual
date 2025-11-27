@@ -1,4 +1,4 @@
-import { makeSentenceNavigable, addTextToSpeech, joinTokens } from "./base.js";
+import { makeSentenceNavigable, joinTokens } from "./base.js";
 import { dataTypes, registerCallback, saveStudyList, getStudyList, findOtherCards, removeFromStudyList, recordEvent, studyResult, updateCard } from "./data-layer.js";
 
 const exportStudyListButton = document.getElementById('exportStudyListButton');
@@ -81,7 +81,7 @@ let setupStudyMode = function () {
     for (let i = 0; i < aList.length; i++) {
         aList[i].addEventListener('click', displayRelatedCards.bind(this, aList[i]));
     }
-    addTextToSpeech(cardQuestionContainer, question, aList);
+    // addTextToSpeech(cardQuestionContainer, question, aList);
     cardAnswerElement.textContent = currentCard.base;
     if (currentCard.wrongCount + currentCard.rightCount != 0) {
         cardOldMessageElement.removeAttribute('style');
@@ -97,6 +97,75 @@ let setupStudyMode = function () {
 };
 
 let initialize = function () {
+    const modeToggle = document.getElementById('mode-toggle');
+    const exampleContainer = document.getElementById('example-container');
+    const studyContainer = document.getElementById('study-container');
+    let currentMode = 'explore'; // 'explore' or 'study'
+
+    const exploreIcon = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+    `;
+    const studyIcon = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+    `;
+
+    modeToggle.addEventListener('click', function () {
+        if (currentMode === 'explore') {
+            // Switch to study mode
+            currentMode = 'study';
+            modeToggle.innerHTML = exploreIcon;
+            modeToggle.setAttribute('aria-label', 'Switch to explore mode');
+            modeToggle.setAttribute('title', 'Explore mode');
+            modeToggle.classList.add('study-mode');
+
+            // Animate out explore, animate in study
+            exampleContainer.classList.add('slide-out');
+
+            exampleContainer.addEventListener('animationend', function onExploreOut() {
+                exampleContainer.removeEventListener('animationend', onExploreOut);
+                exampleContainer.style.display = 'none';
+                exampleContainer.classList.remove('slide-out');
+
+                studyContainer.style.display = 'block';
+                studyContainer.classList.add('slide-in');
+                setupStudyMode();
+
+                studyContainer.addEventListener('animationend', function onStudyIn() {
+                    studyContainer.removeEventListener('animationend', onStudyIn);
+                    studyContainer.classList.remove('slide-in');
+                });
+            });
+        } else {
+            // Switch to explore mode
+            currentMode = 'explore';
+            modeToggle.innerHTML = studyIcon;
+            modeToggle.setAttribute('aria-label', 'Switch to study mode');
+            modeToggle.setAttribute('title', 'Study mode');
+            modeToggle.classList.remove('study-mode');
+
+            // Animate out study, animate in explore
+            studyContainer.classList.add('slide-out');
+
+            studyContainer.addEventListener('animationend', function onStudyOut() {
+                studyContainer.removeEventListener('animationend', onStudyOut);
+                studyContainer.style.display = 'none';
+                studyContainer.classList.remove('slide-out');
+
+                exampleContainer.style.display = 'block';
+                exampleContainer.classList.add('slide-in');
+
+                exampleContainer.addEventListener('animationend', function onExploreIn() {
+                    exampleContainer.removeEventListener('animationend', onExploreIn);
+                    exampleContainer.classList.remove('slide-in');
+                });
+            });
+        }
+    });
+
     showAnswerButton.addEventListener('click', function () {
         showAnswerButton.innerText = "Answer:";
         cardAnswerContainer.style.display = 'block';

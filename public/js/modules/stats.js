@@ -4,6 +4,7 @@ import { getActiveGraph } from "./base.js";
 //TODO move these to a central spot
 const mainContainer = document.getElementById('main-container');
 const statsContainer = document.getElementById('stats-container');
+const menuContainer = document.getElementById('menu-container');
 
 const statsShow = document.getElementById('stats-show');
 const statsExitButton = document.getElementById('exit-button');
@@ -471,6 +472,7 @@ let initialize = function () {
             updateTotalsByLevel();
         }
         mainContainer.style.display = 'none';
+        menuContainer.style.display = 'none';
         statsContainer.removeAttribute('style');
         createCardGraphs(getStudyList(), activeGraph.legend);
         createStudyResultGraphs(getStudyResults(), activeGraph.legend);

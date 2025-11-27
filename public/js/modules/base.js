@@ -100,53 +100,99 @@ let runTextToSpeech = function (text, anchors) {
     }
 };
 
-let addTextToSpeech = function (holder, text, aList) {
-    // create accessible icon button for TTS
-    let btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'icon-button listen';
-    btn.setAttribute('aria-label', 'Listen');
-    btn.title = 'Listen';
-    btn.innerHTML = `
+let createActionMenu = function (holder, text, aList, examples) {
+    // Create three-dot menu container
+    let menuContainer = document.createElement('div');
+    menuContainer.className = 'action-menu-container';
+
+    // Create menu toggle button
+    let menuButton = document.createElement('button');
+    menuButton.type = 'button';
+    menuButton.className = 'icon-button menu-toggle';
+    menuButton.setAttribute('aria-label', 'More options');
+    menuButton.setAttribute('aria-expanded', 'false');
+    menuButton.title = 'More options';
+    menuButton.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="5" r="2" fill="currentColor"/>
+            <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            <circle cx="12" cy="19" r="2" fill="currentColor"/>
+        </svg>
+    `;
+
+    // Create dropdown menu
+    let dropdown = document.createElement('div');
+    dropdown.className = 'action-menu-dropdown';
+
+    // Listen menu item
+    let listenItem = document.createElement('button');
+    listenItem.type = 'button';
+    listenItem.className = 'action-menu-item';
+    listenItem.innerHTML = `
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <path d="M5 9v6h4l5 5V4L9 9H5z"></path>
             <path d="M16.5 8.5a4.5 4.5 0 010 7" stroke="none" fill="currentColor"></path>
         </svg>
+        <span>Listen</span>
     `;
-    btn.addEventListener('click', runTextToSpeech.bind(this, text, aList), false);
-    holder.appendChild(btn);
-};
-let addSaveToListButton = function (holder, examples) {
-    // create compact icon button to add examples to study list (bookmark/plus)
-    let btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'icon-button save';
-    // determine initial state: are all examples already in study list?
-    let allSaved = examples.length && examples.every(x => inStudyList(x.t));
-    btn.setAttribute('aria-pressed', allSaved ? 'true' : 'false');
-    btn.title = allSaved ? 'In your study list' : 'Add to study list';
-    btn.setAttribute('aria-label', btn.title);
-    const svgAdd = `
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z"></path>
-            <path d="M18 6v4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M16 8h4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>`;
-    const svgSaved = `
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z"></path>
-            <path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        </svg>`;
-    btn.innerHTML = allSaved ? svgSaved : svgAdd;
-    btn.addEventListener('click', function () {
-        addCards(examples);
-        // update visual state to saved
-        btn.setAttribute('aria-pressed', 'true');
-        btn.title = 'In your study list';
-        btn.setAttribute('aria-label', btn.title);
-        btn.innerHTML = svgSaved;
+    listenItem.addEventListener('click', function (e) {
+        e.stopPropagation();
+        runTextToSpeech(text, aList);
+        dropdown.classList.remove('open');
+        menuButton.setAttribute('aria-expanded', 'false');
     });
-    holder.appendChild(btn);
+    dropdown.appendChild(listenItem);
+
+    // Save to list menu item
+    let allSaved = examples && examples.length && examples.every(x => inStudyList(x.t));
+    let saveItem = document.createElement('button');
+    saveItem.type = 'button';
+    saveItem.className = 'action-menu-item';
+    saveItem.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <!-- Bookmark base -->
+            <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
+            ${allSaved
+            ? '<path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+            : '<circle cx="18" cy="8" r="5" fill="#eaf2ff" opacity="0.85"/><path d="M18 5v6" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 8h6" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'}
+        </svg>
+        <span>${allSaved ? 'Saved' : 'Add to list'}</span>
+    `;
+    saveItem.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (examples && examples.length) {
+            addCards(examples);
+            saveItem.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
+                    <path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
+                <span>Saved</span>
+            `;
+        }
+        dropdown.classList.remove('open');
+        menuButton.setAttribute('aria-expanded', 'false');
+    });
+    dropdown.appendChild(saveItem);
+
+    // Toggle menu on button click
+    menuButton.addEventListener('click', function (e) {
+        e.stopPropagation();
+        const isOpen = dropdown.classList.toggle('open');
+        menuButton.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+
+    // Close menu when clicking outside
+    document.addEventListener('click', function (e) {
+        if (!menuContainer.contains(e.target)) {
+            dropdown.classList.remove('open');
+            menuButton.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    menuContainer.appendChild(menuButton);
+    menuContainer.appendChild(dropdown);
+    holder.appendChild(menuContainer);
 };
 let setupDefinitions = function (words, definitionHolder, shown) {
     if (!words) {
@@ -239,7 +285,7 @@ let setupExampleElements = function (examples, exampleList) {
         let exampleText = joinTokens(examples[i].t);
         let aList = makeSentenceNavigable(examples[i].t, targetHolder, true);
         targetHolder.className = 'target-example example-line';
-        addTextToSpeech(targetHolder, exampleText, aList);
+        createActionMenu(targetHolder, exampleText, aList, [examples[i]]);
         exampleHolder.appendChild(targetHolder);
         if (examples[i].transcription) {
             let transcriptionHolder = document.createElement('p');
@@ -269,14 +315,13 @@ let setupExamples = function (words) {
 
     let item = document.createElement('li');
     let wordHolder = document.createElement('h2');
+    wordHolder.classList.add('word-header');
     for (let i = 0; i < words.length; i++) {
         let wordAnchor = document.createElement('a');
         wordAnchor.innerText = `${words[i]} `;
         wordHolder.appendChild(wordAnchor);
     }
-    item.appendChild(wordHolder);
-    addTextToSpeech(wordHolder, words, []);
-    addSaveToListButton(wordHolder, examples);
+    createActionMenu(wordHolder, words, [], examples);
     item.appendChild(wordHolder);
 
     if (words.length === 1) {
@@ -519,4 +564,4 @@ let switchLanguage = function () {
 }
 languageSelector.addEventListener('change', switchLanguage);
 
-export { initialize, makeSentenceNavigable, addTextToSpeech, getActiveGraph, joinTokens };
+export { initialize, makeSentenceNavigable, getActiveGraph, joinTokens };

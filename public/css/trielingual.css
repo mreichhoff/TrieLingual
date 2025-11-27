@@ -53,11 +53,11 @@ a {
 
 /* Animation helpers for transitioning from landing -> main app */
 .slide-out-left {
-    animation: slideOutLeft 450ms ease-in-out forwards;
+    animation: slideOutLeft 250ms ease-in-out forwards;
 }
 
 .slide-in-right {
-    animation: slideInRight 450ms ease-in-out forwards;
+    animation: slideInRight 250ms ease-in-out forwards;
 }
 
 @keyframes slideOutLeft {
@@ -142,6 +142,35 @@ a {
     margin-right: 8px;
 }
 
+.mode-toggle-container {
+    flex: 1;
+    text-align: right;
+    margin-right: 8px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.mode-toggle-button {
+    background: linear-gradient(180deg, #f0f9ff, #e0f2fe);
+    color: #0369a1;
+}
+
+.mode-toggle-button:hover {
+    background: linear-gradient(180deg, #e0f2fe, #bae6fd);
+    box-shadow: 0 6px 16px rgba(3, 105, 161, 0.3);
+}
+
+.mode-toggle-button.study-mode {
+    background: linear-gradient(180deg, #fff7ed, #fed7aa);
+    color: #c2410c;
+}
+
+.mode-toggle-button.study-mode:hover {
+    background: linear-gradient(180deg, #fed7aa, #fdba74);
+    box-shadow: 0 6px 16px rgba(194, 65, 12, 0.3);
+}
+
 .exit-container {
     flex: 1;
     text-align: left;
@@ -215,20 +244,60 @@ a {
     margin-left: auto;
     margin-right: auto;
     margin-top: 20px;
+    display: grid;
+    gap: 14px;
 }
 
 .menu-item {
-    font-size: 22px;
-    height: 60px;
-    cursor: pointer;
+    font-size: 17px;
+    padding: 16px 18px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04));
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
 }
 
 .menu-item-text {
-    cursor: pointer;
+    font-weight: 500;
 }
 
 .menu-item-clickable {
-    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.menu-item-clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    background: linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0.08));
+}
+
+.menu-item-clickable:active {
+    transform: translateY(0);
+}
+
+.menu-item label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.menu-item select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255,255,255,0.1);
+    color: inherit;
+    font-size: 16px;
+    cursor: pointer;
+    flex: 1;
+    max-width: 200px;
 }
 
 #menu-button {
@@ -274,6 +343,7 @@ h1 {
 h2 {
     margin-bottom: 4px;
     font-size: 26px;
+    align-items: center;
 }
 
 h2 span {
@@ -349,8 +419,20 @@ h2 span {
 }
 
 #examples ul {
-    margin-left: 0px;
-    margin-right: 4px;
+    margin: 0px;
+}
+
+.word-header {
+    display: flex;
+}
+
+/* TODO: just set up spacing or something, and why are these even <a> tags? */
+.word-header a {
+    margin-right: 6px;
+}
+
+.word-header .action-menu-container {
+    margin-right: 9px;
 }
 
 p.example-line {
@@ -482,10 +564,247 @@ p.target-example {
     padding: 12px 0;
 }
 
+#example-container.slide-out {
+    animation: slideOutToLeft 100ms ease-in-out forwards;
+}
+
+#example-container.slide-in {
+    animation: slideInFromRight 100ms ease-in-out forwards;
+}
+
+@keyframes slideOutToLeft {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(-25%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(25%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 #study-container {
     flex-grow: 1;
     margin-left: 8px;
     margin-right: 8px;
+}
+
+/* Study card layout */
+.study-card {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    gap: 16px;
+    padding: 16px;
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    margin-top: 12px;
+}
+
+.study-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.cards-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #ffffff, #f1f4f8);
+    color: #111;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.cards-badge .badge-label {
+    font-weight: 600;
+    font-size: 13px;
+    color: #333;
+}
+
+.cards-badge .badge-count#card-due-count {
+    font-weight: 800;
+    font-size: 14px;
+    background: #111;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 8px;
+}
+
+.study-cta {
+    padding: 12px 14px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+#study-call-to-action .cta-text {
+    display: grid;
+    gap: 6px;
+    text-align: center;
+}
+
+#task-description {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+#task-complete {
+    display: none;
+    font-size: 16px;
+    opacity: 0.85;
+    text-align: center;
+}
+
+.study-question {
+    display: grid;
+    gap: 12px;
+}
+
+#card-question-container {
+    display: block;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.04);
+    border-left: 4px solid #6de200;
+    border-radius: 10px;
+}
+
+/* Primary button for show answer */
+.primary-button#show-answer-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 18px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(180deg, #f0f9ff, #e0f2fe);
+    color: #0369a1;
+    box-shadow: 0 8px 18px rgba(3, 105, 161, 0.28);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    width: 400px;
+    margin: 0 auto;
+}
+
+.primary-button#show-answer-button:hover {
+    background: linear-gradient(180deg, #e0f2fe, #bae6fd);
+    transform: translateY(-1px);
+}
+
+.primary-button#show-answer-button:active {
+    transform: translateY(0);
+}
+
+.study-answer {
+    display: grid;
+    gap: 10px;
+}
+
+#card-answer {
+    font-size: 20px;
+    line-height: 1.5;
+}
+
+.result-button {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.result-wrong {
+    background: linear-gradient(180deg, #ffe4e2, #ffb3af);
+    color: #7f1d1d;
+    box-shadow: 0 8px 18px rgba(127, 29, 29, 0.25);
+}
+
+.result-right {
+    background: linear-gradient(180deg, #ecfdf5, #d1fae5);
+    color: #065f46;
+    box-shadow: 0 8px 18px rgba(6, 95, 70, 0.22);
+}
+
+#delete-card-button {
+    margin-right: auto;
+    margin-left: auto;
+    text-align: center;
+    width: 50%;
+    margin-top: 30px;
+    color: #93c5fd;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.card-detail {
+    font-size: 14px;
+    margin: 8px 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.related-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+}
+
+.related-header {
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+#study-container.slide-out {
+    animation: slideOutToRight 100ms ease-in-out forwards;
+}
+
+#study-container.slide-in {
+    animation: slideInFromLeft 100ms ease-in-out forwards;
+}
+
+@keyframes slideOutToRight {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(25%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInFromLeft {
+    from {
+        transform: translateX(-25%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 #cards-due {
@@ -591,18 +910,13 @@ p.target-example {
     flex: 0 0 auto;
 }
 
-.icon-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.32);
-}
-
 .icon-button:active {
     transform: translateY(-1px) scale(0.98);
 }
 
 .icon-button svg {
-    width: 18px;
-    height: 18px;
+    width: 22px;
+    height: 22px;
     display: block;
     fill: currentColor;
 }
@@ -614,6 +928,81 @@ p.target-example {
 .icon-button.save {
     background: linear-gradient(180deg, #ffffff, #f7fff2);
     color: #0a6f3a;
+}
+
+/* Three-dot action menu */
+.action-menu-container {
+    position: relative;
+    display: inline-block;
+    margin-left: auto;
+}
+
+.icon-button.menu-toggle {
+    background: linear-gradient(180deg, #ffffff, #f1f4f8);
+}
+
+.action-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    min-width: 160px;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px);
+    transition: opacity 200ms ease, transform 200ms ease, visibility 200ms;
+    z-index: 1000;
+}
+
+.action-menu-dropdown.open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.action-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: white;
+    color: #111;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+    transition: background-color 150ms;
+    font-family: inherit;
+}
+
+.action-menu-item:hover {
+    background-color: #f5f5f5;
+}
+
+.action-menu-item:first-child {
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.action-menu-item:last-child {
+    border-bottom-left-radius: 8px;
+    border-bottom-right-radius: 8px;
+}
+
+.action-menu-item svg {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    fill: currentColor;
+}
+
+.action-menu-item span {
+    flex: 1;
+    font-weight: 500;
 }
 
 /* Keep text-button available for other UI; icon-button is the compact replacement */
@@ -661,6 +1050,7 @@ h2 .text-button {
 
 #result-buttons {
     width: 100%;
+    display: flex;
 }
 
 #result-buttons li {
@@ -675,28 +1065,14 @@ h2 .text-button {
     font-size: 20px;
 }
 
-#wrong-button {
-    background-color: #ff635f;
-    color: black;
-    border: 1px solid #3333;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-#right-button {
-    background-color: #6de200;
-    border: 1px solid #3333;
-    color: black;
-    user-select: none;
-    -webkit-user-select: none;
-}
-
-#card-question-container {
-    display: flex;
+/* Hide the question container when it has no content */
+#card-question-container:empty {
+    display: none;
 }
 
 #card-question-container a {
-    font-size: 28px;
+    font-size: 18px;
+    line-height: 1.6;
     vertical-align: text-top;
     cursor: pointer;
 }
@@ -727,14 +1103,6 @@ p.related-card {
 
 .related-card-performance {
     font-size: 16px;
-}
-
-#delete-card-button {
-    margin-right: auto;
-    margin-left: auto;
-    text-align: center;
-    width: 50%;
-    margin-top: 30px;
 }
 
 #explain-text {
@@ -948,8 +1316,8 @@ select {
     }
 
     #result-buttons li:hover {
-        border: 1px solid white;
-        transition: border 500ms;
+        transform: scale(1.03);
+        transition: transform 250ms;
     }
 
     #show-answer-button:hover {
@@ -1037,10 +1405,6 @@ select {
     }
 
     h2 {
-        font-size: 30px;
-    }
-
-    #card-question-container a {
         font-size: 30px;
     }
 
