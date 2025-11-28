@@ -3,6 +3,7 @@ import { initialize as baseInit } from "./base.js";
 import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
 import { initialize as statsInit } from "./stats.js";
+import { initialize as firebaseInit } from "./firebase.js";
 
 //TODO: adding a new language involves changing index.html, base.js, and main.js. refactor
 let languageOptions = [
@@ -51,6 +52,7 @@ let init = function () {
             //     .then(data => window.invertedTrie = data)
         ]
     ).then(_ => {
+        firebaseInit();
         dataInit();
         studyModeInit();
         baseInit();
@@ -82,6 +84,7 @@ let initWithMinimumDelay = function (minDelay) {
 
         setTimeout(() => {
             revealApp(() => {
+                firebaseInit();
                 dataInit();
                 studyModeInit();
                 baseInit();

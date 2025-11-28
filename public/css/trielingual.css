@@ -300,6 +300,24 @@ a {
     max-width: 200px;
 }
 
+/* Account info in menu */
+.account-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.account-info .menu-item-text {
+    font-size: 15px;
+    color: rgba(238, 238, 238, 0.9);
+}
+
+.account-info .link-button {
+    align-self: flex-start;
+    padding: 4px 0;
+}
+
 #menu-button {
     display: block;
     width: 25%;
@@ -1603,6 +1621,95 @@ main.stats section p {
 /* TODO probably should be like .level1, .level2 or something */
 .blue {
     background: linear-gradient(135deg, #003f84 0%, #0070bf 100%);
+}
+
+/* Login page styles */
+.login-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.login-header .main-header {
+    margin-bottom: 12px;
+}
+
+.login-subtitle {
+    font-size: 18px;
+    color: rgba(238, 238, 238, 0.8);
+    margin: 0;
+}
+
+.login-main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    max-width: 400px;
+    width: 100%;
+}
+
+.google-signin-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    transition: transform 150ms ease, box-shadow 150ms ease;
+    width: 100%;
+    max-width: 320px;
+}
+
+.google-signin-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.google-signin-button:active {
+    transform: translateY(0);
+}
+
+.google-signin-button svg {
+    width: 24px;
+    height: 24px;
+}
+
+.login-info {
+    text-align: center;
+    font-size: 14px;
+    color: rgba(238, 238, 238, 0.7);
+    max-width: 320px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.login-back-link {
+    font-size: 15px;
+    color: rgba(238, 238, 238, 0.9);
+    text-decoration: none;
+    padding: 8px;
+    transition: color 150ms ease;
+}
+
+.login-back-link:hover {
+    color: #fff;
+    text-decoration: underline;
 }
 
 .green {
