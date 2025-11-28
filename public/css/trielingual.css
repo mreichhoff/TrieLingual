@@ -456,6 +456,7 @@ h2 span {
     vertical-align: baseline;
     user-select: none;
 }
+
 /* Links inside form-badge */
 .form-badge a {
     color: inherit;
@@ -552,7 +553,7 @@ p.target-example {
     flex-grow: 1;
     max-width: 80%;
     margin: 0 auto;
-    padding: 10px 0 0 0;
+    padding: 5px 0;
 }
 
 /* Search form styling: full-width, modern input and icon button */
@@ -764,7 +765,7 @@ p.target-example {
     font-size: 18px;
     font-weight: 700;
     letter-spacing: 0.2px;
-    width: 400px;
+    width: 300px;
     margin: 0 auto;
 }
 
