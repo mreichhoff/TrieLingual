@@ -198,39 +198,85 @@ let setupDefinitions = function (words, definitionHolder, shown) {
     if (!words) {
         return;
     }
-    let definitionList = [];
     words.forEach(word => {
-        definitionList.push(definitions[word] || []);
+        let wordDefinitions = definitions[word];
+        if (!wordDefinitions || !wordDefinitions.length) {
+            return;
+        }
+        wordDefinitions.forEach(sense => {
+            let definitionItem = document.createElement('li');
+            definitionItem.className = `${word}-definition`;
+            if (!shown) {
+                definitionItem.style.display = 'none';
+            }
+
+            // Build definition with mixed text and links
+            let container = document.createElement('span');
+
+            // Add POS if available (styled badge before definition)
+            if (sense.pos) {
+                let posBadge = document.createElement('span');
+                posBadge.className = 'pos-badge';
+                posBadge.textContent = sense.pos;
+                container.appendChild(posBadge);
+            }
+
+            // Add main definition
+            if (sense.def) {
+                let defText = document.createTextNode(sense.def);
+                container.appendChild(defText);
+            }
+
+            // Add form_of lemmas as clickable links inside a badge (right of definition)
+            if (sense.form_of && sense.form_of.length) {
+                let formBadge = document.createElement('span');
+                formBadge.className = 'form-badge';
+
+                // Label inside badge
+                formBadge.appendChild(document.createTextNode('form of: '));
+
+                // Append lemma links inside the badge
+                sense.form_of.forEach((lemma, index) => {
+                    let lemmaLink = document.createElement('a');
+                    lemmaLink.textContent = lemma;
+                    lemmaLink.classList.add('active-link');
+                    lemmaLink.addEventListener('click', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        let cleanLemma = lemma.toLowerCase();
+                        if (trie[cleanLemma]) {
+                            updateGraph(cleanLemma);
+                            setupExamples([cleanLemma]);
+                        }
+                    });
+                    formBadge.appendChild(lemmaLink);
+
+                    if (index < sense.form_of.length - 1) {
+                        formBadge.appendChild(document.createTextNode(', '));
+                    }
+                });
+
+                container.appendChild(formBadge);
+            }
+
+            definitionItem.appendChild(container);
+
+            // Add morphological tags as styled badges on a separate row
+            if (sense.tags && sense.tags.length) {
+                let tagsContainer = document.createElement('div');
+                tagsContainer.className = 'definition-tags';
+                sense.tags.forEach(tag => {
+                    let tagSpan = document.createElement('span');
+                    tagSpan.className = 'tag-badge';
+                    tagSpan.textContent = tag;
+                    tagsContainer.appendChild(tagSpan);
+                });
+                definitionItem.appendChild(tagsContainer);
+            }
+
+            definitionHolder.appendChild(definitionItem);
+        });
     });
-    //TODO make this sane
-    for (let i = 0; i < definitionList.length; i++) {
-        let currentWord = definitionList[i];
-        if (!currentWord.length) {
-            continue;
-        }
-        for (let j = 0; j < currentWord.length; j++) {
-            let currentItem = currentWord[j];
-            if (!currentItem.length) {
-                break;
-            }
-            for (let k = 0; k < currentItem.length; k++) {
-                if (!currentItem[k].length) {
-                    continue;
-                }
-                let definitionItem = document.createElement('li');
-                definitionItem.className = `${words[i]}-definition`;
-                if (!shown) {
-                    definitionItem.style.display = 'none';
-                }
-                if (currentItem[k].length >= 2) {
-                    definitionItem.innerText = `${currentItem[k][0]}: ${currentItem[k].slice(1).join(', ')}`;
-                } else {
-                    definitionItem.innerText = currentItem[k][0];
-                }
-                definitionHolder.appendChild(definitionItem);
-            }
-        }
-    }
 };
 let findExamples = function (ngram) {
     if (ngram.length === 1) {
@@ -368,35 +414,31 @@ let setupExamples = function (words) {
 let getCardsFromDefinitions = function (words, definitionList) {
     let results = [];
     if (!definitionList) {
-        return;
+        return results;
     }
-    //TODO make this sane
     for (let i = 0; i < definitionList.length; i++) {
-        let currentWord = definitionList[i];
-        if (!currentWord.length) {
+        let word = words[i];
+        let wordDefinitions = definitionList[i];
+        if (!wordDefinitions || !wordDefinitions.length) {
             continue;
         }
-        for (let j = 0; j < currentWord.length; j++) {
-            let currentItem = currentWord[j];
-            if (!currentItem.length) {
-                break;
+        wordDefinitions.forEach(sense => {
+            if (!sense.def) {
+                return;
             }
-            for (let k = 0; k < currentItem.length; k++) {
-                if (!currentItem[k].length) {
-                    continue;
-                }
-                let card = {};
-                card.t = [words[i]];
-                if (currentItem[k].length >= 2) {
-                    card.b = `${currentItem[k][0]}: ${currentItem[k].slice(1).join(', ')}`;
-                } else {
-                    card.b = currentItem[k][0];
-                }
-                if (card.b && card.t) {
-                    results.push(card);
-                }
+            let card = {
+                t: [word],
+                b: sense.def
+            };
+            // Optionally include POS and tags in the answer
+            if (sense.pos || sense.tags) {
+                let meta = [];
+                if (sense.pos) meta.push(sense.pos);
+                if (sense.tags) meta.push(sense.tags.join(', '));
+                card.b = `${sense.def} (${meta.join('; ')})`;
             }
-        }
+            results.push(card);
+        });
     }
     return results;
 };
