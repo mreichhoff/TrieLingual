@@ -1,5 +1,6 @@
 import { addCards, getCardCount, inStudyList, initialize as dataInit } from "./data-layer.js";
-import { initializeGraph, updateColorScheme } from "./graph.js";
+import { initializeGraph } from "./graph.js";
+import { getAuthenticatedUser, callGenerateSentences, callAnalyzeCollocation } from "./firebase.js"
 
 window.definitions = window.definitions || {};
 //TODO break this down further
@@ -100,7 +101,69 @@ let runTextToSpeech = function (text, anchors) {
     }
 };
 
-let createActionMenu = function (holder, text, aList, examples) {
+// Helper to render AI-generated sentences under a container
+let renderAISentences = function (container, sentences, headingText, blockClass) {
+    if (!container || !Array.isArray(sentences) || !sentences.length) return;
+    if (blockClass) {
+        const old = container.querySelector('.' + blockClass);
+        if (old) old.remove();
+    }
+    let block = document.createElement('li');
+    block.className = blockClass || 'ai-sentences-block';
+    let heading = document.createElement('h3');
+    heading.className = 'section-heading';
+    heading.textContent = headingText || 'More Examples (AI)';
+    block.appendChild(heading);
+    let list = document.createElement('ul');
+    list.className = 'ai-sentences-list';
+    sentences.forEach(s => {
+        if (!s || !s.targetLanguageText || !s.englishTranslation) return;
+        let li = document.createElement('li');
+        let targetP = document.createElement('p');
+        targetP.className = 'target-example example-line';
+        const tokens = s.targetLanguageText.split(/\s+/).filter(x => x.length);
+        const anchors = makeSentenceNavigable(tokens, targetP, true);
+        // Attach compact action menu with listen/save only (no AI actions for full sentences)
+        createActionMenu(list, targetP, s.targetLanguageText, anchors, [{ t: tokens, b: s.englishTranslation }]);
+        li.appendChild(targetP);
+        let baseP = document.createElement('p');
+        baseP.className = 'base-example example-line';
+        baseP.textContent = s.englishTranslation;
+        li.appendChild(baseP);
+        list.appendChild(li);
+    });
+    block.appendChild(list);
+    container.appendChild(block);
+};
+
+// AI loading helpers
+let showAiLoading = function (container, label) {
+    if (!container) return;
+    // remove any existing loading block
+    const old = container.querySelector('.ai-loading-block');
+    if (old) old.remove();
+    const li = document.createElement('li');
+    li.className = 'ai-loading-block';
+    const wrap = document.createElement('div');
+    wrap.className = 'ai-loading-wrapper';
+    const spinner = document.createElement('div');
+    spinner.className = 'ai-spinner';
+    const text = document.createElement('span');
+    text.className = 'ai-loading-text';
+    text.textContent = label || 'Loading AI…';
+    wrap.appendChild(spinner);
+    wrap.appendChild(text);
+    li.appendChild(wrap);
+    container.appendChild(li);
+    return li;
+};
+let clearAiLoading = function (container) {
+    if (!container) return;
+    const old = container.querySelector('.ai-loading-block');
+    if (old) old.remove();
+};
+
+let createActionMenu = function (aiResponseContainer, holder, text, aList, examples) {
     // Create three-dot menu container
     let menuContainer = document.createElement('div');
     menuContainer.className = 'action-menu-container';
@@ -174,6 +237,132 @@ let createActionMenu = function (holder, text, aList, examples) {
         menuButton.setAttribute('aria-expanded', 'false');
     });
     dropdown.appendChild(saveItem);
+
+    // AI actions: show conditionally based on whether header is a single word or an n-gram
+    try {
+        const isArrayInput = Array.isArray(text);
+        const isSingleWord = isArrayInput && text.length === 1;
+        const isCollocation = isArrayInput && text.length > 1;
+
+        if (isSingleWord) {
+            let aiSentencesItem = document.createElement('button');
+            aiSentencesItem.type = 'button';
+            aiSentencesItem.className = 'action-menu-item';
+            aiSentencesItem.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <defs>
+                        <linearGradient id="ai-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#60a5fa"/>
+                            <stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="4" y="4" width="16" height="16" transform="rotate(45 12 12)" fill="url(#ai-grad)" rx="2" ry="2"/>
+                </svg>
+                <span>AI sentences</span>
+            `;
+            aiSentencesItem.addEventListener('click', async function (e) {
+                e.stopPropagation();
+                dropdown.classList.remove('open');
+                menuButton.setAttribute('aria-expanded', 'false');
+                aiResponseContainer.removeAttribute('style');
+                try {
+                    const word = text[0];
+                    const rawDefs = (window.definitions && window.definitions[word]) ? window.definitions[word] : [];
+                    // Convert senses to plain strings expected by generateSentencesInputSchema
+                    const defs = Array.isArray(rawDefs)
+                        ? rawDefs
+                            .map(s => typeof s === 'string' ? s : (s && s.def ? s.def : null))
+                            .filter(Boolean)
+                        : [];
+                    showAiLoading(aiResponseContainer, 'Generating sentences…');
+                    const data = await callGenerateSentences({ word, targetLanguage: targetLang, count: 3, definitions: defs });
+                    clearAiLoading(aiResponseContainer);
+                    if (data && Array.isArray(data.sentences) && data.sentences.length) {
+                        renderAISentences(aiResponseContainer, data.sentences, 'More Examples (AI)', 'ai-sentences-block');
+                    }
+                } catch (err) {
+                    console.error('AI sentence generation failed', err);
+                    alert('Sorry, could not generate sentences right now.');
+                    clearAiLoading(aiResponseContainer);
+                }
+            });
+            if (getAuthenticatedUser()) {
+                dropdown.appendChild(aiSentencesItem);
+            }
+        }
+
+        if (isCollocation) {
+            let analyzeCollocationItem = document.createElement('button');
+            analyzeCollocationItem.type = 'button';
+            analyzeCollocationItem.className = 'action-menu-item';
+            analyzeCollocationItem.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <defs>
+                        <linearGradient id="ai-grad" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#60a5fa"/>
+                            <stop offset="100%" stop-color="#a78bfa"/>
+                        </linearGradient>
+                    </defs>
+                    <rect x="4" y="4" width="16" height="16" transform="rotate(45 12 12)" fill="url(#ai-grad)" rx="2" ry="2"/>
+                </svg>
+                <span>AI Analysis</span>
+            `;
+            analyzeCollocationItem.addEventListener('click', async function (e) {
+                e.stopPropagation();
+                dropdown.classList.remove('open');
+                menuButton.setAttribute('aria-expanded', 'false');
+                aiResponseContainer.removeAttribute('style');
+                try {
+                    const collocation = text.join(' ').toLowerCase();
+                    showAiLoading(aiResponseContainer, 'Analyzing collocation…');
+                    const data = await callAnalyzeCollocation({ collocation, targetLanguage: targetLang });
+                    clearAiLoading(aiResponseContainer);
+                    if (data) {
+                        const old = aiResponseContainer.querySelector('.ai-collocation-block');
+                        if (old) old.remove();
+                        const block = document.createElement('li');
+                        block.className = 'ai-collocation-block';
+                        const heading = document.createElement('h3');
+                        heading.className = 'section-heading';
+                        heading.textContent = 'Collocation Analysis (AI)';
+                        block.appendChild(heading);
+                        if (data.englishTranslation) {
+                            const tHead = document.createElement('h4');
+                            tHead.textContent = 'English Translation';
+                            block.appendChild(tHead);
+                            const tP = document.createElement('p');
+                            tP.className = 'base-example ai-translation';
+                            tP.textContent = data.englishTranslation;
+                            block.appendChild(tP);
+                        }
+                        const explanation = data.plainTextExplanation || data.explanation || data.summary;
+                        if (explanation) {
+                            const eHead = document.createElement('h4');
+                            eHead.textContent = 'Explanation';
+                            block.appendChild(eHead);
+                            const eP = document.createElement('p');
+                            eP.className = 'ai-explanation';
+                            eP.textContent = explanation;
+                            block.appendChild(eP);
+                        }
+                        if (Array.isArray(data.sentences) && data.sentences.length) {
+                            renderAISentences(block, data.sentences, 'Sentences', 'ai-collocation-sentences-section');
+                        }
+                        aiResponseContainer.appendChild(block);
+                    }
+                } catch (err) {
+                    console.error('AI collocation analysis failed', err);
+                    alert('Sorry, could not analyze this collocation right now.');
+                    clearAiLoading(aiResponseContainer);
+                }
+            });
+            if (getAuthenticatedUser()) {
+                dropdown.appendChild(analyzeCollocationItem);
+            }
+        }
+    } catch (err) {
+        // noop; AI actions optional
+    }
 
     // Toggle menu on button click
     menuButton.addEventListener('click', function (e) {
@@ -331,7 +520,7 @@ let setupExampleElements = function (examples, exampleList) {
         let exampleText = joinTokens(examples[i].t);
         let aList = makeSentenceNavigable(examples[i].t, targetHolder, true);
         targetHolder.className = 'target-example example-line';
-        createActionMenu(targetHolder, exampleText, aList, [examples[i]]);
+        createActionMenu(exampleList, targetHolder, exampleText, aList, [examples[i]]);
         exampleHolder.appendChild(targetHolder);
         if (examples[i].transcription) {
             let transcriptionHolder = document.createElement('p');
@@ -362,13 +551,16 @@ let setupExamples = function (words) {
     let item = document.createElement('li');
     let wordHolder = document.createElement('h2');
     wordHolder.classList.add('word-header');
+    let aiContainer = document.createElement('div');
+    aiContainer.style.display = 'none';
     for (let i = 0; i < words.length; i++) {
         let wordAnchor = document.createElement('a');
         wordAnchor.innerText = `${words[i]} `;
         wordHolder.appendChild(wordAnchor);
     }
-    createActionMenu(wordHolder, words, [], examples);
+    createActionMenu(aiContainer, wordHolder, words, [], examples);
     item.appendChild(wordHolder);
+    item.appendChild(aiContainer);
 
     if (words.length === 1) {
         let definitionHeading = document.createElement('h3');

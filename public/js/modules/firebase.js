@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithRedirect } from "firebase/auth";
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from "firebase/functions";
 
 const signinButton = document.getElementById('signin-button');
 const signoutButton = document.getElementById('signout-button');
@@ -9,6 +10,7 @@ const loginContainer = document.querySelector('.login-container');
 const loginBackLink = document.querySelector('.login-back-link');
 const signinWithGoogle = document.getElementById('signin-with-google');
 const mainContainer = document.getElementById('main-container');
+const menuContainer = document.getElementById('menu-container');
 
 const firebaseConfig = {
     apiKey: "AIzaSyCrDBfpFTmZvmiRahaGb8hepqDjgYzJThg",
@@ -21,6 +23,32 @@ const firebaseConfig = {
 };
 
 const firebaseApp = initializeApp(firebaseConfig);
+const functions = getFunctions(firebaseApp);
+
+let authenticatedUser = null;
+
+async function callGenerateSentences(params) {
+    try {
+        // connectFunctionsEmulator(functions, "127.0.0.1", 5004);
+        const fn = httpsCallable(functions, 'generateSentences');
+        const result = await fn(params);
+        return result?.data;
+    } catch (err) {
+        console.error('generateSentences error', err);
+        throw err;
+    }
+}
+async function callAnalyzeCollocation(params) {
+    try {
+        // connectFunctionsEmulator(functions, "127.0.0.1", 5004);
+        const fn = httpsCallable(functions, 'analyzeCollocation');
+        const result = await fn(params);
+        return result?.data;
+    } catch (err) {
+        console.error('analyzeCollocation error', err);
+        throw err;
+    }
+}
 
 function initialize() {
     const auth = getAuth();
@@ -28,6 +56,7 @@ function initialize() {
 
     onAuthStateChanged(auth, (user) => {
         if (user) {
+            authenticatedUser = user;
             signinButton.style.display = 'none';
             userAccountItem.style.display = 'block';
             welcomeMessage.textContent = user.email;
@@ -37,6 +66,7 @@ function initialize() {
                 mainContainer.removeAttribute('style');
             }
         } else {
+            authenticatedUser = null;
             userAccountItem.style.display = 'none';
             signinButton.style.display = 'block';
             welcomeMessage.textContent = '';
@@ -55,6 +85,7 @@ function initialize() {
 
     signinButton.addEventListener('click', function () {
         mainContainer.style.display = 'none';
+        menuContainer.style.display = 'none';
         loginContainer.removeAttribute('style');
     });
 
@@ -69,4 +100,8 @@ function initialize() {
     });
 }
 
-export { initialize, firebaseApp }
+function getAuthenticatedUser() {
+    return authenticatedUser;
+}
+
+export { initialize, getAuthenticatedUser, callAnalyzeCollocation, callGenerateSentences, firebaseApp }
