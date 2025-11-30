@@ -402,6 +402,51 @@ let createActionMenu = function (aiResponseContainer, holder, text, aList, examp
                 menuButton.setAttribute('aria-expanded', 'false');
             });
             dropdown.appendChild(saveItem);
+
+            // Share menu item - only for single words and when Web Share API is available
+            if (navigator && typeof navigator.share === 'function') {
+                let shareItem = document.createElement('button');
+                shareItem.type = 'button';
+                shareItem.className = 'action-menu-item';
+                shareItem.innerHTML = `
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <circle cx="18" cy="5" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="6" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="18" cy="19" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <path d="M8.5 13.3L15.5 16.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M15.5 7.3L8.5 10.7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <span>Share</span>
+                `;
+                shareItem.addEventListener('click', async function (e) {
+                    e.stopPropagation();
+                    const langOption = Object.values(languageOptions).find(opt => opt.targetLang === targetLang);
+                    const shareUrl = langOption && langOption.urlPath
+                        ? `${window.location.origin}/${langOption.urlPath}/${encodeURIComponent(word)}`
+                        : window.location.href;
+                    let success = false;
+                    try {
+                        await navigator.share({ title: `${word} — TrieLingual`, url: shareUrl });
+                        success = true;
+                    } catch (err) {
+                        // Likely user canceled; no fallback per requirements
+                        success = false;
+                    }
+                    if (success) {
+                        const labelEl = shareItem.querySelector('span');
+                        if (labelEl) labelEl.textContent = 'Shared';
+                        setTimeout(() => {
+                            dropdown.classList.remove('open');
+                            menuButton.setAttribute('aria-expanded', 'false');
+                            if (labelEl) labelEl.textContent = 'Share';
+                        }, 800);
+                    } else {
+                        dropdown.classList.remove('open');
+                        menuButton.setAttribute('aria-expanded', 'false');
+                    }
+                });
+                dropdown.appendChild(shareItem);
+            }
         } else if (!isArrayInput) {
             // For sentence examples (non-array text input), save sentence to list
             let allSaved = examples && examples.length && examples.every(x => inStudyList(x.t));
