@@ -319,6 +319,47 @@ let createActionMenu = function (aiResponseContainer, holder, text, aList, examp
     });
     dropdown.appendChild(listenItem);
 
+    // Copy menu item
+    let copyItem = document.createElement('button');
+    copyItem.type = 'button';
+    copyItem.className = 'action-menu-item';
+    copyItem.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <rect x="8" y="8" width="12" height="12" rx="2" ry="2" fill="currentColor" opacity="0.85"></rect>
+            <rect x="4" y="4" width="12" height="12" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"></rect>
+        </svg>
+        <span>Copy</span>
+    `;
+    copyItem.addEventListener('click', async function (e) {
+        e.stopPropagation();
+        const toCopy = Array.isArray(text) ? text.join(' ') : String(text || '');
+        let success = false;
+        try {
+            if (!navigator.clipboard || !navigator.clipboard.writeText) {
+                alert('Clipboard not available in this context.');
+            } else {
+                await navigator.clipboard.writeText(toCopy);
+                success = true;
+            }
+        } catch (err) {
+            console.error('Clipboard write failed', err);
+            alert('Could not copy to clipboard.');
+        }
+        if (success) {
+            const labelEl = copyItem.querySelector('span');
+            if (labelEl) labelEl.textContent = 'Copied';
+            setTimeout(() => {
+                dropdown.classList.remove('open');
+                menuButton.setAttribute('aria-expanded', 'false');
+                if (labelEl) labelEl.textContent = 'Copy';
+            }, 800);
+        } else {
+            dropdown.classList.remove('open');
+            menuButton.setAttribute('aria-expanded', 'false');
+        }
+    });
+    dropdown.appendChild(copyItem);
+
     // AI actions: show conditionally based on whether header is a single word or an n-gram
     try {
         const isArrayInput = Array.isArray(text);
