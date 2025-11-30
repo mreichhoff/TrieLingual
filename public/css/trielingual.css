@@ -951,7 +951,8 @@ p.target-example {
     border-bottom: 2px solid transparent;
 }
 
-.sentence-container a:hover {
+.sentence-container a:hover,
+.sentence-container a.speaking {
     background-color: rgba(110, 226, 0, 0.3);
     border-bottom-color: #6de200;
     transform: scale(1.05);

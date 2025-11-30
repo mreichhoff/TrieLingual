@@ -89,12 +89,48 @@ let runTextToSpeech = function (text, anchors) {
         let utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = targetLang;
         utterance.voice = tts;
+        // Map character offsets to token anchors for highlighting during speech.
+        let wordRanges = [];
+        try {
+            const tokens = Array.isArray(anchors) ? anchors.map(a => (a && a.textContent ? a.textContent.trimEnd() : '')) : [];
+            let cursor = 0;
+            for (let i = 0; i < tokens.length; i++) {
+                const tok = tokens[i] || '';
+                // If not the first token and token isn't punctuation for the current language, account for a preceding space
+                if (i > 0 && !isPunctuation(tok)) {
+                    cursor += 1; // space
+                }
+                const start = cursor;
+                const len = tok.length;
+                const end = start + len;
+                wordRanges.push({ start, end, anchor: anchors[i] });
+                cursor = end;
+            }
+        } catch (e) {
+            wordRanges = [];
+        }
+
+        let lastHighlighted = null;
         utterance.addEventListener('boundary', function (event) {
-            //TODO: highlighting
+            const idx = typeof event.charIndex === 'number' ? event.charIndex : null;
+            if (idx == null || !wordRanges.length) return;
+            for (let i = 0; i < wordRanges.length; i++) {
+                const r = wordRanges[i];
+                if (idx >= r.start && idx < r.end) {
+                    if (lastHighlighted && lastHighlighted !== r.anchor) {
+                        lastHighlighted.classList.remove('speaking');
+                    }
+                    lastHighlighted = r.anchor;
+                    if (lastHighlighted) {
+                        lastHighlighted.classList.add('speaking');
+                    }
+                    break;
+                }
+            }
         });
         utterance.addEventListener('end', function () {
             anchors.forEach(word => {
-                word.style.fontWeight = 'normal';
+                word.classList.remove('speaking');
             });
         });
         speechSynthesis.speak(utterance);
