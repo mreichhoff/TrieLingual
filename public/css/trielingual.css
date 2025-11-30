@@ -491,6 +491,43 @@ h2 span {
     color: rgba(238, 238, 238, 0.8);
 }
 
+/* Collapsible definitions toggle styling */
+.collapse-toggle {
+    margin-left: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: inherit;
+    cursor: pointer;
+}
+
+.collapse-toggle svg {
+    width: 18px;
+    height: 18px;
+}
+
+.collapse-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: scale(1.1);
+}
+
+.collapse-toggle:focus {
+    outline: 2px solid rgba(96, 165, 250, 0.7);
+    outline-offset: 2px;
+}
+
+/* Ensure heading and toggle align nicely */
+.section-heading {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
 #examples ul li {
     font-size: 15px;
     margin-bottom: 12px;

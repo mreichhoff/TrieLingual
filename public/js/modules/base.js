@@ -128,19 +128,87 @@ let renderWordInline = function (container, word) {
 
     let definitionHeading = document.createElement('h3');
     definitionHeading.className = 'section-heading';
+    // Definitions section with collapse toggle
     definitionHeading.innerText = 'Definitions';
+    const defToggle = document.createElement('button');
+    defToggle.type = 'button';
+    defToggle.className = 'collapse-toggle';
+    defToggle.setAttribute('aria-expanded', 'true');
+    defToggle.title = 'Collapse definitions';
+    defToggle.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+    definitionHeading.appendChild(defToggle);
     item.appendChild(definitionHeading);
     let definitionHolder = document.createElement('ul');
     definitionHolder.className = 'definition';
     setupDefinitions([word], definitionHolder, true);
+    defToggle.addEventListener('click', function () {
+        const isOpen = defToggle.getAttribute('aria-expanded') === 'true';
+        if (isOpen) {
+            definitionHolder.style.display = 'none';
+            defToggle.setAttribute('aria-expanded', 'false');
+            defToggle.title = 'Expand definitions';
+            defToggle.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M7 14l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            `;
+        } else {
+            definitionHolder.style.display = '';
+            defToggle.setAttribute('aria-expanded', 'true');
+            defToggle.title = 'Collapse definitions';
+            defToggle.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            `;
+        }
+    });
     item.appendChild(definitionHolder);
 
     let examplesHeading = document.createElement('h3');
     examplesHeading.className = 'section-heading';
+    // Examples section with collapse toggle
     examplesHeading.innerText = 'Examples';
+    const exToggle = document.createElement('button');
+    exToggle.type = 'button';
+    exToggle.className = 'collapse-toggle';
+    exToggle.setAttribute('aria-expanded', 'true');
+    exToggle.title = 'Collapse examples';
+    exToggle.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+    examplesHeading.appendChild(exToggle);
     item.appendChild(examplesHeading);
     let exampleList = document.createElement('ul');
     item.appendChild(exampleList);
+    exToggle.addEventListener('click', function () {
+        const isOpen = exToggle.getAttribute('aria-expanded') === 'true';
+        if (isOpen) {
+            exampleList.style.display = 'none';
+            exToggle.setAttribute('aria-expanded', 'false');
+            exToggle.title = 'Expand examples';
+            exToggle.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M7 14l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            `;
+        } else {
+            exampleList.style.display = '';
+            exToggle.setAttribute('aria-expanded', 'true');
+            exToggle.title = 'Collapse examples';
+            exToggle.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            `;
+        }
+    });
     setupExampleElements(examples, exampleList);
 
     container.appendChild(item);
@@ -648,12 +716,46 @@ let setupExamples = function (words) {
     if (words.length === 1) {
         let definitionHeading = document.createElement('h3');
         definitionHeading.className = 'section-heading';
+        // Definitions section with collapse toggle
         definitionHeading.innerText = 'Definitions';
+        const defToggle = document.createElement('button');
+        defToggle.type = 'button';
+        defToggle.className = 'collapse-toggle';
+        defToggle.setAttribute('aria-expanded', 'true');
+        defToggle.title = 'Collapse definitions';
+        defToggle.innerHTML = `
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+        `;
+        definitionHeading.appendChild(defToggle);
         item.appendChild(definitionHeading);
 
         let definitionHolder = document.createElement('ul');
         definitionHolder.className = 'definition';
         setupDefinitions(words, definitionHolder, words.length === 1);
+        defToggle.addEventListener('click', function () {
+            const isOpen = defToggle.getAttribute('aria-expanded') === 'true';
+            if (isOpen) {
+                definitionHolder.style.display = 'none';
+                defToggle.setAttribute('aria-expanded', 'false');
+                defToggle.title = 'Expand definitions';
+                defToggle.innerHTML = `
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M7 14l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                `;
+            } else {
+                definitionHolder.style.display = '';
+                defToggle.setAttribute('aria-expanded', 'true');
+                defToggle.title = 'Collapse definitions';
+                defToggle.innerHTML = `
+                    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                `;
+            }
+        });
         item.appendChild(definitionHolder);
     }
 
@@ -662,11 +764,45 @@ let setupExamples = function (words) {
 
     let examplesHeading = document.createElement('h3');
     examplesHeading.className = 'section-heading';
+    // Examples section with collapse toggle
     examplesHeading.innerText = 'Examples';
+    const exToggle = document.createElement('button');
+    exToggle.type = 'button';
+    exToggle.className = 'collapse-toggle';
+    exToggle.setAttribute('aria-expanded', 'true');
+    exToggle.title = 'Collapse examples';
+    exToggle.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+    `;
+    examplesHeading.appendChild(exToggle);
     item.appendChild(examplesHeading);
 
     let exampleList = document.createElement('ul');
     item.appendChild(exampleList);
+    exToggle.addEventListener('click', function () {
+        const isOpen = exToggle.getAttribute('aria-expanded') === 'true';
+        if (isOpen) {
+            exampleList.style.display = 'none';
+            exToggle.setAttribute('aria-expanded', 'false');
+            exToggle.title = 'Expand examples';
+            exToggle.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M7 14l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            `;
+        } else {
+            exampleList.style.display = '';
+            exToggle.setAttribute('aria-expanded', 'true');
+            exToggle.title = 'Collapse examples';
+            exToggle.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M7 10l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            `;
+        }
+    });
     setupExampleElements(examples, exampleList);
 
     examplesList.append(item);
