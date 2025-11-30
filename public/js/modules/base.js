@@ -251,43 +251,81 @@ let createActionMenu = function (aiResponseContainer, holder, text, aList, examp
     });
     dropdown.appendChild(listenItem);
 
-    // Save to list menu item
-    let allSaved = examples && examples.length && examples.every(x => inStudyList(x.t));
-    let saveItem = document.createElement('button');
-    saveItem.type = 'button';
-    saveItem.className = 'action-menu-item';
-    saveItem.innerHTML = `
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <!-- Bookmark base -->
-            <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
-            ${allSaved
-            ? '<path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
-            : '<circle cx="18" cy="8" r="5" fill="#eaf2ff" opacity="0.85"/><path d="M18 5v6" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 8h6" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'}
-        </svg>
-        <span>${allSaved ? 'Saved' : 'Add to list'}</span>
-    `;
-    saveItem.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (examples && examples.length) {
-            addCards(examples);
-            saveItem.innerHTML = `
-                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
-                    <path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                </svg>
-                <span>Saved</span>
-            `;
-        }
-        dropdown.classList.remove('open');
-        menuButton.setAttribute('aria-expanded', 'false');
-    });
-    dropdown.appendChild(saveItem);
-
     // AI actions: show conditionally based on whether header is a single word or an n-gram
     try {
         const isArrayInput = Array.isArray(text);
         const isSingleWord = isArrayInput && text.length === 1;
         const isCollocation = isArrayInput && text.length > 1;
+
+        // Save to list menu item - only for single words in word-header context
+        if (isSingleWord) {
+            const word = text[0];
+            const wordDefinitions = (window.definitions && window.definitions[word]) ? window.definitions[word] : [];
+            const definitionCards = getCardsFromDefinitions([word], [wordDefinitions]);
+            const allSaved = definitionCards.length && definitionCards.every(x => inStudyList(x.t));
+
+            let saveItem = document.createElement('button');
+            saveItem.type = 'button';
+            saveItem.className = 'action-menu-item';
+            saveItem.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <!-- Bookmark base -->
+                    <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
+                    ${allSaved
+                    ? '<path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+                    : '<circle cx="18" cy="8" r="5" fill="#eaf2ff" opacity="0.85"/><path d="M18 5v6" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 8h6" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'}
+                </svg>
+                <span>${allSaved ? 'Saved' : 'Add to list'}</span>
+            `;
+            saveItem.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (definitionCards.length) {
+                    addCards(definitionCards);
+                    saveItem.innerHTML = `
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
+                            <path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                        <span>Saved</span>
+                    `;
+                }
+                dropdown.classList.remove('open');
+                menuButton.setAttribute('aria-expanded', 'false');
+            });
+            dropdown.appendChild(saveItem);
+        } else if (!isArrayInput) {
+            // For sentence examples (non-array text input), save sentence to list
+            let allSaved = examples && examples.length && examples.every(x => inStudyList(x.t));
+            let saveItem = document.createElement('button');
+            saveItem.type = 'button';
+            saveItem.className = 'action-menu-item';
+            saveItem.innerHTML = `
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <!-- Bookmark base -->
+                    <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
+                    ${allSaved
+                    ? '<path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+                    : '<circle cx="18" cy="8" r="5" fill="#eaf2ff" opacity="0.85"/><path d="M18 5v6" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 8h6" stroke="#60a5fa" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'}
+                </svg>
+                <span>${allSaved ? 'Saved' : 'Add to list'}</span>
+            `;
+            saveItem.addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (examples && examples.length) {
+                    addCards(examples);
+                    saveItem.innerHTML = `
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
+                            <path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                        <span>Saved</span>
+                    `;
+                }
+                dropdown.classList.remove('open');
+                menuButton.setAttribute('aria-expanded', 'false');
+            });
+            dropdown.appendChild(saveItem);
+        }
 
         if (isSingleWord) {
             let aiSentencesItem = document.createElement('button');
