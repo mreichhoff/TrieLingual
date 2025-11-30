@@ -1,6 +1,6 @@
 import { addCards, getCardCount, inStudyList, initialize as dataInit } from "./data-layer.js";
 import { initializeGraph } from "./graph.js";
-import { getAuthenticatedUser, callGenerateSentences, callAnalyzeCollocation } from "./firebase.js"
+import { getAuthenticatedUser, callGenerateSentences, callAnalyzeCollocation, callExplainEnglishText, callExplainText } from "./firebase.js"
 
 window.definitions = window.definitions || {};
 //TODO break this down further
@@ -99,6 +99,51 @@ let runTextToSpeech = function (text, anchors) {
         });
         speechSynthesis.speak(utterance);
     }
+};
+
+// Render a single-word block (header + definitions + examples) appended to a container
+let renderWordInline = function (container, word) {
+    if (!container || !word || !trie[word]) return;
+    let examples = findExamples([word]);
+
+    let item = document.createElement('li');
+    // Add divider if there are already items
+    if (container.children.length > 0) {
+        item.style.borderTop = '2px solid rgba(255, 255, 255, 0.15)';
+        item.style.marginTop = '24px';
+        item.style.paddingTop = '24px';
+    }
+    let wordHolder = document.createElement('h2');
+    wordHolder.classList.add('word-header');
+    let wordAnchor = document.createElement('a');
+    wordAnchor.innerText = `${word} `;
+    wordAnchor.style.cursor = 'pointer';
+    wordAnchor.addEventListener('click', function () {
+        updateGraph(word);
+    });
+    wordHolder.appendChild(wordAnchor);
+    // Attach menu to header (uses existing actions for single word)
+    createActionMenu(item, wordHolder, [word], [], examples);
+    item.appendChild(wordHolder);
+
+    let definitionHeading = document.createElement('h3');
+    definitionHeading.className = 'section-heading';
+    definitionHeading.innerText = 'Definitions';
+    item.appendChild(definitionHeading);
+    let definitionHolder = document.createElement('ul');
+    definitionHolder.className = 'definition';
+    setupDefinitions([word], definitionHolder, true);
+    item.appendChild(definitionHolder);
+
+    let examplesHeading = document.createElement('h3');
+    examplesHeading.className = 'section-heading';
+    examplesHeading.innerText = 'Examples';
+    item.appendChild(examplesHeading);
+    let exampleList = document.createElement('ul');
+    item.appendChild(exampleList);
+    setupExampleElements(examples, exampleList);
+
+    container.appendChild(item);
 };
 
 // Helper to render AI-generated sentences under a container
@@ -774,13 +819,80 @@ let makeSentenceNavigable = function (tokens, container, noExampleChange) {
     return anchorList;
 };
 
-searchForm.addEventListener('submit', function (event) {
+searchForm.addEventListener('submit', async function (event) {
     event.preventDefault();
     let value = searchBox.value.toLocaleLowerCase();
-    if (value && trie[value]) {
-        updateGraph(value);
-        setupExamples([value]);
+    if (!value) return;
+    const tokens = value.split(/\s+/).filter(Boolean);
+    const known = tokens.filter(t => trie[t]);
+
+    // Clear once before rendering
+    while (examplesList.firstChild) {
+        examplesList.firstChild.remove();
     }
+
+    // If few known words and user is authenticated, treat as English and call explainEnglish
+    if (known.length < Math.max(1, Math.ceil(tokens.length / 2)) && getAuthenticatedUser()) {
+        try {
+            showAiLoading(examplesList, 'Translating…');
+            const data = await callExplainEnglishText({ text: value });
+            clearAiLoading(examplesList);
+            if (data && data.targetLanguageText) {
+                // Render as a sentence card: target from AI, English from user input
+                let item = document.createElement('li');
+                let targetP = document.createElement('p');
+                targetP.className = 'target-example example-line';
+                const aiTokens = data.targetLanguageText.split(/\s+/).filter(x => x.length);
+                const anchors = makeSentenceNavigable(aiTokens, targetP, false);
+                createActionMenu(examplesList, targetP, data.targetLanguageText, anchors, [{ t: aiTokens, b: value }]);
+                item.appendChild(targetP);
+                let baseP = document.createElement('p');
+                baseP.className = 'base-example example-line';
+                baseP.textContent = value;
+                item.appendChild(baseP);
+                examplesList.appendChild(item);
+            }
+        } catch (err) {
+            console.error('AI English explanation failed', err);
+            alert('Sorry, could not translate this text right now.');
+            clearAiLoading(examplesList);
+        }
+        return;
+    }
+
+    // If authenticated user with multi-word target language input, call explainText
+    if (getAuthenticatedUser() && tokens.length > 2) {
+        try {
+            showAiLoading(examplesList, 'Analyzing…');
+            const data = await callExplainText({ text: value });
+            clearAiLoading(examplesList);
+            if (data && data.englishText) {
+                // Render as a sentence card: target from user input, English from AI
+                let item = document.createElement('li');
+                let targetP = document.createElement('p');
+                targetP.className = 'target-example example-line';
+                const anchors = makeSentenceNavigable(tokens, targetP, false);
+                createActionMenu(examplesList, targetP, value, anchors, [{ t: tokens, b: data.englishText }]);
+                item.appendChild(targetP);
+                let baseP = document.createElement('p');
+                baseP.className = 'base-example example-line';
+                baseP.textContent = data.englishText;
+                item.appendChild(baseP);
+                examplesList.appendChild(item);
+            }
+        } catch (err) {
+            console.error('AI text explanation failed', err);
+            alert('Sorry, could not analyze this text right now.');
+            clearAiLoading(examplesList);
+        }
+        return;
+    }
+
+    if (known.length === 0) return;
+    // Update graph to the first known word for context
+    updateGraph(known[0]);
+    // Render each known token in order
+    known.forEach(w => renderWordInline(examplesList, w));
 });
 
 menuButton.addEventListener('click', function () {

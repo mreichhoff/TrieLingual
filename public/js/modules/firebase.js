@@ -49,6 +49,28 @@ async function callAnalyzeCollocation(params) {
         throw err;
     }
 }
+async function callExplainEnglishText(params) {
+    try {
+        // connectFunctionsEmulator(functions, "127.0.0.1", 5004);
+        const fn = httpsCallable(functions, 'explainEnglishText');
+        const result = await fn(params);
+        return result?.data;
+    } catch (err) {
+        console.error('explainEnglishText error', err);
+        throw err;
+    }
+}
+async function callExplainText(params) {
+    try {
+        // connectFunctionsEmulator(functions, "127.0.0.1", 5004);
+        const fn = httpsCallable(functions, 'explainText');
+        const result = await fn(params);
+        return result?.data;
+    } catch (err) {
+        console.error('explainText error', err);
+        throw err;
+    }
+}
 
 function initialize() {
     const auth = getAuth();
@@ -104,4 +126,4 @@ function getAuthenticatedUser() {
     return authenticatedUser;
 }
 
-export { initialize, getAuthenticatedUser, callAnalyzeCollocation, callGenerateSentences, firebaseApp }
+export { initialize, getAuthenticatedUser, callAnalyzeCollocation, callGenerateSentences, callExplainEnglishText, callExplainText, firebaseApp }
