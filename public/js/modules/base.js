@@ -82,6 +82,138 @@ speechSynthesis.onvoiceschanged = function () {
     }
 };
 
+// --- Search suggestions (character-level trie) ---
+// TODO: we may want to move this to a worker, and also out of this file, and also should we use a wordset to get more words in there
+let searchTrieRoot = null;
+let suggestionsContainer = null;
+let suggestionActiveIndex = -1;
+
+let buildSearchTrie = function (words) {
+    const root = { c: Object.create(null), end: false };
+    for (let i = 0; i < words.length; i++) {
+        const w = words[i];
+        if (!w || typeof w !== 'string') continue;
+        let node = root;
+        for (let j = 0; j < w.length; j++) {
+            const ch = w[j];
+            if (!node.c[ch]) node.c[ch] = { c: Object.create(null), end: false };
+            node = node.c[ch];
+        }
+        node.end = true;
+    }
+    return root;
+};
+
+let findPrefixNode = function (root, prefix) {
+    let node = root;
+    for (let i = 0; i < prefix.length; i++) {
+        const ch = prefix[i];
+        if (!node.c[ch]) return null;
+        node = node.c[ch];
+    }
+    return node;
+};
+
+let collectWords = function (node, prefix, limit, results) {
+    if (!node || results.length >= limit) return;
+    if (node.end) results.push(prefix);
+    if (results.length >= limit) return;
+    const keys = Object.keys(node.c);
+    for (let i = 0; i < keys.length && results.length < limit; i++) {
+        const ch = keys[i];
+        collectWords(node.c[ch], prefix + ch, limit, results);
+    }
+};
+
+let getSuggestions = function (prefix, limit) {
+    if (!searchTrieRoot || !prefix) return [];
+    const node = findPrefixNode(searchTrieRoot, prefix);
+    if (!node) return [];
+    const out = [];
+    collectWords(node, prefix, limit || 8, out);
+    return out;
+};
+
+let ensureSuggestionsContainer = function () {
+    if (suggestionsContainer) return suggestionsContainer;
+    const field = searchBox && searchBox.parentElement; // .search-field
+    if (!field) return null;
+    const ul = document.createElement('ul');
+    ul.id = 'search-suggestions';
+    ul.className = 'search-suggestions';
+    field.appendChild(ul);
+    suggestionsContainer = ul;
+    return suggestionsContainer;
+};
+
+let hideSuggestions = function () {
+    if (!suggestionsContainer) return;
+    suggestionsContainer.innerHTML = '';
+    suggestionsContainer.style.display = 'none';
+};
+
+let showSuggestions = function (items, baseTokens) {
+    const ul = ensureSuggestionsContainer();
+    if (!ul) return;
+    ul.innerHTML = '';
+    if (!items || !items.length) {
+        hideSuggestions();
+        return;
+    }
+    suggestionActiveIndex = -1;
+    items.forEach((w) => {
+        const li = document.createElement('li');
+        li.textContent = w;
+        li.tabIndex = 0;
+        li.addEventListener('mousedown', function (e) {
+            // Use mousedown so click doesn't blur the input first
+            e.preventDefault();
+            const tokens = baseTokens.slice(0, baseTokens.length - 1);
+            const filled = tokens.length ? (tokens.join(' ') + ' ' + w) : w;
+            searchBox.value = filled;
+            hideSuggestions();
+            searchBox.focus();
+            if (searchForm && typeof searchForm.requestSubmit === 'function') {
+                searchForm.requestSubmit();
+            } else if (searchForm) {
+                searchForm.submit();
+            }
+        });
+        ul.appendChild(li);
+    });
+    ul.style.display = 'block';
+};
+
+let moveSuggestionSelection = function (direction) {
+    if (!suggestionsContainer || suggestionsContainer.style.display === 'none') return;
+    const items = Array.from(suggestionsContainer.querySelectorAll('li'));
+    if (!items.length) return;
+    // direction: 1 for down, -1 for up
+    suggestionActiveIndex += direction;
+    if (suggestionActiveIndex < 0) suggestionActiveIndex = items.length - 1;
+    if (suggestionActiveIndex >= items.length) suggestionActiveIndex = 0;
+    items.forEach((li, idx) => {
+        if (idx === suggestionActiveIndex) {
+            li.classList.add('active');
+            li.scrollIntoView({ block: 'nearest' });
+        } else {
+            li.classList.remove('active');
+        }
+    });
+};
+
+let applyCurrentSuggestion = function () {
+    if (!suggestionsContainer || suggestionsContainer.style.display === 'none') return false;
+    const items = Array.from(suggestionsContainer.querySelectorAll('li'));
+    if (!items.length) return false;
+    const idx = suggestionActiveIndex >= 0 ? suggestionActiveIndex : 0;
+    const li = items[idx];
+    if (!li) return false;
+    // Simulate click selection behavior
+    li.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    return true;
+};
+
 let runTextToSpeech = function (text, anchors) {
     tts = tts || getTts();
     //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
@@ -1013,6 +1145,58 @@ let initialize = function () {
             break;
         }
     }
+
+    // Build the character-level search trie from the top-level words in `trie`
+    try {
+        if (typeof trie === 'object' && trie) {
+            const words = Object.keys(trie).filter(Boolean);
+            searchTrieRoot = buildSearchTrie(words);
+        }
+    } catch (e) {
+        // ignore; suggestions optional
+        searchTrieRoot = null;
+    }
+
+    // Wire up input handler for suggestions (prefix = last token)
+    if (searchBox) {
+        searchBox.addEventListener('input', function () {
+            const raw = searchBox.value.toLocaleLowerCase();
+            const tokens = raw.split(/\s+/).filter((t, idx, arr) => t.length || idx < arr.length - 1);
+            if (!tokens.length) {
+                hideSuggestions();
+                return;
+            }
+            const last = tokens[tokens.length - 1];
+            if (!last) {
+                hideSuggestions();
+                return;
+            }
+            const items = getSuggestions(last, 8);
+            showSuggestions(items, tokens);
+        });
+        // Hide suggestions on blur or Escape
+        searchBox.addEventListener('blur', function () {
+            // delay to allow mousedown on suggestion to fire
+            setTimeout(hideSuggestions, 120);
+        });
+        searchBox.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                hideSuggestions();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                moveSuggestionSelection(1);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                moveSuggestionSelection(-1);
+            } else if (e.key === 'Enter') {
+                // If a suggestion is visible, apply it and submit; else let form handler run
+                const applied = applyCurrentSuggestion();
+                if (applied) {
+                    e.preventDefault();
+                }
+            }
+        });
+    }
     // If word is in URL, display it with examples; otherwise just load the graph for a random default
     if (window.urlPath && window.urlPath.word) {
         const word = window.urlPath.word;
@@ -1187,6 +1371,19 @@ searchForm.addEventListener('submit', async function (event) {
     if (known.length === 0) return;
     // Update graph to the first known word for context
     updateGraph(known[0]);
+    // Update URL once to reflect the primary searched word
+    try {
+        const langOption = Object.values(languageOptions).find(opt => opt.targetLang === targetLang);
+        if (langOption && langOption.urlPath) {
+            const word = known[0];
+            const newUrl = `/${langOption.urlPath}/${encodeURIComponent(word)}`;
+            if (document.location.pathname !== newUrl) {
+                history.pushState({}, '', newUrl);
+            }
+        }
+    } catch (e) {
+        // noop; URL update optional
+    }
     // Render each known token in order
     known.forEach(w => renderWordInline(examplesList, w));
 });
