@@ -72,6 +72,20 @@ a {
     }
 }
 
+/* New fade-out animation for landing container */
+.fade-out {
+    animation: fadeOut 250ms ease-in-out forwards;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
 @keyframes slideInRight {
     from {
         transform: translateX(30%);
