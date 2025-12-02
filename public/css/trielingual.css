@@ -1548,6 +1548,17 @@ select {
 
     #landing {
         max-width: 98%;
+        padding: 0 6px;
+    }
+
+    .language-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+        gap: 6px;
+    }
+
+    .language-card {
+        padding: 18px 0;
     }
 }
 
