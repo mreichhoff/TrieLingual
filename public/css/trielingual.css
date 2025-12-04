@@ -19,6 +19,8 @@ body {
     font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* TODO: why do we need this? Do we need this? */
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* Make UI headings and controls use the same modern stack */
@@ -131,11 +133,10 @@ a {
 }
 
 .menu-container {
-    flex: 1;
-    text-align: left;
-    margin-left: 8px;
-    margin-top: 4px;
-    cursor: pointer;
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    margin: 0 8px;
 }
 
 .menu-expand {
@@ -158,12 +159,11 @@ a {
 }
 
 .mode-toggle-container {
-    flex: 1;
-    text-align: right;
-    margin-right: 8px;
+    flex: 0 0 auto;
     display: flex;
     justify-content: flex-end;
     align-items: center;
+    margin-right: 8px;
 }
 
 .mode-toggle-button {
@@ -334,11 +334,36 @@ a {
 }
 
 #menu-button {
-    display: block;
-    width: 25%;
-    height: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #111;
+    border: 0;
+    padding: 4px;
     cursor: pointer;
-    margin: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    flex: 0 0 auto;
+}
+
+#menu-button:hover {
+    background: rgba(255, 255, 255, 1);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+#menu-button:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+#menu-button svg {
+    width: 22px;
+    height: 22px;
+    display: block;
+    fill: currentColor;
 }
 
 .authn-button {
@@ -620,25 +645,24 @@ p.target-example {
 
 #controls {
     display: flex;
-    flex-grow: 1;
-    max-width: 80%;
-    margin: 0 auto;
+    flex: 1 1 auto;
+    justify-content: center;
+    align-items: center;
     padding: 5px 0;
+    gap: 8px;
 }
 
 /* Search form styling: full-width, modern input and icon button */
 #search-form {
     width: 100%;
+    max-width: 600px;
     display: block;
     box-sizing: border-box;
-    /* keep a small gap on the right so the search button isn't flush with the graph */
-    padding-right: 12px;
 }
 
 .search-field {
     display: flex;
     align-items: center;
-    gap: 8px;
     position: relative;
     /* anchor suggestions dropdown */
 }
@@ -646,10 +670,11 @@ p.target-example {
 #search-box {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 10px 14px;
+    padding: 10px 14px 10px 44px;
     border-radius: 12px;
     border: 0;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.15) url('data:image/svg+xml;utf8,<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM10 14a4 4 0 110-8 4 4 0 010 8z" fill="rgba(255, 255, 255, 0.65)"/></svg>') no-repeat 12px center;
+    background-size: 20px 20px;
     color: inherit;
     font-size: 16px;
     box-shadow: 0 6px 18px rgba(2, 6, 23, 0.45);
@@ -672,13 +697,24 @@ p.target-example {
     color: #111;
 }
 
+.search-button {
+    width: 44px;
+    height: 44px;
+    padding: 6px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #ffffff, #f1f4f8);
+    color: #111;
+}
+
 /* Search suggestions dropdown */
 .search-suggestions {
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
-    right: 52px;
-    /* leave room for the 44px search button + gap */
+    right: 0;
     background: #fff;
     color: #111;
     border-radius: 8px;
@@ -786,9 +822,7 @@ p.target-example {
 
 .study-card-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
+    justify-content: end;
 }
 
 .cards-badge {

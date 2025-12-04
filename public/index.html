@@ -65,9 +65,11 @@
         <div id="header-container">
             <header class="header">
                 <div class="menu-container">
-                    <label id="menu-button">
-                        <i class="menu-expand"></i>
-                    </label>
+                    <button id="menu-button" class="icon-button" aria-label="Menu" title="Menu">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" fill="currentColor" />
+                        </svg>
+                    </button>
                 </div>
                 <div id="controls">
                     <form id="search-form" class="control" role="search">
@@ -75,12 +77,6 @@
                         <label class="visually-hidden" for="search-box">Choose a word</label>
                         <div class="search-field">
                             <input id="search-box" type="text" placeholder="Search a word" aria-label="Choose a word" />
-                            <button type="submit" class="icon-button search-button" aria-label="Search">
-                                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                    <path
-                                        d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0016 9.5 6.5 6.5 0 109.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM10 14a4 4 0 110-8 4 4 0 010 8z" />
-                                </svg>
-                            </button>
                         </div>
                     </form>
                 </div>
@@ -128,21 +124,17 @@
                 <div id="study-container" style="display:none">
                     <div class="study-card">
                         <header class="study-card-header">
-                            <div class="study-info">
-                                <p id="explain-text">Not sure how this works? <a class="faq-link"
-                                        id="show-study-faq">Learn more.</a></p>
-                            </div>
                             <div class="cards-badge" id="cards-due" aria-live="polite">
                                 <span class="badge-label">Cards due</span>
                                 <span class="badge-count" id="card-due-count"></span>
                             </div>
                         </header>
-
                         <section class="study-cta" id="study-call-to-action">
                             <div class="cta-text">
                                 <span id="task-description">What does the text below mean?</span>
                                 <span id="task-complete">All caught up. Check back later or add more cards to your
-                                    list.</span>
+                                    list. <a class="faq-link" style="color:#eee" id="show-study-faq">Learn
+                                        more.</a></span>
                             </div>
                         </section>
 
