@@ -4,7 +4,6 @@ import { genkit } from "genkit";
 import { vertexAI, gemini20Flash001 } from '@genkit-ai/vertexai';
 import * as admin from 'firebase-admin';
 import { isUserAuthorized } from "./auth";
-import * as logger from "firebase-functions/logger";
 import {
     explanationSchema,
     explanationInputSchema,
@@ -15,7 +14,7 @@ import {
     sentenceGenerationSchema,
     generateSentencesInputSchema,
     analyzeCollocationSchema,
-    analyzeCollocationInputSchema
+    analyzeCollocationInputSchema,
 } from "./schema";
 
 setGlobalOptions({ maxInstances: 10 });
@@ -40,7 +39,8 @@ const ExplanationInputSchema = ai.defineSchema('ExplanationInputSchema', explana
 const explainTargetPrompt = ai.prompt<typeof ExplanationInputSchema, typeof ExplanationSchema>('explain-target');
 const EnglishExplanationSchema = ai.defineSchema('EnglishExplanationSchema', englishExplanationSchema);
 const ExplainEnglishInputSchema = ai.defineSchema('ExplainEnglishInputSchema', explainEnglishInputSchema);
-const explainEnglishPrompt = ai.prompt<typeof ExplainEnglishInputSchema, typeof EnglishExplanationSchema>('explain-english');
+const explainEnglishPrompt = ai.prompt<
+    typeof ExplainEnglishInputSchema, typeof EnglishExplanationSchema>('explain-english');
 
 // TODO: dig into streamSchema and streaming structured responses
 const explainFlow = ai.defineFlow({
@@ -148,7 +148,8 @@ export const generateSentences = onCallGenkit(generateSentencesFlow);
 const AnalyzeCollocationSchema = ai.defineSchema('AnalyzeCollocationSchema', analyzeCollocationSchema);
 const AnalyzeCollocationInputSchema = ai.defineSchema('AnalyzeCollocationInputSchema', analyzeCollocationInputSchema);
 
-const analyzeCollocationPrompt = ai.prompt<typeof AnalyzeCollocationInputSchema, typeof AnalyzeCollocationSchema>('analyze-collocation');
+const analyzeCollocationPrompt = ai.prompt<
+    typeof AnalyzeCollocationInputSchema, typeof AnalyzeCollocationSchema>('analyze-collocation');
 
 const analyzeCollocationFlow = ai.defineFlow({
     name: "analyzeCollocation",

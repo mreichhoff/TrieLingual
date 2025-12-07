@@ -66,7 +66,7 @@ export const explainEnglishInputSchema = z.object({
 export const analyzeCollocationInputSchema = z.object({
     collocation: z.string(),
     targetLanguage: z.string(),
-}); 
+});
 
 export const sentenceGenerationSchema = z.object({
     sentences: sentenceSchema,
