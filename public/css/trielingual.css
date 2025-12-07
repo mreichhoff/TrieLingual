@@ -163,7 +163,7 @@ a {
     display: flex;
     justify-content: flex-end;
     align-items: center;
-    margin-right: 8px;
+    margin: 0 8px;
 }
 
 .mode-toggle-button {
@@ -1102,7 +1102,6 @@ p.target-example {
     color: #111;
     border: 0;
     padding: 4px;
-    margin-left: 8px;
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
     transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
