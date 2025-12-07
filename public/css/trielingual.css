@@ -177,13 +177,13 @@ a {
 }
 
 .mode-toggle-button.study-mode {
-    background: linear-gradient(180deg, #fff7ed, #fed7aa);
-    color: #c2410c;
+    background: linear-gradient(180deg, #fef3f2, #fee2e2);
+    color: #b91c1c;
 }
 
 .mode-toggle-button.study-mode:hover {
-    background: linear-gradient(180deg, #fed7aa, #fdba74);
-    box-shadow: 0 6px 16px rgba(194, 65, 12, 0.3);
+    background: linear-gradient(180deg, #fee2e2, #fecaca);
+    box-shadow: 0 6px 16px rgba(185, 28, 28, 0.3);
 }
 
 .exit-container {
@@ -612,10 +612,8 @@ p.example-line {
 }
 
 .base-example {
-    opacity: 0.8;
+    opacity: 0.85;
     font-size: 15px;
-    padding: 4px;
-    border-left: 3px solid #666;
 }
 
 p.target-example {
@@ -1101,7 +1099,6 @@ p.target-example {
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.95);
     color: #111;
     border: 0;
     padding: 4px;
