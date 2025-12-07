@@ -58,7 +58,7 @@ let levelColor = function (element) {
 };
 let nodeWidth = function (element) {
     let word = element.data('word');
-    return `${Math.max(30, (word.length * 10) + 12)}px`;
+    return `${Math.max(30, (word.length * 10) + 10)}px`;
 };
 let nodeHeight = function (element) {
     return '32px';
