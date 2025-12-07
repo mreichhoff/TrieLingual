@@ -1317,14 +1317,14 @@ searchForm.addEventListener('submit', async function (event) {
             showAiLoading(examplesList, 'Translating…');
             const data = await callExplainEnglishText({ text: value, targetLanguage: targetLang });
             clearAiLoading(examplesList);
-            if (data && data.targetLanguageText) {
+            if (data && data.targetLanguageTranslation) {
                 // Render as a sentence card: target from AI, English from user input
                 let item = document.createElement('li');
                 let targetP = document.createElement('p');
                 targetP.className = 'target-example example-line';
-                const aiTokens = data.targetLanguageText.split(/\s+/).filter(x => x.length);
+                const aiTokens = data.targetLanguageTranslation.split(/\s+/).filter(x => x.length);
                 const anchors = makeSentenceNavigable(aiTokens, targetP, false);
-                createActionMenu(examplesList, targetP, data.targetLanguageText, anchors, [{ t: aiTokens, b: value }]);
+                createActionMenu(examplesList, targetP, data.targetLanguageTranslation, anchors, [{ t: aiTokens, b: value }]);
                 item.appendChild(targetP);
                 let baseP = document.createElement('p');
                 baseP.className = 'base-example example-line';
@@ -1346,17 +1346,17 @@ searchForm.addEventListener('submit', async function (event) {
             showAiLoading(examplesList, 'Analyzing…');
             const data = await callExplainText({ text: value, targetLanguage: targetLang });
             clearAiLoading(examplesList);
-            if (data && data.englishText) {
+            if (data && data.englishTranslation) {
                 // Render as a sentence card: target from user input, English from AI
                 let item = document.createElement('li');
                 let targetP = document.createElement('p');
                 targetP.className = 'target-example example-line';
                 const anchors = makeSentenceNavigable(tokens, targetP, false);
-                createActionMenu(examplesList, targetP, value, anchors, [{ t: tokens, b: data.englishText }]);
+                createActionMenu(examplesList, targetP, value, anchors, [{ t: tokens, b: data.englishTranslation }]);
                 item.appendChild(targetP);
                 let baseP = document.createElement('p');
                 baseP.className = 'base-example example-line';
-                baseP.textContent = data.englishText;
+                baseP.textContent = data.englishTranslation;
                 item.appendChild(baseP);
                 examplesList.appendChild(item);
             }
