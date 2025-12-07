@@ -58,6 +58,41 @@ let bfs = function (value, elements) {
         }
     }
 };
+
+// BFS for inverted trie - traverses backward from word to its predecessors
+let bfsInverted = function (value, elements, invertedTrieData) {
+    if (!value || !invertedTrieData) {
+        return;
+    }
+    let queue = [];
+    queue.push({ word: value, path: [value], trie: invertedTrieData });
+    while (queue.length > 0) {
+        let curr = queue.shift();
+        elements.nodes.push({
+            data: {
+                id: curr.path.join(''),
+                word: curr.word,
+                depth: curr.path.length - 1,
+                path: curr.path,
+                level: getLevelForWord(curr.word)
+            }
+        });
+        for (const [key, value] of Object.entries(curr.trie)) {
+            if (key === '__l') {
+                continue;
+            }
+            // In inverted trie, edges point backward (from predecessor to current word)
+            elements.edges.push({
+                data: {
+                    id: ('_edge' + key + curr.path.join('')),
+                    source: (key + curr.path.join('')),
+                    target: curr.path.join('')
+                }
+            });
+            queue.push({ word: key, path: [key, ...curr.path], trie: curr.trie[key] });
+        }
+    }
+};
 //this file meant to hold all cytoscape-related code
 let levelColor = function (element) {
     let level = element.data('level');
@@ -86,9 +121,14 @@ let nodeHeight = function (element) {
 };
 
 let layout = function (root) {
+    let rootSelector = root;
+    if (Array.isArray(root)) {
+        rootSelector = root.join(',');
+    }
+    // TODO: this only sort of works. Ideally it would show the leaves at the top, but this just switches arrow directions?
     return {
         name: 'breadthfirst',
-        root: root,
+        root: rootSelector,
         padding: 6,
         spacingFactor: 0.85
     };
@@ -122,12 +162,22 @@ let getStylesheet = function () {
         }
     ];
 }
-let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler, edgeEventHandler) {
+let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler, edgeEventHandler, mode) {
     root = root;
+    // In inverted mode, find leaf nodes (nodes with no incoming edges) to use as roots
+    let layoutRoots = root;
+    if (mode === 'inverted') {
+        const nodeIds = new Set(elements.nodes.map(n => n.data.id));
+        const nodesWithIncomingEdges = new Set(elements.edges.map(e => e.data.target));
+        const leafNodes = Array.from(nodeIds).filter(id => !nodesWithIncomingEdges.has(id));
+        // Cytoscape expects selector strings with # prefix for IDs
+        layoutRoots = leafNodes.length > 0 ? leafNodes.map(id => '#' + id) : root;
+    }
+
     cy = cytoscape({
         container: graphContainer,
         elements: elements,
-        layout: layout(root),
+        layout: layout(layoutRoots),
         style: getStylesheet(),
         maxZoom: 10,
         minZoom: 0.5
@@ -144,18 +194,22 @@ let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler,
             resizeTimer = setTimeout(function () {
                 if (cy) {
                     // Re-apply the layout to redraw nodes/edges responsively
-                    cy.layout(layout(root)).run();
+                    cy.layout(layout(layoutRoots)).run();
                 }
             }, 150);
         });
         resizeListenerAdded = true;
     }
 };
-let initializeGraph = function (value, containerElement, nodeEventHandler, edgeEventHandler) {
+let initializeGraph = function (value, containerElement, nodeEventHandler, edgeEventHandler, mode, invertedTrieData) {
     let result = { 'nodes': [], 'edges': [] };
     let maxDepth = 1;
-    bfs(value, result, maxDepth, {});
-    setupCytoscape(value, result, containerElement, nodeEventHandler, edgeEventHandler);
+    if (mode === 'inverted' && invertedTrieData) {
+        bfsInverted(value, result, invertedTrieData);
+    } else {
+        bfs(value, result, maxDepth, {});
+    }
+    setupCytoscape(value, result, containerElement, nodeEventHandler, edgeEventHandler, mode);
 };
 let isInGraph = function (node) {
     return cy && cy.getElementById(node).length;

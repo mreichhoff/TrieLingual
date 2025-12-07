@@ -923,12 +923,19 @@ let findExamples = function (ngram) {
         }
         return examples;
     } else {
-        let curr = subtries[ngram[0]];
-        for (let i = 1; i < ngram.length; i++) {
+        // In inverted mode, use invertedSubtries with reversed ngram
+        const isInverted = (typeof window.currentMode !== 'undefined' && window.currentMode === 'inverted');
+        const subtreeData = isInverted ? invertedSubtries : subtries;
+        
+        // For inverted mode, reverse the ngram to match the inverted subtrie structure
+        const searchNgram = isInverted ? [...ngram].reverse() : ngram;
+        
+        let curr = subtreeData[searchNgram[0]];
+        for (let i = 1; i < searchNgram.length; i++) {
             if (!curr) {
                 return [];
             }
-            curr = curr[ngram[i]];
+            curr = curr[searchNgram[i]];
         }
         if (!curr.__e) {
             return [];
@@ -1273,7 +1280,10 @@ let updateGraph = function (value) {
         if (coverageContainer && coverageContainer.style.display !== 'none') {
             initializeCoverageChart(coverageContainer, value);
         } else {
-            initializeGraph(value, nextGraph, nodeTapHandler, edgeTapHandler);
+            // Pass mode and inverted trie data if in inverted mode
+            const mode = (typeof window.currentMode !== 'undefined' && window.currentMode === 'inverted') ? 'inverted' : 'normal';
+            const invertedData = (mode === 'inverted' && window.invertedTrie && window.invertedTrie[value]) ? window.invertedTrie[value] : null;
+            initializeGraph(value, nextGraph, nodeTapHandler, edgeTapHandler, mode, invertedData);
         }
     }
     return result;
@@ -1383,6 +1393,7 @@ let initialize = function () {
     const graphLegend = document.getElementById('graph-legend');
 
     let currentView = 'trie';
+    window.currentMode = 'normal'; // 'normal' or 'inverted' - make global for updateGraph access
 
     viewButtons.forEach(button => {
         button.addEventListener('click', function () {
@@ -1400,6 +1411,7 @@ let initialize = function () {
                 graphLegend.style.display = 'none';
                 // Show coverage chart focused on current root word
                 coverageContainer.removeAttribute('style');
+                window.currentMode = 'normal';
             } else if (view === 'trie') {
                 // Clean up coverage chart
                 destroyCoverageChart();
@@ -1407,6 +1419,15 @@ let initialize = function () {
                 // Show trie graph and legend
                 graphContainer.removeAttribute('style');
                 graphLegend.removeAttribute('style');
+                window.currentMode = 'normal';
+            } else if (view === 'inverted') {
+                // Clean up coverage chart
+                destroyCoverageChart();
+                coverageContainer.style.display = 'none';
+                // Show inverted trie graph and legend
+                graphContainer.removeAttribute('style');
+                graphLegend.removeAttribute('style');
+                window.currentMode = 'inverted';
             }
             updateGraph(currentRoot);
 

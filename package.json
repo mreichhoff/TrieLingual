@@ -1,6 +1,7 @@
 {
     "private": true,
     "dependencies": {
+        "chart.js": "^4.5.1",
         "cytoscape": "^3.33.1",
         "firebase": "^12.6.0"
     },
