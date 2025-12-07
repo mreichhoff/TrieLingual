@@ -1315,7 +1315,7 @@ searchForm.addEventListener('submit', async function (event) {
     if (known.length < Math.max(1, Math.ceil(tokens.length / 2)) && getAuthenticatedUser()) {
         try {
             showAiLoading(examplesList, 'Translating…');
-            const data = await callExplainEnglishText({ text: value });
+            const data = await callExplainEnglishText({ text: value, targetLanguage: targetLang });
             clearAiLoading(examplesList);
             if (data && data.targetLanguageText) {
                 // Render as a sentence card: target from AI, English from user input
@@ -1344,7 +1344,7 @@ searchForm.addEventListener('submit', async function (event) {
     if (getAuthenticatedUser() && tokens.length > 2) {
         try {
             showAiLoading(examplesList, 'Analyzing…');
-            const data = await callExplainText({ text: value });
+            const data = await callExplainText({ text: value, targetLanguage: targetLang });
             clearAiLoading(examplesList);
             if (data && data.englishText) {
                 // Render as a sentence card: target from user input, English from AI
