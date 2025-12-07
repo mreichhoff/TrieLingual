@@ -1,6 +1,7 @@
 import { addCards, getCardCount, inStudyList, initialize as dataInit } from "./data-layer.js";
 import { initializeGraph } from "./graph.js";
 import { initializeCoverageChart, destroyCoverageChart } from "./coverage-chart.js";
+import { initializeSankeyDiagram, destroySankeyDiagram } from "./sankey-diagram.js";
 import { getAuthenticatedUser, callGenerateSentences, callAnalyzeCollocation, callExplainEnglishText, callExplainText } from "./firebase.js"
 
 window.definitions = window.definitions || {};
@@ -926,10 +927,10 @@ let findExamples = function (ngram) {
         // In inverted mode, use invertedSubtries with reversed ngram
         const isInverted = (typeof window.currentMode !== 'undefined' && window.currentMode === 'inverted');
         const subtreeData = isInverted ? invertedSubtries : subtries;
-        
+
         // For inverted mode, reverse the ngram to match the inverted subtrie structure
         const searchNgram = isInverted ? [...ngram].reverse() : ngram;
-        
+
         let curr = subtreeData[searchNgram[0]];
         for (let i = 1; i < searchNgram.length; i++) {
             if (!curr) {
@@ -1275,10 +1276,18 @@ let updateGraph = function (value) {
             });
         currentRoot = value;
 
-        // Update coverage chart if it's the active view
+        // Check which view is active
         const coverageContainer = document.getElementById('coverage-chart-container');
+        const sankeyContainer = document.getElementById('sankey-container');
+
         if (coverageContainer && coverageContainer.style.display !== 'none') {
+            // Update coverage chart if it's the active view
             initializeCoverageChart(coverageContainer, value);
+        } else if (sankeyContainer && sankeyContainer.style.display !== 'none') {
+            // Wait for both subtries to load, then render Sankey
+            result.then(() => {
+                initializeSankeyDiagram(sankeyContainer, value, subtries[value], invertedSubtries[value]);
+            });
         } else {
             // Pass mode and inverted trie data if in inverted mode
             const mode = (typeof window.currentMode !== 'undefined' && window.currentMode === 'inverted') ? 'inverted' : 'normal';
@@ -1404,30 +1413,49 @@ let initialize = function () {
             viewButtons.forEach(btn => btn.classList.remove('active'));
             this.classList.add('active');
 
+            // Get containers
+            const sankeyContainer = document.getElementById('sankey-container');
+
             // Switch views
             if (view === 'coverage') {
                 // Hide trie graph and legend
                 graphContainer.style.display = 'none';
                 graphLegend.style.display = 'none';
+                sankeyContainer.style.display = 'none';
+                destroySankeyDiagram(sankeyContainer);
                 // Show coverage chart focused on current root word
                 coverageContainer.removeAttribute('style');
                 window.currentMode = 'normal';
             } else if (view === 'trie') {
-                // Clean up coverage chart
+                // Clean up coverage chart and sankey
                 destroyCoverageChart();
+                destroySankeyDiagram(sankeyContainer);
                 coverageContainer.style.display = 'none';
+                sankeyContainer.style.display = 'none';
                 // Show trie graph and legend
                 graphContainer.removeAttribute('style');
                 graphLegend.removeAttribute('style');
                 window.currentMode = 'normal';
             } else if (view === 'inverted') {
-                // Clean up coverage chart
+                // Clean up coverage chart and sankey
                 destroyCoverageChart();
+                destroySankeyDiagram(sankeyContainer);
                 coverageContainer.style.display = 'none';
+                sankeyContainer.style.display = 'none';
                 // Show inverted trie graph and legend
                 graphContainer.removeAttribute('style');
                 graphLegend.removeAttribute('style');
                 window.currentMode = 'inverted';
+            } else if (view === 'sankey') {
+                // Clean up coverage chart
+                destroyCoverageChart();
+                coverageContainer.style.display = 'none';
+                // Hide graph and legend
+                graphContainer.style.display = 'none';
+                graphLegend.style.display = 'none';
+                // Show sankey
+                sankeyContainer.removeAttribute('style');
+                window.currentMode = 'sankey';
             }
             updateGraph(currentRoot);
 

@@ -489,6 +489,11 @@ h2 span {
     box-sizing: border-box;
 }
 
+#sankey-container {
+    width: 100%;
+    height: 100%;
+}
+
 #coverage-chart-canvas {
     width: 100% !important;
     height: 100% !important;
