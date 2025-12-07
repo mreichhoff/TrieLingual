@@ -1,5 +1,6 @@
 import { addCards, getCardCount, inStudyList, initialize as dataInit } from "./data-layer.js";
 import { initializeGraph } from "./graph.js";
+import { initializeCoverageChart, destroyCoverageChart } from "./coverage-chart.js";
 import { getAuthenticatedUser, callGenerateSentences, callAnalyzeCollocation, callExplainEnglishText, callExplainText } from "./firebase.js"
 
 window.definitions = window.definitions || {};
@@ -13,6 +14,7 @@ let currentRoot = null;
 let currentNgram = null;
 
 let subtries = {};
+let invertedSubtries = {};
 
 let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
 let punctuation = {
@@ -39,6 +41,13 @@ let languageOptions = {
     'Spanish': { targetLang: 'es-ES', urlPath: 'spanish' },
     'Norwegian': { targetLang: 'nb-NO', urlPath: 'norwegian' }
 };
+
+const sentenceSources = [
+    { display: 'Tatoeba', url: 'https://tatoeba.org/' },
+    { display: 'OpenSubtitles', url: 'https://www.opensubtitles.org/' },
+    { display: 'AI 🤖' },
+    { display: 'User 👑' }
+];
 
 //TODO: make specialized tries per language
 let graphOptions = {
@@ -411,6 +420,29 @@ let renderAISentences = function (container, sentences, headingText, blockClass)
         baseP.className = 'base-example example-line';
         baseP.textContent = s.englishTranslation;
         li.appendChild(baseP);
+
+        // Add AI source tag and difficulty badge
+        let tagsContainer = document.createElement('div');
+        tagsContainer.className = 'definition-tags';
+
+        // Source badge
+        let sourceSpan = document.createElement('span');
+        sourceSpan.className = 'tag-badge';
+        sourceSpan.textContent = sentenceSources[2].display; // 'AI 🤖'
+        tagsContainer.appendChild(sourceSpan);
+
+        // Difficulty badge
+        const difficulty = calculateDifficulty(tokens);
+        if (difficulty.level !== 'unknown') {
+            let diffSpan = document.createElement('span');
+            diffSpan.className = 'tag-badge difficulty-' + difficulty.level;
+            diffSpan.textContent = difficulty.level.charAt(0).toUpperCase() + difficulty.level.slice(1);
+            diffSpan.title = `Average word rank: ${difficulty.avgRank}`;
+            tagsContainer.appendChild(diffSpan);
+        }
+
+        li.appendChild(tagsContainer);
+
         list.appendChild(li);
     });
     block.appendChild(list);
@@ -881,6 +913,7 @@ let findExamples = function (ngram) {
         for (let i = 0; i < sentences.length; i++) {
             if (sentences[i].t.map(x => x.toLowerCase()).includes(targetWord)) {
                 if (sentences[i].b) {
+                    sentences[i].s = 0; // assume tatoeba and thus higher quality
                     examples.push(sentences[i]);
                     if (examples.length === maxExamples) {
                         break;
@@ -901,13 +934,61 @@ let findExamples = function (ngram) {
             return [];
         }
         return curr.__e.map(x => {
-            return { t: x[0], b: x[1] };
+            let targetTokens = x[0];
+            if (typeof targetTokens === 'string') {
+                targetTokens = targetTokens.split(' ');
+            }
+            return { t: targetTokens, b: x[1], s: x[2] };
         });
     }
 };
 let isPunctuation = function (token) {
     return punctuation[targetLang].has(token);
 };
+
+// Normalize a word for trie/frequency lookup by lowercasing and removing leading/trailing punctuation
+let normalizeWord = function (word) {
+    return word.toLowerCase().replace(/^[.,!?:;'"'']+|[.,!?:;'"'']+$/g, '');
+};
+
+// Calculate difficulty based on average word frequency rank
+// Returns: { level: 'easy'|'medium'|'hard'|'expert', avgRank: number }
+let calculateDifficulty = function (tokens) {
+    if (!tokens || !tokens.length || !window.freqs) {
+        return { level: 'unknown', avgRank: null };
+    }
+    const contentWords = tokens.filter(t => !isPunctuation(t));
+    if (!contentWords.length) {
+        return { level: 'unknown', avgRank: null };
+    }
+    let totalRank = 0;
+    let knownCount = 0;
+    contentWords.forEach(word => {
+        const normalized = normalizeWord(word);
+        if (window.freqs[normalized]) {
+            totalRank += window.freqs[normalized].freq;
+            knownCount++;
+        }
+    });
+    if (knownCount === 0) {
+        return { level: 'unknown', avgRank: null };
+    }
+    const avgRank = totalRank / knownCount;
+    // Map average rank to difficulty levels
+    // Lower rank = more common words = easier
+    let level;
+    if (avgRank < 1000) {
+        level = 'easy';
+    } else if (avgRank < 3000) {
+        level = 'medium';
+    } else if (avgRank < 6000) {
+        level = 'hard';
+    } else {
+        level = 'expert';
+    }
+    return { level, avgRank: Math.round(avgRank) };
+};
+
 let joinTokens = function (tokens) {
     let result = '';
     tokens.forEach((x, index) => {
@@ -937,6 +1018,43 @@ let setupExampleElements = function (examples, exampleList) {
         baseHolder.textContent = examples[i].b;
         baseHolder.className = 'base-example example-line';
         exampleHolder.appendChild(baseHolder);
+
+        // Add source tag and difficulty badge
+        if (typeof examples[i].s === 'number' && examples[i].s < sentenceSources.length) {
+            let tagsContainer = document.createElement('div');
+            tagsContainer.className = 'definition-tags';
+
+            // Source badge
+            let sourceSpan = document.createElement('span');
+            sourceSpan.className = 'tag-badge';
+            const source = sentenceSources[examples[i].s];
+            if (source.url) {
+                let sourceLink = document.createElement('a');
+                sourceLink.href = source.url;
+                sourceLink.target = '_blank';
+                sourceLink.rel = 'noopener noreferrer';
+                sourceLink.textContent = source.display;
+                sourceLink.style.color = 'inherit';
+                sourceLink.style.textDecoration = 'none';
+                sourceSpan.appendChild(sourceLink);
+            } else {
+                sourceSpan.textContent = source.display;
+            }
+            tagsContainer.appendChild(sourceSpan);
+
+            // Difficulty badge
+            const difficulty = calculateDifficulty(examples[i].t);
+            if (difficulty.level !== 'unknown') {
+                let diffSpan = document.createElement('span');
+                diffSpan.className = 'tag-badge difficulty-' + difficulty.level;
+                diffSpan.textContent = difficulty.level.charAt(0).toUpperCase() + difficulty.level.slice(1);
+                diffSpan.title = `Average word rank: ${difficulty.avgRank}`;
+                tagsContainer.appendChild(diffSpan);
+            }
+
+            exampleHolder.appendChild(tagsContainer);
+        }
+
         exampleList.appendChild(exampleHolder);
     }
 };
@@ -1112,6 +1230,18 @@ let nodeTapHandler = function (evt) {
     setupExamples(evt.target.data('path'));
 };
 let edgeTapHandler = function () { };
+
+// TODO: put the number of partitions in a per-language config
+const numPartitions = 10000;
+function getPartition(word) {
+    let hashValue = 0;
+    const prime = 31; // a prime number to reduce hotspots
+    for (let i = 0; i < word.length; i++) {
+        hashValue = hashValue * prime + word.charCodeAt(i);
+    }
+    return hashValue % numPartitions;
+};
+
 let updateGraph = function (value) {
     const oldGraph = document.getElementById('graph');
     if (oldGraph) {
@@ -1126,13 +1256,25 @@ let updateGraph = function (value) {
 
     let result = null;
     if (value && trie[value]) {
-        result = fetch(`/data/${targetLang}/subtries/${value}.json`)
+        result = fetch(`/data/${targetLang}/subtries/${getPartition(value)}.json`)
             .then(response => response.json())
             .then(function (data) {
-                subtries[value] = data;
+                subtries[value] = data[value];
             });
-        initializeGraph(value, nextGraph, nodeTapHandler, edgeTapHandler);
+        fetch(`/data/${targetLang}/inverted-subtries/${getPartition(value)}.json`)
+            .then(response => response.json())
+            .then(function (data) {
+                invertedSubtries[value] = data[value];
+            });
         currentRoot = value;
+
+        // Update coverage chart if it's the active view
+        const coverageContainer = document.getElementById('coverage-chart-container');
+        if (coverageContainer && coverageContainer.style.display !== 'none') {
+            initializeCoverageChart(coverageContainer, value);
+        } else {
+            initializeGraph(value, nextGraph, nodeTapHandler, edgeTapHandler);
+        }
     }
     return result;
 };
@@ -1233,6 +1375,44 @@ let initialize = function () {
             location.reload();
         }
     });
+
+    // Setup view switcher for different graph visualizations
+    const viewButtons = document.querySelectorAll('.view-button');
+    const graphContainer = document.getElementById('graph');
+    const coverageContainer = document.getElementById('coverage-chart-container');
+    const graphLegend = document.getElementById('graph-legend');
+
+    let currentView = 'trie';
+
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const view = this.getAttribute('data-view');
+            if (view === currentView) return;
+
+            // Update button states
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+
+            // Switch views
+            if (view === 'coverage') {
+                // Hide trie graph and legend
+                graphContainer.style.display = 'none';
+                graphLegend.style.display = 'none';
+                // Show coverage chart focused on current root word
+                coverageContainer.removeAttribute('style');
+            } else if (view === 'trie') {
+                // Clean up coverage chart
+                destroyCoverageChart();
+                coverageContainer.style.display = 'none';
+                // Show trie graph and legend
+                graphContainer.removeAttribute('style');
+                graphLegend.removeAttribute('style');
+            }
+            updateGraph(currentRoot);
+
+            currentView = view;
+        });
+    });
 };
 
 // Parse URL path function (duplicated from data-load.js for use in popstate handler)
@@ -1278,7 +1458,7 @@ let makeSentenceNavigable = function (tokens, container, noExampleChange) {
             }
             a.textContent = word + separator;
             a.addEventListener('click', function () {
-                let cleanWord = word.toLowerCase();
+                let cleanWord = normalizeWord(word);
                 if (trie[cleanWord]) {
                     let updated = false;
                     if (currentRoot && currentRoot !== word) {
@@ -1330,6 +1510,29 @@ searchForm.addEventListener('submit', async function (event) {
                 baseP.className = 'base-example example-line';
                 baseP.textContent = value;
                 item.appendChild(baseP);
+
+                // Add User source tag and difficulty badge
+                let tagsContainer = document.createElement('div');
+                tagsContainer.className = 'definition-tags';
+
+                // Source badge
+                let sourceSpan = document.createElement('span');
+                sourceSpan.className = 'tag-badge';
+                sourceSpan.textContent = sentenceSources[3].display; // 'User 👑'
+                tagsContainer.appendChild(sourceSpan);
+
+                // Difficulty badge
+                const difficulty = calculateDifficulty(aiTokens);
+                if (difficulty.level !== 'unknown') {
+                    let diffSpan = document.createElement('span');
+                    diffSpan.className = 'tag-badge difficulty-' + difficulty.level;
+                    diffSpan.textContent = difficulty.level.charAt(0).toUpperCase() + difficulty.level.slice(1);
+                    diffSpan.title = `Average word rank: ${difficulty.avgRank}`;
+                    tagsContainer.appendChild(diffSpan);
+                }
+
+                item.appendChild(tagsContainer);
+
                 examplesList.appendChild(item);
             }
         } catch (err) {
@@ -1358,6 +1561,29 @@ searchForm.addEventListener('submit', async function (event) {
                 baseP.className = 'base-example example-line';
                 baseP.textContent = data.englishTranslation;
                 item.appendChild(baseP);
+
+                // Add User source tag and difficulty badge
+                let tagsContainer = document.createElement('div');
+                tagsContainer.className = 'definition-tags';
+
+                // Source badge
+                let sourceSpan = document.createElement('span');
+                sourceSpan.className = 'tag-badge';
+                sourceSpan.textContent = sentenceSources[3].display; // 'User 👑'
+                tagsContainer.appendChild(sourceSpan);
+
+                // Difficulty badge
+                const difficulty = calculateDifficulty(tokens);
+                if (difficulty.level !== 'unknown') {
+                    let diffSpan = document.createElement('span');
+                    diffSpan.className = 'tag-badge difficulty-' + difficulty.level;
+                    diffSpan.textContent = difficulty.level.charAt(0).toUpperCase() + difficulty.level.slice(1);
+                    diffSpan.title = `Average word rank: ${difficulty.avgRank}`;
+                    tagsContainer.appendChild(diffSpan);
+                }
+
+                item.appendChild(tagsContainer);
+
                 examplesList.appendChild(item);
             }
         } catch (err) {

@@ -37,7 +37,7 @@ window.targetLang = null;
 window.trieFetch = null;
 window.sentencesFetch = null;
 window.definitionsFetch = null;
-// window.invertedTrieFetch = null;
+window.invertedTrieFetch = null;
 
 // Set language from URL only
 if (urlPath.lang) {
@@ -45,5 +45,6 @@ if (urlPath.lang) {
     window.trieFetch = fetch(`/data/${targetLang}/trie.json`);
     window.sentencesFetch = fetch(`/data/${targetLang}/sentences.json`);
     window.definitionsFetch = fetch(`/data/${targetLang}/definitions.json`);
-    // window.invertedTrieFetch = fetch(`/data/${targetLang}/inverted-trie.json`);
+    window.wordlistFetch = fetch(`/data/${targetLang}/wordlist.json`);
+    window.invertedTrieFetch = fetch(`/data/${targetLang}/inverted-trie.json`);
 }

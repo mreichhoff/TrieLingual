@@ -446,6 +446,54 @@ h2 span {
     color: #999;
 }
 
+/* View switcher for graph visualizations */
+#view-switcher {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    /* background: linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.02));
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); */
+}
+
+.view-button {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.view-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+.view-button.active {
+    background: linear-gradient(180deg, rgba(96, 165, 250, 0.3), rgba(96, 165, 250, 0.2));
+    color: #fff;
+    border-color: rgba(96, 165, 250, 0.6);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.3);
+}
+
+/* Coverage chart container */
+#coverage-chart-container {
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#coverage-chart-canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 /*TODO: use classes to make this sane again*/
 #examples {
     margin-top: 0;
@@ -480,7 +528,37 @@ h2 span {
     background: rgba(100, 150, 255, 0.15);
     color: rgba(238, 238, 238, 0.85);
     border: 1px solid rgba(100, 150, 255, 0.25);
+    border-left: 3px solid rgba(100, 150, 255, 0.5);
     line-height: 1.4;
+}
+
+/* Difficulty badge variants */
+.tag-badge.difficulty-easy {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.25);
+    border-left-color: rgba(34, 197, 94, 0.6);
+    color: rgba(187, 247, 208, 0.95);
+}
+
+.tag-badge.difficulty-medium {
+    background: rgba(234, 179, 8, 0.15);
+    border-color: rgba(234, 179, 8, 0.25);
+    border-left-color: rgba(234, 179, 8, 0.6);
+    color: rgba(254, 240, 138, 0.95);
+}
+
+.tag-badge.difficulty-hard {
+    background: rgba(249, 115, 22, 0.15);
+    border-color: rgba(249, 115, 22, 0.25);
+    border-left-color: rgba(249, 115, 22, 0.6);
+    color: rgba(254, 215, 170, 0.95);
+}
+
+.tag-badge.difficulty-expert {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.25);
+    border-left-color: rgba(239, 68, 68, 0.6);
+    color: rgba(254, 202, 202, 0.95);
 }
 
 /* Part of speech badge (placed inline before definition) */

@@ -180,7 +180,12 @@
                 <!-- legend moved to graph-area so it sits below the visualization -->
             </div>
             <div id="graph-area">
+                <div id="view-switcher">
+                    <button class="view-button active" data-view="trie">Trie</button>
+                    <button class="view-button" data-view="coverage">Coverage Chart</button>
+                </div>
                 <div id="graph"></div>
+                <div id="coverage-chart-container" style="display: none;"></div>
                 <div id="graph-legend">
                     <div>
                         The color of a word indicates its frequency.

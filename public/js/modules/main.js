@@ -47,9 +47,12 @@ let init = function () {
             window.definitionsFetch
                 .then(response => response.json())
                 .then(data => window.definitions = data),
-            // window.invertedTrieFetch
-            //     .then(response => response.json())
-            //     .then(data => window.invertedTrie = data)
+            window.wordlistFetch
+                .then(response => response.json())
+                .then(data => setupWordlist(data)),
+            window.invertedTrieFetch
+                .then(response => response.json())
+                .then(data => window.invertedTrie = data)
         ]
     ).then(_ => {
         firebaseInit();
@@ -60,6 +63,15 @@ let init = function () {
         faqInit();
     });
 };
+
+function setupWordlist(data) {
+    let freqs = {};
+    window.wordlist = data;
+    for (let i = 0; i < window.wordlist.length; i++) {
+        freqs[window.wordlist[i][0]] = { freq: i, count: window.wordlist[i][1] };
+    }
+    window.freqs = freqs;
+}
 
 let initWithMinimumDelay = function (minDelay) {
     const startTime = Date.now();
@@ -74,6 +86,12 @@ let initWithMinimumDelay = function (minDelay) {
             window.definitionsFetch
                 .then(response => response.json())
                 .then(data => window.definitions = data),
+            window.wordlistFetch
+                .then(response => response.json())
+                .then(data => setupWordlist(data)),
+            window.invertedTrieFetch
+                .then(response => response.json())
+                .then(data => window.invertedTrie = data)
         ]
     );
 
@@ -143,7 +161,8 @@ if (targetLang) {
             window.trieFetch = fetch(`/data/${targetLang}/trie.json`);
             window.sentencesFetch = fetch(`/data/${targetLang}/sentences.json`);
             window.definitionsFetch = fetch(`/data/${targetLang}/definitions.json`);
-            // window.invertedTrieFetch = fetch(`/data/${targetLang}/inverted-trie.json`);
+            window.wordlistFetch = fetch(`/data/${targetLang}/wordlist.json`);
+            window.invertedTrieFetch = fetch(`/data/${targetLang}/inverted-trie.json`);
 
             // Enforce minimum 0.5 second animation delay before showing app
             initWithMinimumDelay(500);

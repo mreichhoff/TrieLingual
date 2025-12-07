@@ -4,6 +4,27 @@ let cy = null;
 let root = null;
 let resizeTimer = null;
 let resizeListenerAdded = false;
+function getLevelForWord(word) {
+    if (window.freqs && window.freqs[word]) {
+        let freqRank = window.freqs[word].freq;
+        if (freqRank < 500) {
+            return 1;
+        } else if (freqRank < 1000) {
+            return 2;
+        } else if (freqRank < 2000) {
+            return 3;
+        } else if (freqRank < 4000) {
+            return 4;
+        } else if (freqRank < 7000) {
+            return 5;
+        } else {
+            return 6;
+        }
+    } else {
+        return 6;
+    }
+}
+
 let bfs = function (value, elements) {
     if (!value) {
         return;
@@ -19,7 +40,7 @@ let bfs = function (value, elements) {
                 word: curr.word,
                 depth: curr.path.length - 1,
                 path: curr.path,
-                level: trie[curr.word]['__l']
+                level: getLevelForWord(curr.word)
             }
         });
         for (const [key, value] of Object.entries(curr.trie)) {
