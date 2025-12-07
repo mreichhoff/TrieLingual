@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TrieLingual</title>
+    <meta charset="utf-8">
+    <meta name="description" content="Learn languages by exploring the words most commonly used together.">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script type="module">
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/asset-service-worker.js');
+        };
+    </script>
+    <script src="/js/data-load.js"></script>
+    <link rel="stylesheet" type="text/css" href="/css/trielingual.css">
+    <link rel="manifest" href="/manifest.json">
+    <!-- <link rel="icon" href="images/favicon-32x32.png" type="image/x-icon">
+    <link rel="apple-touch-icon" href="images/apple-touch-icon.png"> -->
+</head>
+
+<body>
+    <div id="landing" style="display:none">
+        <header class="header">
+            <h1 class="main-header">TrieLingual</h1>
+        </header>
+        <main>
+            <section>
+                <h2>Choose a language</h2>
+            </section>
+            <section id="language-grid" class="language-grid">
+                <div id="french-language-card" class="language-card blue" data-lang="fr-FR">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇫🇷</span> French</p>
+                    <p class="language-nickname">(FrenchTries🍟)</p>
+                </div>
+                <div id="portuguese-language-card" class="language-card green" data-lang="pt-BR">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇧🇷</span> Portuguese</p>
+                    <p class="language-nickname">(Portrieguese)</p>
+                </div>
+                <div id="italian-language-card" class="language-card red" data-lang="it-IT">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇮🇹</span> Italian</p>
+                    <p class="language-nickname">(Trietalian)</p>
+                </div>
+                <div id="german-language-card" class="language-card yellow" data-lang="de-DE">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇩🇪</span> German</p>
+                    <p class="language-nickname">(Triedesco, I guess?)</p>
+                </div>
+                <div id="spanish-language-card" class="language-card orange" data-lang="es-ES">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇪🇸</span> Spanish</p>
+                    <p class="language-nickname">(espárbol)</p>
+                </div>
+                <div id="norwegian-language-card" class="language-card red" data-lang="nb-NO">
+                    <div class="card-accent" aria-hidden="true"></div>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇳🇴</span> Norwegian</p>
+                    <p class="language-nickname">(Nortreegian)</p>
+                </div>
+            </section>
+        </main>
+    </div>
+    <div id="main-container">
+        <div id="header-container">
+            <header class="header">
+                <div class="menu-container">
+                    <button id="menu-button" class="icon-button" aria-label="Menu" title="Menu">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" fill="currentColor" />
+                        </svg>
+                    </button>
+                </div>
+                <div id="controls">
+                    <form id="search-form" class="control" role="search">
+                        <!-- i18n? what's that? -->
+                        <label class="visually-hidden" for="search-box">Choose a word</label>
+                        <div class="search-field">
+                            <input id="search-box" type="text" placeholder="Search a word" aria-label="Choose a word" />
+                        </div>
+                    </form>
+                </div>
+                <div class="mode-toggle-container">
+                    <button id="mode-toggle" class="icon-button mode-toggle-button" aria-label="Switch to study mode"
+                        title="Study mode">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path
+                                d="M18 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 4h5v8l-2.5-1.5L6 12V4z" />
+                        </svg>
+                    </button>
+                </div>
+            </header>
+        </div>
+        <div id="container">
+            <script>
+                if (!targetLang) {
+                    document.getElementById('main-container').style.display = 'none';
+                    document.getElementById('landing').removeAttribute('style');
+                }
+            </script>
+            <!-- lol, like control plane -->
+            <div id="control-pane">
+                <div id="example-container">
+                    <ul id="examples">
+                        <li class="walkthrough">
+                            <h2 class="walkthrough-title">TrieLingual</h2>
+                            <h3 class="walkthrough-heading">Learn by Exploring Word Connections</h3>
+                            <p>
+                                Enter a word above to see how it connects to others. <strong>Boxes</strong> represent
+                                words, and <strong>lines</strong> show which words commonly follow.
+                            </p>
+                            <p>
+                                Click any word to view real example sentences. Build your study list by adding sentences
+                                you
+                                want to master, then export them to Anki or your favorite flashcard app.
+                            </p>
+                            <p>
+                                Zoom, drag, and rearrange the graph freely. Colors indicate word frequency—find more at
+                                <a class="faq-link" id="show-general-faq">the FAQ</a>.
+                            </p>
+                        </li>
+                    </ul>
+                </div>
+                <div id="study-container" style="display:none">
+                    <div class="study-card">
+                        <header class="study-card-header">
+                            <div class="cards-badge" id="cards-due" aria-live="polite">
+                                <span class="badge-label">Cards due</span>
+                                <span class="badge-count" id="card-due-count"></span>
+                            </div>
+                        </header>
+                        <section class="study-cta" id="study-call-to-action">
+                            <div class="cta-text">
+                                <span id="task-description">What does the text below mean?</span>
+                                <span id="task-complete">All caught up. Check back later or add more cards to your
+                                    list. <a class="faq-link" style="color:#eee" id="show-study-faq">Learn
+                                        more.</a></span>
+                            </div>
+                        </section>
+
+                        <section class="study-question" id="card-question-section">
+                            <p id="card-question-container"></p>
+                            <button id="show-answer-button" class="primary-button" aria-label="Show the answer">Show
+                                Answer</button>
+                        </section>
+
+                        <section class="study-answer" id="card-answer-section">
+                            <div id="card-answer-container" style="display:none">
+                                <p id="card-answer"></p>
+                                <ul id="result-buttons" class="result-buttons">
+                                    <li>
+                                        <button id="wrong-button" class="result-button result-wrong"
+                                            aria-label="Review again">Review again</button>
+                                    </li>
+                                    <li>
+                                        <button id="right-button" class="result-button result-right"
+                                            aria-label="Got it">Got it</button>
+                                    </li>
+                                </ul>
+                                <p id="delete-card-button" class="link-button">Delete this card</p>
+
+                                <div id="past-performance-container" class="card-detail">
+                                    <p id="card-new-message" style="display:none">This is a new card!</p>
+                                    <div id="card-old-message" style="display: none;">
+                                        <p>Previous attempts: <span id="card-percentage"></span>% correct.</p>
+                                        <p>Right <span id="card-right-count"></span>; Wrong <span
+                                                id="card-wrong-count"></span>.</p>
+                                    </div>
+                                </div>
+
+                                <div id="related-cards-container" class="card-detail" style="display:none">
+                                    <div class="related-header">Other cards with <span id="related-card-query"></span>:
+                                    </div>
+                                    <div id="related-cards" class="related-cards"></div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                <!-- legend moved to graph-area so it sits below the visualization -->
+            </div>
+            <div id="graph-area">
+                <div id="graph"></div>
+                <div id="graph-legend">
+                    <div>
+                        The color of a word indicates its frequency.
+                    </div>
+                    <div id="level-container">
+                        <div id="gradient-labels">
+                            <span>More common</span>
+                            <div id="gradient-legend"></div>
+                            <span>Less common</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="stats-container" style="display:none">
+        <header class="header">
+            <div class="exit-container"><i id="exit-button" class="exit-arrow"></i></div>
+            <h1 class="main-header">TrieLingual</h1>
+            <div class="stats-container"></div>
+        </header>
+        <main class="stats">
+            <section>
+                <h3>You've studied examples for:</h3>
+                <div id="studied-graph"></div>
+                <p id="studied-graph-detail" class="stats-detail">Click a bar in the chart for details.</p>
+            </section>
+            <section>
+                <h2>Study Stats</h2>
+                <div id="study-calendar-container" style="display: none;">
+                    <h3>Study stats by day:</h3>
+                    <div id="study-calendar"></div>
+                    <p id='study-calendar-detail' class="stats-detail">Click a box in the calendar for details. Brighter
+                        colors mean more
+                        studying.
+                    </p>
+                </div>
+                <h3>Cards added by day:</h3>
+                <div id="added-calendar"></div>
+                <p id='added-calendar-detail' class="stats-detail">Click a box in the calendar for details. Brighter
+                    colors mean more cards
+                    added.
+                </p>
+                <div id="hourly-container" style="display: none;">
+                    <h3>Study stats by hour:</h3>
+                    <p id='hourly-graph-detail' class="stats-detail">Click a bar in the chart for details. <br />Green:
+                        75% correct or
+                        better.
+                        Blue:
+                        between 50% and 75%. Orange: between 25% and 50%. Red: less than 25% correct.</p>
+                    <div id="hourly-graph"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <div id="faq-container" style="display:none">
+        <header class="header">
+            <div class="exit-container"><i id="faq-exit-button" class="exit-arrow"></i></div>
+            <h1 class="main-header">TrieLingual</h1>
+            <div class="stats-container"></div>
+        </header>
+        <main class="faq">
+            <section id="faq-general" style="display:none">
+                <p>This site is a prototype, but it&#39;s decently usable in its current state. Feel free to see the
+                    (currently
+                    at a
+                    hackathon level of quality) <a href="https://github.com/mreichhoff/TrieLingual">code</a> or contact
+                    <a href="https://github.com/mreichhoff">the author on github</a>.
+                </p>
+                <p>The idea is to emphasize the connections among words to help learners remember them.
+                </p>
+                <ul>
+                    <li>
+                        <h3>Is there an app?</h3>
+                        <ul>
+                            <li>The site is a progressive web app. This means it uses modern browser APIs to make an
+                                installable
+                                app. Follow <a
+                                    href="https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps/Installing">the
+                                    directions for your platform</a> to install it. A truly native app downloadable from
+                                the app
+                                stores may be a future work item.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>Where did the examples come from?</h3>
+                        <ul>
+                            <li>The examples came from <a href="https://tatoeba.org">Tatoeba</a>, which releases data
+                                under <a href="https://creativecommons.org/licenses/by/2.0/fr">CC-BY 2.0 FR</a>, and
+                                from <a href="http://www.opensubtitles.org/">OpenSubtitles</a>, pulled from <a
+                                    href="https://opus.nlpl.eu/OpenSubtitles2018.php">opus.nlpl.eu</a>. </li>
+                            <li>
+                                TODO: once definitions are added, update this
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>Which words are present?</h3>
+                        <ul>
+                            <li>The top 10,000 most frequent words should all be present, though sometimes garbage data
+                                will slip through.
+                                <a href="https://github.com/mreichhoff/TrieLingual/issues/new/choose">Ping on github</a>
+                                with any issues. More examples and definitions will be added in the future.
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section id="faq-study-mode" style="display:none">
+                <ul>
+                    <li>
+                        <h3>How does study mode work?</h3>
+                        <ul>
+                            <li>When you add words to your study list, they will be presented to you as flashcards.
+                                You&#39;ll
+                                be
+                                shown the sentence and asked what it means; click &quot;Show Answer&quot; to see how
+                                tatoeba
+                                translated it. When you click &quot;I didn&#39;t know that&quot;, the card will be added
+                                back to
+                                the
+                                end of your to-study list. When you click &quot;I knew that!&quot;, it will be shown one
+                                day
+                                later,
+                                then two days if you get it right again, then four, and so on. It is meant to be a very,
+                                very
+                                basic
+                                <a href="https://en.wikipedia.org/wiki/Spaced_repetition">spaced repetition system</a>.
+                            </li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>What does the export button do?</h3>
+                        <ul>
+                            <li>The export button downloads a file that can be imported into a different (better) spaced
+                                repetition
+                                system, like Anki.</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <h3>Where are the flashcards stored?</h3>
+                        <ul>
+                            <li>All data for the site is stored in <a
+                                    href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage">localStorage</a>.
+                                It
+                                does not leave your browser, and clearing your browser data will clear it.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section id="faq-single-char-warning" style="display:none">
+                <ul>
+                    <li>
+                        <h3>Why are the examples for certain characters a little strange?</h3>
+                        <ul>
+                            <li>Some characters are not commonly used alone. The examples use a process called <a
+                                    href="https://nlp.stanford.edu/IR-book/html/htmledition/tokenization-1.html">tokenization</a>
+                                to
+                                split the sentences into individual words. For example, 他是非常好 might be split into words
+                                like: 他,
+                                是,
+                                非常, 好, so searching for 非 by itself would not match. Future updates might show any
+                                sentences that contain the character, even if
+                                it&#39;s used
+                                as
+                                part of another word.</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+            <section id="faq-context" style="display:none">
+                <ul>
+                    <li>
+                        <h3>What does this "Previously" thing mean?</h3>
+                        <ul>
+                            <li>As you search, click, or tap words or connections in the diagram, you are shown example
+                                sentences. Then, when you add words to your study list, the examples are converted to
+                                flashcards.
+                                The 'previous' section indicates how many times you've
+                                viewed examples for each of the characters in a given word, and how many cards contain
+                                those characters. The numbers are based on how things were when you viewed the examples,
+                                so if it's your first time seeing examples for a character, it'll say seen 0 times.
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+        </main>
+    </div>
+    <div class="login-container" style="display: none;">
+        <header class="login-header">
+            <h1 class="main-header">TrieLingual</h1>
+            <p class="login-subtitle">Sign in to enable AI features</p>
+        </header>
+        <main class="login-main">
+            <button id="signin-with-google" class="google-signin-button">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path fill="#4285F4"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                    <path fill="#34A853"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                    <path fill="#FBBC05"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                    <path fill="#EA4335"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
+                <span>Sign in with Google</span>
+            </button>
+            <p class="login-info">
+                An account is otherwise not required.
+            </p>
+            <a class="login-back-link">← Back to app</a>
+        </main>
+    </div>
+    <div id="menu-container" style="display:none">
+        <header class="header">
+            <div class="exit-container"><i id="menu-exit-button" class="exit-arrow"></i></div>
+            <h1 class="main-header">TrieLingual</h1>
+            <div class="stats-container"></div>
+        </header>
+        <main class="menu">
+            <div class="menu-item menu-item-clickable" id="signin-button" style="display:none">
+                Sign in
+            </div>
+            <div class="menu-item" id="user-account-item" style="display:none">
+                <div class="account-info">
+                    <span class="menu-item-text" id="welcome-message"></span>
+                    <button id="signout-button" class="link-button">Sign out</button>
+                </div>
+            </div>
+            <div class="menu-item">
+                <label class="menu-item-text" for="language-selector">Language:</label>
+                <select id="language-selector">
+                    <option>French</option>
+                    <option>Portuguese</option>
+                    <option>Italian</option>
+                    <option>German</option>
+                    <option>Spanish</option>
+                    <option>Norwegian</option>
+                </select>
+            </div>
+            <div class="menu-item menu-item-clickable" id="stats-show">
+                View study stats
+            </div>
+            <div class="menu-item menu-item-clickable" id="exportStudyListButton" style="display:none">
+                Export study list
+            </div>
+            <div class="menu-item">
+                <span class="menu-item-text"><a
+                        href="https://github.com/mreichhoff/TrieLingual/blob/main/README.md">GitHub
+                        for more information.</a></span>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="/js/bundle.js"></script>
+</body>
+
+</html>

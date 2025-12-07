@@ -1,8 +1,5 @@
-import nltk
 import json
 import argparse
-import jieba
-
 
 def get_word_frequencies(filename):
     with open(filename) as f:
@@ -51,11 +48,11 @@ zh_punctuation = {'。', '‘', '’', '“', '”', '，',
 
 
 def get_words(language, sentence):
-    if language == 'chinese':
-        return [x for x in jieba.cut(sentence) if x not in zh_punctuation]
-    else:
-        return [x.lower() for x in nltk.word_tokenize(sentence, language=language)
-                if any(letter.isalpha() for letter in x)]
+    # if language == 'chinese':
+    #     return [x for x in jieba.cut(sentence) if x not in zh_punctuation]
+    # else:
+    return [x.lower() for x in sentence.split()
+            if any(letter.isalpha() for letter in x)]
 
 
 def main():
@@ -101,7 +98,7 @@ def main():
         trim_children(trie[key], 0, [6, 2, 0])
     trim_by_count(trie, 10)
 
-    remove_freq_field(trie)
+    # remove_freq_field(trie)
     # TODO unfortunate that it includes a lot of empty {}
     # Will clean that up + add levels in post-processing step
     # This script is memory constrained and takes long enough as it is
