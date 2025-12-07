@@ -330,7 +330,8 @@ a {
 
 .account-info .link-button {
     align-self: flex-start;
-    padding: 4px 0;
+    padding: 6px;
+    cursor: pointer;
 }
 
 #menu-button {
