@@ -2,39 +2,46 @@ import { sankey, sankeyLinkHorizontal } from 'd3-sankey';
 import { select } from 'd3-selection';
 import { scaleOrdinal } from 'd3-scale';
 import { schemeCategory10 } from 'd3-scale-chromatic';
+import { setupExamples } from './base.js';
 
 let currentSankeyData = null;
 
 // Build Sankey data from subtries and inverted subtries
-function buildSankeyData(word, subtrie, invertedSubtrie) {
+function buildSankeyData(word, subtrie, invertedSubtrie, maxDepth = 2, direction = 'both') {
     const nodes = [];
     const links = [];
     const nodeMap = new Map();
+    const nodePaths = new Map(); // Track the path to each node
+    const nodeIsIncoming = new Map(); // Track if node is from inverted trie (incoming)
 
     let nodeId = 0;
 
     // Helper to get or create node
-    function getNodeId(name, depth) {
+    function getNodeId(name, depth, path = [], isIncoming = false) {
         const key = `${name}_${depth}`;
         if (!nodeMap.has(key)) {
             const id = nodeId++;
             nodeMap.set(key, id);
             nodes.push({ id, name, depth });
+            nodePaths.set(id, path);
+            nodeIsIncoming.set(id, isIncoming);
         }
         return nodeMap.get(key);
     }
 
     // Add center node (the searched word)
-    const centerNodeId = getNodeId(word, 1);
+    const centerDepth = direction === 'incoming' ? maxDepth : 1;
+    const centerNodeId = getNodeId(word, centerDepth, [word], false);
 
     // Process forward trie (words that come after)
-    if (subtrie) {
-        function processForwardNode(trieNode, parentId, parentDepth) {
+    if (subtrie && (direction === 'both' || direction === 'outgoing')) {
+        function processForwardNode(trieNode, parentId, parentDepth, parentPath) {
             for (const [key, value] of Object.entries(trieNode)) {
                 if (key === '__l' || key === '__e' || key === '__C') continue;
 
                 const count = value.__C || 1;
-                const childId = getNodeId(key, parentDepth + 1);
+                const currentPath = [...parentPath, key];
+                const childId = getNodeId(key, parentDepth + 1, currentPath, false);
 
                 links.push({
                     source: parentId,
@@ -43,22 +50,23 @@ function buildSankeyData(word, subtrie, invertedSubtrie) {
                 });
 
                 // Recurse to next level (limit depth to avoid too much complexity)
-                if (parentDepth < 2 && typeof value === 'object') {
-                    processForwardNode(value, childId, parentDepth + 1);
+                if (parentDepth < maxDepth && typeof value === 'object') {
+                    processForwardNode(value, childId, parentDepth + 1, currentPath);
                 }
             }
         }
-        processForwardNode(subtrie, centerNodeId, 1);
+        processForwardNode(subtrie, centerNodeId, centerDepth, [word]);
     }
 
     // Process inverted trie (words that come before)
-    if (invertedSubtrie) {
-        function processBackwardNode(trieNode, childId, childDepth) {
+    if (invertedSubtrie && (direction === 'both' || direction === 'incoming')) {
+        function processBackwardNode(trieNode, childId, childDepth, childPath) {
             for (const [key, value] of Object.entries(trieNode)) {
                 if (key === '__l' || key === '__e' || key === '__C') continue;
 
                 const count = value.__C || 1;
-                const parentId = getNodeId(key, childDepth - 1);
+                const currentPath = [key, ...childPath];
+                const parentId = getNodeId(key, childDepth - 1, currentPath, true);
 
                 links.push({
                     source: parentId,
@@ -67,25 +75,27 @@ function buildSankeyData(word, subtrie, invertedSubtrie) {
                 });
 
                 // Recurse to previous level (limit depth)
-                if (childDepth > 0 && typeof value === 'object') {
-                    processBackwardNode(value, parentId, childDepth - 1);
+                if (childDepth > (direction === 'outgoing' ? 1 : 1 - maxDepth) && typeof value === 'object') {
+                    processBackwardNode(value, parentId, childDepth - 1, currentPath);
                 }
             }
         }
-        processBackwardNode(invertedSubtrie, centerNodeId, 1);
+        processBackwardNode(invertedSubtrie, centerNodeId, centerDepth, [word]);
     }
 
-    return { nodes, links };
+    return { nodes, links, nodePaths, centerDepth, nodeIsIncoming };
 }
 
-function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie) {
+function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie, options = {}) {
     if (!container || !word) return;
+
+    const { maxDepth = 2, direction = 'both' } = options;
 
     // Clear previous diagram
     select(container).selectAll('*').remove();
 
     // Build data
-    const data = buildSankeyData(word, subtrie, invertedSubtrie);
+    const data = buildSankeyData(word, subtrie, invertedSubtrie, maxDepth, direction);
     currentSankeyData = data;
 
     if (!data.nodes.length || !data.links.length) {
@@ -95,6 +105,8 @@ function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie) {
         container.appendChild(message);
         return;
     }
+
+    const { nodePaths, centerDepth, nodeIsIncoming } = data;
 
     // Set up dimensions
     const width = container.clientWidth || 800;
@@ -120,7 +132,7 @@ function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie) {
         .extent([[0, 0], [width - margin.left - margin.right, height - margin.top - margin.bottom]]);
 
     // Generate layout
-    const { nodes, links } = sankeyGenerator(data);
+    const { nodes: layoutNodes, links: layoutLinks } = sankeyGenerator(data);
 
     // Color scale based on depth
     const color = scaleOrdinal(schemeCategory10);
@@ -129,7 +141,7 @@ function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie) {
     g.append('g')
         .attr('class', 'links')
         .selectAll('path')
-        .data(links)
+        .data(layoutLinks)
         .enter()
         .append('path')
         .attr('d', sankeyLinkHorizontal())
@@ -153,7 +165,7 @@ function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie) {
     const node = g.append('g')
         .attr('class', 'nodes')
         .selectAll('g')
-        .data(nodes)
+        .data(layoutNodes)
         .enter()
         .append('g');
 
@@ -171,7 +183,19 @@ function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie) {
         .attr('stroke-width', 1)
         .style('cursor', 'pointer')
         .on('click', function (event, d) {
-            // Navigate to clicked word
+            // Show examples for this node's path
+            let path = nodePaths.get(d.id);
+            if (path) {
+                // If node is from the inverted trie (incoming), use inverted mode
+                const isIncoming = nodeIsIncoming.get(d.id);
+                if (direction === 'both' && isIncoming) {
+                    window.currentMode = 'inverted';
+                } else if (direction === 'both') {
+                    window.currentMode = 'normal';
+                }
+                setupExamples(path);
+            }
+            // Also navigate to clicked word if it's not the current word
             if (window.updateGraph && d.name !== word) {
                 window.updateGraph(d.name);
             }

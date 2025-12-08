@@ -1286,7 +1286,14 @@ let updateGraph = function (value) {
         } else if (sankeyContainer && sankeyContainer.style.display !== 'none') {
             // Wait for both subtries to load, then render Sankey
             result.then(() => {
-                initializeSankeyDiagram(sankeyContainer, value, subtries[value], invertedSubtries[value]);
+                let options = { maxDepth: 2, direction: 'both' };
+                if (window.currentMode === 'sankey-outgoing') {
+                    options = { maxDepth: 5, direction: 'outgoing' };
+                } else if (window.currentMode === 'inverted') {
+                    // sankey-incoming uses 'inverted' mode for proper path reversal in findExamples
+                    options = { maxDepth: 5, direction: 'incoming' };
+                }
+                initializeSankeyDiagram(sankeyContainer, value, subtries[value], invertedSubtries[value], options);
             });
         } else {
             // Pass mode and inverted trie data if in inverted mode
@@ -1456,6 +1463,27 @@ let initialize = function () {
                 // Show sankey
                 sankeyContainer.removeAttribute('style');
                 window.currentMode = 'sankey';
+            } else if (view === 'sankey-outgoing') {
+                // Clean up coverage chart
+                destroyCoverageChart();
+                coverageContainer.style.display = 'none';
+                // Hide graph and legend
+                graphContainer.style.display = 'none';
+                graphLegend.style.display = 'none';
+                // Show sankey
+                sankeyContainer.removeAttribute('style');
+                window.currentMode = 'sankey-outgoing';
+            } else if (view === 'sankey-incoming') {
+                // Clean up coverage chart
+                destroyCoverageChart();
+                coverageContainer.style.display = 'none';
+                // Hide graph and legend
+                graphContainer.style.display = 'none';
+                graphLegend.style.display = 'none';
+                // Show sankey
+                sankeyContainer.removeAttribute('style');
+                // Use 'inverted' mode for incoming Sankey so findExamples reverses paths
+                window.currentMode = 'inverted';
             }
             updateGraph(currentRoot);
 
@@ -1678,4 +1706,4 @@ let switchLanguage = function () {
 }
 languageSelector.addEventListener('change', switchLanguage);
 
-export { initialize, makeSentenceNavigable, getActiveGraph, joinTokens };
+export { initialize, makeSentenceNavigable, getActiveGraph, joinTokens, setupExamples };
