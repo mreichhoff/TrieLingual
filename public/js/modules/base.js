@@ -2,6 +2,7 @@ import { addCards, getCardCount, inStudyList, initialize as dataInit } from "./d
 import { initializeGraph } from "./graph.js";
 import { initializeCoverageChart, destroyCoverageChart } from "./coverage-chart.js";
 import { initializeSankeyDiagram, destroySankeyDiagram } from "./sankey-diagram.js";
+import { initializeSunburstDiagram, destroySunburstDiagram } from "./sunburst-diagram.js";
 import { getAuthenticatedUser, callGenerateSentences, callAnalyzeCollocation, callExplainEnglishText, callExplainText } from "./firebase.js"
 
 window.definitions = window.definitions || {};
@@ -1279,10 +1280,16 @@ let updateGraph = function (value) {
         // Check which view is active
         const coverageContainer = document.getElementById('coverage-chart-container');
         const sankeyContainer = document.getElementById('sankey-container');
+        const sunburstContainer = document.getElementById('sunburst-container');
 
         if (coverageContainer && coverageContainer.style.display !== 'none') {
             // Update coverage chart if it's the active view
             initializeCoverageChart(coverageContainer, value);
+        } else if (sunburstContainer && sunburstContainer.style.display !== 'none') {
+            // Wait for subtrie to load, then render sunburst
+            result.then(() => {
+                initializeSunburstDiagram(sunburstContainer, value, subtries[value]);
+            });
         } else if (sankeyContainer && sankeyContainer.style.display !== 'none') {
             // Wait for both subtries to load, then render Sankey
             result.then(() => {
@@ -1422,6 +1429,7 @@ let initialize = function () {
 
             // Get containers
             const sankeyContainer = document.getElementById('sankey-container');
+            const sunburstContainer = document.getElementById('sunburst-container');
 
             // Switch views
             if (view === 'coverage') {
@@ -1430,15 +1438,30 @@ let initialize = function () {
                 graphLegend.style.display = 'none';
                 sankeyContainer.style.display = 'none';
                 destroySankeyDiagram(sankeyContainer);
+                sunburstContainer.style.display = 'none';
+                destroySunburstDiagram(sunburstContainer);
                 // Show coverage chart focused on current root word
                 coverageContainer.removeAttribute('style');
+                window.currentMode = 'normal';
+            } else if (view === 'sunburst') {
+                // Hide other views
+                graphContainer.style.display = 'none';
+                graphLegend.style.display = 'none';
+                coverageContainer.style.display = 'none';
+                destroyCoverageChart(coverageContainer);
+                sankeyContainer.style.display = 'none';
+                destroySankeyDiagram(sankeyContainer);
+                // Show sunburst
+                sunburstContainer.removeAttribute('style');
                 window.currentMode = 'normal';
             } else if (view === 'trie') {
                 // Clean up coverage chart and sankey
                 destroyCoverageChart();
                 destroySankeyDiagram(sankeyContainer);
+                destroySunburstDiagram(sunburstContainer);
                 coverageContainer.style.display = 'none';
                 sankeyContainer.style.display = 'none';
+                sunburstContainer.style.display = 'none';
                 // Show trie graph and legend
                 graphContainer.removeAttribute('style');
                 graphLegend.removeAttribute('style');
@@ -1447,8 +1470,10 @@ let initialize = function () {
                 // Clean up coverage chart and sankey
                 destroyCoverageChart();
                 destroySankeyDiagram(sankeyContainer);
+                destroySunburstDiagram(sunburstContainer);
                 coverageContainer.style.display = 'none';
                 sankeyContainer.style.display = 'none';
+                sunburstContainer.style.display = 'none';
                 // Show inverted trie graph and legend
                 graphContainer.removeAttribute('style');
                 graphLegend.removeAttribute('style');
@@ -1456,7 +1481,9 @@ let initialize = function () {
             } else if (view === 'sankey') {
                 // Clean up coverage chart
                 destroyCoverageChart();
+                destroySunburstDiagram(sunburstContainer);
                 coverageContainer.style.display = 'none';
+                sunburstContainer.style.display = 'none';
                 // Hide graph and legend
                 graphContainer.style.display = 'none';
                 graphLegend.style.display = 'none';
@@ -1466,7 +1493,9 @@ let initialize = function () {
             } else if (view === 'sankey-outgoing') {
                 // Clean up coverage chart
                 destroyCoverageChart();
+                destroySunburstDiagram(sunburstContainer);
                 coverageContainer.style.display = 'none';
+                sunburstContainer.style.display = 'none';
                 // Hide graph and legend
                 graphContainer.style.display = 'none';
                 graphLegend.style.display = 'none';
@@ -1476,7 +1505,9 @@ let initialize = function () {
             } else if (view === 'sankey-incoming') {
                 // Clean up coverage chart
                 destroyCoverageChart();
+                destroySunburstDiagram(sunburstContainer);
                 coverageContainer.style.display = 'none';
+                sunburstContainer.style.display = 'none';
                 // Hide graph and legend
                 graphContainer.style.display = 'none';
                 graphLegend.style.display = 'none';

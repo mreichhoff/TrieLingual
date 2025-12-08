@@ -195,10 +195,6 @@ function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie, opti
                 }
                 setupExamples(path);
             }
-            // Also navigate to clicked word if it's not the current word
-            if (window.updateGraph && d.name !== word) {
-                window.updateGraph(d.name);
-            }
         })
         .append('title')
         .text(d => `${d.name}\n${d.value || 0} connections`);
