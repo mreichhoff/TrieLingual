@@ -3,6 +3,7 @@ import { select } from 'd3-selection';
 import { arc } from 'd3-shape';
 import { scaleOrdinal } from 'd3-scale';
 import { schemeCategory10 } from 'd3-scale-chromatic';
+import { zoom, zoomIdentity } from 'd3-zoom';
 import { setupExamples } from './base.js';
 
 // Build hierarchical data structure for sunburst from subtrie
@@ -118,6 +119,48 @@ let initializeSunburstDiagram = function (container, word, subtrie) {
         .style('height', '100%')
         .style('font', '12px sans-serif');
 
+    // Add a group for zoom transformations
+    const g = svg.append('g');
+
+    // Set up zoom behavior
+    const zoomBehavior = zoom()
+        .scaleExtent([0.5, 4]) // Allow zoom from 50% to 400%
+        .clickDistance(4) // Treat movements less than 4 pixels as clicks, not drags
+        .on('zoom', (event) => {
+            g.attr('transform', event.transform);
+        });
+
+    svg.call(zoomBehavior);
+
+    // TODO: do we want a reset button? Not sure there's space for it.
+    // // Add reset zoom button
+    // const resetButton = select(container)
+    //     .append('div')
+    //     .style('position', 'absolute')
+    //     .style('top', '10px')
+    //     .style('right', '10px')
+    //     .style('background', 'rgba(30, 41, 59, 0.9)')
+    //     .style('color', '#fff')
+    //     .style('padding', '8px 12px')
+    //     .style('border-radius', '6px')
+    //     .style('cursor', 'pointer')
+    //     .style('font-size', '14px')
+    //     .style('font-weight', '500')
+    //     .style('border', '1px solid rgba(255, 255, 255, 0.2)')
+    //     .style('z-index', '10')
+    //     .text('Reset Zoom')
+    //     .on('click', () => {
+    //         svg.transition()
+    //             .duration(750)
+    //             .call(zoomBehavior.transform, zoomIdentity);
+    //     })
+    //     .on('mouseover', function () {
+    //         select(this).style('background', 'rgba(51, 65, 85, 0.95)');
+    //     })
+    //     .on('mouseout', function () {
+    //         select(this).style('background', 'rgba(30, 41, 59, 0.9)');
+    //     });
+
     // Create hierarchy and partition layout
     const hierarchyRoot = hierarchy(root)
         .count() // Use count() instead of sum() to give equal weight to each node
@@ -141,7 +184,7 @@ let initializeSunburstDiagram = function (container, word, subtrie) {
     let pathSelected = false;
 
     // Draw arcs
-    const paths = svg.append('g')
+    const paths = g.append('g')
         .selectAll('path')
         .data(hierarchyRoot.descendants())
         .join('path')
@@ -202,14 +245,14 @@ let initializeSunburstDiagram = function (container, word, subtrie) {
         });
 
     // Add labels for larger arcs
-    svg.append('g')
+    g.append('g')
         .attr('pointer-events', 'none')
         .attr('text-anchor', 'middle')
         .selectAll('text')
         .data(hierarchyRoot.descendants().filter(d => {
             // Only show labels for arcs that are large enough
             const angle = d.x1 - d.x0;
-            return angle > 0.05 && d.depth > 0;
+            return angle > 0.04 && d.depth > 0;
         }))
         .join('text')
         .attr('transform', d => {
@@ -220,19 +263,21 @@ let initializeSunburstDiagram = function (container, word, subtrie) {
         .attr('dy', '0.35em')
         .style('font-size', d => {
             const angle = d.x1 - d.x0;
-            if (angle > 0.2) return '14px';
-            if (angle > 0.1) return '12px';
-            return '10px';
+            if (angle > 0.2) return '18px';
+            if (angle > 0.1) return '16px';
+            if (angle > 0.06) return '14px';
+            return '12px';
         })
         .style('fill', 'white')
         .style('text-shadow', '0 1px 2px rgba(0,0,0,0.6)')
+        .style('font-weight', '500')
         .text(d => d.data.name);
 
     // Add center label
-    svg.append('text')
+    g.append('text')
         .attr('text-anchor', 'middle')
         .attr('dy', '0.35em')
-        .style('font-size', '20px')
+        .style('font-size', '24px')
         .style('font-weight', 'bold')
         .style('fill', 'white')
         .style('text-shadow', '0 2px 4px rgba(0,0,0,0.8)')
