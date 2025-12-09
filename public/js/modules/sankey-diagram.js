@@ -152,11 +152,28 @@ function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie, opti
         .attr('stroke-width', d => Math.max(1, d.width))
         .attr('stroke-opacity', 0.3)
         .attr('fill', 'none')
+        .style('cursor', 'pointer')
         .on('mouseover', function () {
             select(this).attr('stroke-opacity', 0.6);
         })
         .on('mouseout', function () {
             select(this).attr('stroke-opacity', 0.3);
+        })
+        .on('click', function (event, d) {
+            // Show examples for the target node's path
+            const targetId = d.target.id;
+            // TODO: off by one on leading in
+            let path = nodePaths.get(targetId);
+            if (path) {
+                // If target node is from the inverted trie (incoming), use inverted mode
+                const isIncoming = nodeIsIncoming.get(targetId);
+                if (direction === 'both' && isIncoming) {
+                    window.currentMode = 'inverted';
+                } else if (direction === 'both') {
+                    window.currentMode = 'normal';
+                }
+                setupExamples(path);
+            }
         })
         .append('title')
         .text(d => `${d.source.name} → ${d.target.name}\n${d.value} occurrences`);

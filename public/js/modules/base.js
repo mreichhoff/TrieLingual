@@ -1252,29 +1252,19 @@ function getPartition(word) {
 };
 
 let updateGraph = function (value) {
-    const oldGraph = document.getElementById('graph');
-    if (oldGraph) {
-        oldGraph.remove();
-    }
-    let nextGraph = document.createElement("div");
-    nextGraph.id = 'graph';
-    // Insert the new graph into the #graph-area before the legend so it sits above it.
-    const graphArea = document.getElementById('graph-area');
-    const graphLegend = document.getElementById('graph-legend');
-    graphArea.insertBefore(nextGraph, graphLegend);
-
     let result = null;
     if (value && trie[value]) {
-        result = fetch(`/data/${targetLang}/subtries/${getPartition(value)}.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                subtries[value] = data[value];
-            });
-        fetch(`/data/${targetLang}/inverted-subtries/${getPartition(value)}.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                invertedSubtries[value] = data[value];
-            });
+        result = Promise.all([
+            fetch(`/data/${targetLang}/subtries/${getPartition(value)}.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    subtries[value] = data[value];
+                }),
+            fetch(`/data/${targetLang}/inverted-subtries/${getPartition(value)}.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    invertedSubtries[value] = data[value];
+                })]);
         currentRoot = value;
 
         // Check which view is active
@@ -1303,6 +1293,16 @@ let updateGraph = function (value) {
                 initializeSankeyDiagram(sankeyContainer, value, subtries[value], invertedSubtries[value], options);
             });
         } else {
+            const oldGraph = document.getElementById('graph');
+            if (oldGraph) {
+                oldGraph.remove();
+            }
+            let nextGraph = document.createElement("div");
+            nextGraph.id = 'graph';
+            // Insert the new graph into the #graph-area before the legend so it sits above it.
+            const graphArea = document.getElementById('graph-area');
+            const graphLegend = document.getElementById('graph-legend');
+            graphArea.insertBefore(nextGraph, graphLegend);
             // Pass mode and inverted trie data if in inverted mode
             const mode = (typeof window.currentMode !== 'undefined' && window.currentMode === 'inverted') ? 'inverted' : 'normal';
             const invertedData = (mode === 'inverted' && window.invertedTrie && window.invertedTrie[value]) ? window.invertedTrie[value] : null;
@@ -1411,7 +1411,6 @@ let initialize = function () {
 
     // Setup view switcher for different graph visualizations
     const viewButtons = document.querySelectorAll('.view-button');
-    const graphContainer = document.getElementById('graph');
     const coverageContainer = document.getElementById('coverage-chart-container');
     const graphLegend = document.getElementById('graph-legend');
 
@@ -1420,12 +1419,14 @@ let initialize = function () {
 
     viewButtons.forEach(button => {
         button.addEventListener('click', function () {
+            const graphContainer = document.getElementById('graph');
             const view = this.getAttribute('data-view');
             if (view === currentView) return;
 
             // Update button states
             viewButtons.forEach(btn => btn.classList.remove('active'));
             this.classList.add('active');
+            this.scrollIntoView();
 
             // Get containers
             const sankeyContainer = document.getElementById('sankey-container');
