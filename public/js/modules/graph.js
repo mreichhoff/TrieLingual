@@ -114,19 +114,20 @@ let levelColor = function (element) {
 };
 let nodeWidth = function (element) {
     let word = element.data('word');
-    return `${Math.max(30, (word.length * 10) + 10)}px`;
+    return `${Math.max(30, (word.length * 10) + 8)}px`;
 };
 let nodeHeight = function (element) {
     return '32px';
 };
 
-let layout = function (root) {
+let layout = function (root, mode) {
     let rootSelector = root;
     if (Array.isArray(root)) {
         rootSelector = root.join(',');
     }
     return {
         name: 'breadthfirst',
+        direction: mode === 'inverted' ? 'upward' : 'downward',
         root: rootSelector,
         padding: 6,
         spacingFactor: 0.85
@@ -176,29 +177,11 @@ let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler,
     cy = cytoscape({
         container: graphContainer,
         elements: elements,
-        layout: layout(layoutRoots),
+        layout: layout(layoutRoots, mode),
         style: getStylesheet(),
         maxZoom: 10,
         minZoom: 0.5
     });
-
-    // In inverted mode, flip the Y coordinates to show predecessors at top
-    if (mode === 'inverted') {
-        const nodes = cy.nodes();
-        const positions = nodes.map(node => ({ node, pos: node.position() }));
-
-        // Find min and max Y coordinates
-        const yCoords = positions.map(p => p.pos.y);
-        const minY = Math.min(...yCoords);
-        const maxY = Math.max(...yCoords);
-        const centerY = (minY + maxY) / 2;
-
-        // Flip each node's Y coordinate around the center
-        positions.forEach(({ node, pos }) => {
-            const distanceFromCenter = pos.y - centerY;
-            node.position({ x: pos.x, y: centerY - distanceFromCenter });
-        });
-    }
 
     cy.on('tap', 'node', nodeEventHandler);
     cy.on('tap', 'edge', edgeEventHandler);
@@ -212,24 +195,8 @@ let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler,
             resizeTimer = setTimeout(function () {
                 if (cy) {
                     // Re-apply the layout to redraw nodes/edges responsively
-                    const currentLayout = cy.layout(layout(layoutRoots));
+                    const currentLayout = cy.layout(layout(layoutRoots, mode));
                     currentLayout.run();
-
-                    // Re-flip Y coordinates in inverted mode after layout refresh
-                    if (mode === 'inverted') {
-                        currentLayout.one('layoutstop', function () {
-                            const nodes = cy.nodes();
-                            const positions = nodes.map(node => ({ node, pos: node.position() }));
-                            const yCoords = positions.map(p => p.pos.y);
-                            const minY = Math.min(...yCoords);
-                            const maxY = Math.max(...yCoords);
-                            const centerY = (minY + maxY) / 2;
-                            positions.forEach(({ node, pos }) => {
-                                const distanceFromCenter = pos.y - centerY;
-                                node.position({ x: pos.x, y: centerY - distanceFromCenter });
-                            });
-                        });
-                    }
                 }
             }, 150);
         });
