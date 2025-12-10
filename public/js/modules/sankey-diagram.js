@@ -7,7 +7,7 @@ import { setupExamples } from './base.js';
 let currentSankeyData = null;
 
 // Build Sankey data from subtries and inverted subtries
-function buildSankeyData(word, subtrie, invertedSubtrie, maxDepth = 2, direction = 'both') {
+function buildSankeyData(word, subtrie, invertedSubtrie, maxDepth = 2, direction = 'both', maxEdgesPerNode = Infinity) {
     const nodes = [];
     const links = [];
     const nodeMap = new Map();
@@ -36,10 +36,14 @@ function buildSankeyData(word, subtrie, invertedSubtrie, maxDepth = 2, direction
     // Process forward trie (words that come after)
     if (subtrie && (direction === 'both' || direction === 'outgoing')) {
         function processForwardNode(trieNode, parentId, parentDepth, parentPath) {
-            for (const [key, value] of Object.entries(trieNode)) {
-                if (key === '__l' || key === '__e' || key === '__C') continue;
+            // Sort entries by count (descending) and limit to maxEdgesPerNode
+            const entries = Object.entries(trieNode)
+                .filter(([key]) => key !== '__l' && key !== '__e' && key !== '__C')
+                .map(([key, value]) => ({ key, value, count: value.__C || 1 }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, maxEdgesPerNode);
 
-                const count = value.__C || 1;
+            for (const { key, value, count } of entries) {
                 const currentPath = [...parentPath, key];
                 const childId = getNodeId(key, parentDepth + 1, currentPath, false);
 
@@ -61,10 +65,14 @@ function buildSankeyData(word, subtrie, invertedSubtrie, maxDepth = 2, direction
     // Process inverted trie (words that come before)
     if (invertedSubtrie && (direction === 'both' || direction === 'incoming')) {
         function processBackwardNode(trieNode, childId, childDepth, childPath) {
-            for (const [key, value] of Object.entries(trieNode)) {
-                if (key === '__l' || key === '__e' || key === '__C') continue;
+            // Sort entries by count (descending) and limit to maxEdgesPerNode
+            const entries = Object.entries(trieNode)
+                .filter(([key]) => key !== '__l' && key !== '__e' && key !== '__C')
+                .map(([key, value]) => ({ key, value, count: value.__C || 1 }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, maxEdgesPerNode);
 
-                const count = value.__C || 1;
+            for (const { key, value, count } of entries) {
                 const currentPath = [key, ...childPath];
                 const parentId = getNodeId(key, childDepth - 1, currentPath, true);
 
@@ -94,8 +102,12 @@ function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie, opti
     // Clear previous diagram
     select(container).selectAll('*').remove();
 
+    // Determine max edges per node based on screen size
+    const width = container.clientWidth || 800;
+    const maxEdgesPerNode = width < 600 ? 2 : Infinity;
+
     // Build data
-    const data = buildSankeyData(word, subtrie, invertedSubtrie, maxDepth, direction);
+    const data = buildSankeyData(word, subtrie, invertedSubtrie, maxDepth, direction, maxEdgesPerNode);
     currentSankeyData = data;
 
     if (!data.nodes.length || !data.links.length) {
@@ -109,7 +121,6 @@ function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie, opti
     const { nodePaths, centerDepth, nodeIsIncoming } = data;
 
     // Set up dimensions
-    const width = container.clientWidth || 800;
     const height = container.clientHeight || 600;
     const margin = { top: 20, right: 20, bottom: 20, left: 20 };
 
