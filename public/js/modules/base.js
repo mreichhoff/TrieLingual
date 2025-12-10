@@ -1083,13 +1083,9 @@ let setupExamples = async function (words) {
     let item = document.createElement('li');
     let wordHolder = document.createElement('h2');
     wordHolder.classList.add('word-header');
+    wordHolder.innerText = words.join(' ');
     let aiContainer = document.createElement('div');
     aiContainer.style.display = 'none';
-    for (let i = 0; i < words.length; i++) {
-        let wordAnchor = document.createElement('a');
-        wordAnchor.innerText = `${words[i]} `;
-        wordHolder.appendChild(wordAnchor);
-    }
     createActionMenu(aiContainer, wordHolder, words, [], examples);
     item.appendChild(wordHolder);
     item.appendChild(aiContainer);
