@@ -125,7 +125,6 @@ let layout = function (root) {
     if (Array.isArray(root)) {
         rootSelector = root.join(',');
     }
-    // TODO: this only sort of works. Ideally it would show the leaves at the top, but this just switches arrow directions?
     return {
         name: 'breadthfirst',
         root: rootSelector,
@@ -182,6 +181,25 @@ let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler,
         maxZoom: 10,
         minZoom: 0.5
     });
+
+    // In inverted mode, flip the Y coordinates to show predecessors at top
+    if (mode === 'inverted') {
+        const nodes = cy.nodes();
+        const positions = nodes.map(node => ({ node, pos: node.position() }));
+
+        // Find min and max Y coordinates
+        const yCoords = positions.map(p => p.pos.y);
+        const minY = Math.min(...yCoords);
+        const maxY = Math.max(...yCoords);
+        const centerY = (minY + maxY) / 2;
+
+        // Flip each node's Y coordinate around the center
+        positions.forEach(({ node, pos }) => {
+            const distanceFromCenter = pos.y - centerY;
+            node.position({ x: pos.x, y: centerY - distanceFromCenter });
+        });
+    }
+
     cy.on('tap', 'node', nodeEventHandler);
     cy.on('tap', 'edge', edgeEventHandler);
     // Add a debounced window resize handler to re-run the layout when the viewport changes.
@@ -194,7 +212,24 @@ let setupCytoscape = function (root, elements, graphContainer, nodeEventHandler,
             resizeTimer = setTimeout(function () {
                 if (cy) {
                     // Re-apply the layout to redraw nodes/edges responsively
-                    cy.layout(layout(layoutRoots)).run();
+                    const currentLayout = cy.layout(layout(layoutRoots));
+                    currentLayout.run();
+
+                    // Re-flip Y coordinates in inverted mode after layout refresh
+                    if (mode === 'inverted') {
+                        currentLayout.one('layoutstop', function () {
+                            const nodes = cy.nodes();
+                            const positions = nodes.map(node => ({ node, pos: node.position() }));
+                            const yCoords = positions.map(p => p.pos.y);
+                            const minY = Math.min(...yCoords);
+                            const maxY = Math.max(...yCoords);
+                            const centerY = (minY + maxY) / 2;
+                            positions.forEach(({ node, pos }) => {
+                                const distanceFromCenter = pos.y - centerY;
+                                node.position({ x: pos.x, y: centerY - distanceFromCenter });
+                            });
+                        });
+                    }
                 }
             }, 150);
         });
