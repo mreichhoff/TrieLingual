@@ -281,7 +281,7 @@ let runTextToSpeech = function (text, anchors) {
 };
 
 // Render a single-word block (header + definitions + examples) appended to a container
-let renderWordInline = function (container, word) {
+let renderWordInline = async function (container, word) {
     if (!container || !word || !trie[word]) return;
     let examples = findExamples([word]);
 
@@ -323,7 +323,7 @@ let renderWordInline = function (container, word) {
     item.appendChild(definitionHeading);
     let definitionHolder = document.createElement('ul');
     definitionHolder.className = 'definition';
-    setupDefinitions([word], definitionHolder, true);
+    await setupDefinitions([word], definitionHolder, true);
     defToggle.addEventListener('click', function () {
         const isOpen = defToggle.getAttribute('aria-expanded') === 'true';
         if (isOpen) {
@@ -822,14 +822,14 @@ let createActionMenu = function (aiResponseContainer, holder, text, aList, examp
     menuContainer.appendChild(dropdown);
     holder.appendChild(menuContainer);
 };
-let setupDefinitions = function (words, definitionHolder, shown) {
+let setupDefinitions = async function (words, definitionHolder, shown) {
     if (!words) {
         return;
     }
-    words.forEach(word => {
-        let wordDefinitions = definitions[word];
+    for (const word of words) {
+        let wordDefinitions = await getDefinitionsForWord(word);
         if (!wordDefinitions || !wordDefinitions.length) {
-            return;
+            continue;
         }
         wordDefinitions.forEach(sense => {
             let definitionItem = document.createElement('li');
@@ -904,7 +904,7 @@ let setupDefinitions = function (words, definitionHolder, shown) {
 
             definitionHolder.appendChild(definitionItem);
         });
-    });
+    }
 };
 let findExamples = function (ngram) {
     if (ngram.length === 1) {
@@ -1067,7 +1067,7 @@ let setupExampleElements = function (examples, exampleList) {
         exampleList.appendChild(exampleHolder);
     }
 };
-let setupExamples = function (words) {
+let setupExamples = async function (words) {
     currentExamples = {};
     //TODO this mixes markup modification and example finding
     //refactor needed
@@ -1114,7 +1114,7 @@ let setupExamples = function (words) {
 
         let definitionHolder = document.createElement('ul');
         definitionHolder.className = 'definition';
-        setupDefinitions(words, definitionHolder, words.length === 1);
+        await setupDefinitions(words, definitionHolder, words.length === 1);
         defToggle.addEventListener('click', function () {
             const isOpen = defToggle.getAttribute('aria-expanded') === 'true';
             if (isOpen) {
@@ -1242,13 +1242,50 @@ let edgeTapHandler = function () { };
 
 // TODO: put the number of partitions in a per-language config
 const numPartitions = 10000;
+const numDefinitionPartitions = 100;
+
 function getPartition(word) {
     let hashValue = 0;
     const prime = 31; // a prime number to reduce hotspots
     for (let i = 0; i < word.length; i++) {
-        hashValue = hashValue * prime + word.charCodeAt(i);
+        hashValue = (hashValue * prime + word.charCodeAt(i)) % numPartitions;
     }
-    return hashValue % numPartitions;
+    return hashValue;
+};
+
+function getDefinitionPartition(word) {
+    let hashValue = 0;
+    const prime = 31;
+    for (let i = 0; i < word.length; i++) {
+        hashValue = (hashValue * prime + word.charCodeAt(i)) % numDefinitionPartitions;
+    }
+    return hashValue;
+};
+
+let getDefinitionsForWord = async function (word) {
+    // Check if definitions already loaded in window.definitions
+    if (window.definitions && window.definitions[word]) {
+        return window.definitions[word];
+    }
+
+    // Fetch the partition containing this word's definitions
+    const partition = getDefinitionPartition(word);
+    try {
+        const response = await fetch(`/data/${targetLang}/definitions/${partition}.json`);
+        if (!response.ok) {
+            return [];
+        }
+        const partitionData = await response.json();
+
+        // Cache the entire partition in window.definitions
+        Object.assign(window.definitions, partitionData);
+
+        // Return definitions for the requested word
+        return window.definitions[word] || [];
+    } catch (error) {
+        console.error(`Failed to load definition partition ${partition}:`, error);
+        return [];
+    }
 };
 
 let updateGraph = function (value) {
