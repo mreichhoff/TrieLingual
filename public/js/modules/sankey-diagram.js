@@ -140,10 +140,22 @@ function initializeSankeyDiagram(container, word, subtrie, invertedSubtrie, opti
         .nodeId(d => d.id)
         .nodeWidth(20)
         .nodePadding(10)
+        .nodeSort(null) // Preserve order for consistent layout
         .extent([[0, 0], [width - margin.left - margin.right, height - margin.top - margin.bottom]]);
 
     // Generate layout
     const { nodes: layoutNodes, links: layoutLinks } = sankeyGenerator(data);
+
+    // Ensure minimum node height of 20px for easier clicking/tapping
+    const minNodeHeight = 20;
+    layoutNodes.forEach(node => {
+        const currentHeight = node.y1 - node.y0;
+        if (currentHeight < minNodeHeight) {
+            const expansion = (minNodeHeight - currentHeight) / 2;
+            node.y0 -= expansion;
+            node.y1 += expansion;
+        }
+    });
 
     // Color scale based on depth
     const color = scaleOrdinal(schemeCategory10);
