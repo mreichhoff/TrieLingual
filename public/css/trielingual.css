@@ -342,19 +342,20 @@ a {
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.95);
-    color: #111;
-    border: 0;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     padding: 4px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
     flex: 0 0 auto;
 }
 
 #menu-button:hover {
-    background: rgba(255, 255, 255, 1);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 #menu-button:active {
@@ -1191,16 +1192,23 @@ p.target-example {
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    color: #111;
-    border: 0;
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     padding: 4px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .icon-button {
     flex: 0 0 auto;
+}
+
+.icon-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .icon-button:active {
@@ -1214,13 +1222,15 @@ p.target-example {
     fill: currentColor;
 }
 
-.icon-button.listen {
-    background: linear-gradient(180deg, #ffffff, #f1f4f8);
+.icon-button.save {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: rgba(187, 247, 208, 0.95);
 }
 
-.icon-button.save {
-    background: linear-gradient(180deg, #ffffff, #f7fff2);
-    color: #0a6f3a;
+.icon-button.save:hover {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: rgba(34, 197, 94, 0.4);
 }
 
 /* Three-dot action menu */
@@ -1228,10 +1238,6 @@ p.target-example {
     position: relative;
     display: inline-block;
     margin-left: auto;
-}
-
-.icon-button.menu-toggle {
-    background: linear-gradient(180deg, #ffffff, #f1f4f8);
 }
 
 .action-menu-dropdown {
