@@ -619,7 +619,7 @@ h2 span {
     margin: 12px 0 6px 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    opacity: 0.7;
+    opacity: 0.8;
     color: rgba(238, 238, 238, 0.8);
 }
 
@@ -664,7 +664,7 @@ h2 span {
     font-size: 15px;
     margin-bottom: 12px;
     padding: 4px 8px;
-    background: rgba(100, 150, 255, 0.1);
+    background: rgba(100, 150, 255, 0.05);
     border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 3px 3px 3px #3333;
@@ -1118,7 +1118,7 @@ p.target-example {
 
 .sentence-container a {
     padding: 2px 6px;
-    background-color: rgba(100, 150, 255, 0.2);
+    background-color: rgba(100, 150, 255, 0.15);
     border-radius: 3px;
     cursor: pointer;
     transition: background-color 200ms, transform 100ms;
@@ -1137,7 +1137,7 @@ p.target-example {
     border-left: 4px solid #6de200;
     border-radius: 8px;
     padding: 20px 18px;
-    margin: 16px 0 !important;
+    margin: 16px 0;
 }
 
 .walkthrough-heading {
@@ -1315,7 +1315,7 @@ h2 .text-button {
     margin-bottom: 8px;
     font-size: 15px;
     padding: 10px 12px;
-    background-color: rgba(100, 150, 255, 0.2);
+    background-color: rgba(100, 150, 255, 0.1);
     border-left: 3px solid #6de200;
     border-radius: 4px;
     line-height: 1.6;
@@ -1658,6 +1658,10 @@ select {
 }
 
 @media (max-width:664px) {
+    .walkthrough {
+        padding: 4px 18px;
+        margin: 0;
+    }
     #container {
         display: block;
     }
