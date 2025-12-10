@@ -87,7 +87,7 @@ let initializeCoverageChart = function (container, focusWord) {
 
     if (focusRank) {
         // Add 20% buffer on each side, but ensure we show at least 500 words
-        const buffer = Math.max(500, Math.floor(focusRank * 0.2));
+        const buffer = Math.max(1000, Math.floor(focusRank * 0.2));
         xMin = Math.max(0, focusRank - buffer);
         xMax = Math.min(xMax, focusRank + buffer);
     }
@@ -136,7 +136,7 @@ let initializeCoverageChart = function (container, focusWord) {
             plugins: {
                 title: {
                     display: true,
-                    text: focusWord ? `Cumulative Word Coverage - Focused on "${focusWord}"` : 'Cumulative Word Coverage',
+                    text: focusWord ? `Cumulative Word Coverage - "${focusWord}"` : 'Cumulative Word Coverage',
                     color: '#fff',
                     font: {
                         size: 18,
@@ -150,8 +150,8 @@ let initializeCoverageChart = function (container, focusWord) {
                 subtitle: {
                     display: true,
                     text: focusWord && focusRank
-                        ? `"${focusWord}" is ranked #${focusRank} (${focusWordData ? focusWordData.coverage.toFixed(2) : '?'}% coverage at this point)`
-                        : 'How much language you would understand by learning words in order of frequency',
+                        ? `"${focusWord}" is ranked #${focusRank} (${focusWordData ? focusWordData.coverage.toFixed(2) : '?'}% coverage)`
+                        : 'How much you would understand by learning words in frequency order',
                     color: focusWord ? 'rgba(251, 191, 36, 0.9)' : 'rgba(255, 255, 255, 0.7)',
                     font: {
                         size: 14,

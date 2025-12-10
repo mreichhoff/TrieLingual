@@ -1684,6 +1684,10 @@ select {
         flex: 1 1 auto;
     }
 
+    #coverage-chart-container {
+        padding: 6px;
+    }
+
     h1 {
         font-size: 26px;
     }
