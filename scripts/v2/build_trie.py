@@ -21,7 +21,7 @@ def get_word_frequencies(filename):
     return {word: idx for idx, (word, _) in enumerate(sorted_words)}
 
 
-def build_trie_from_file(sentences_file, allowlist, language, ignore_case, depth, start_line, end_line):
+def build_trie_from_file(sentences_file, allowlist, language, ignore_case, depth, start_line, end_line, reverse=False):
     """
     Build a trie from sentences with optional line range support.
 
@@ -33,6 +33,7 @@ def build_trie_from_file(sentences_file, allowlist, language, ignore_case, depth
         depth: Maximum depth of trie (max n-gram size)
         start_line: Starting line index (0-based, None for 0)
         end_line: Ending line index exclusive (None for EOF)
+        reverse: Build reverse n-grams (words ending with each word)
     """
     trie = {}
     line_num = 0
@@ -52,28 +53,54 @@ def build_trie_from_file(sentences_file, allowlist, language, ignore_case, depth
 
             # Build n-grams up to the specified depth
             for i in range(len(words)):
-                first = words[i]
+                if reverse:
+                    # For reverse n-grams, start with the target word and go backwards
+                    first = words[i]
 
-                # Initialize first word node
-                if first not in trie:
-                    trie[first] = {"__C": 0}
-                trie[first]["__C"] += 1
+                    # Initialize first word node
+                    if first not in trie:
+                        trie[first] = {"__C": 0}
+                    trie[first]["__C"] += 1
 
-                # Build n-grams of increasing depth
-                current_node = trie[first]
-                for d in range(1, depth):
-                    next_idx = i + d
-                    if next_idx >= len(words):
-                        break
+                    # Build n-grams of increasing depth going backwards
+                    current_node = trie[first]
+                    for d in range(1, depth):
+                        prev_idx = i - d
+                        if prev_idx < 0:
+                            break
 
-                    next_word = words[next_idx]
+                        prev_word = words[prev_idx]
 
-                    # Initialize child node
-                    if next_word not in current_node:
-                        current_node[next_word] = {"__C": 0}
+                        # Initialize child node
+                        if prev_word not in current_node:
+                            current_node[prev_word] = {"__C": 0}
 
-                    current_node[next_word]["__C"] += 1
-                    current_node = current_node[next_word]
+                        current_node[prev_word]["__C"] += 1
+                        current_node = current_node[prev_word]
+                else:
+                    # Normal forward n-grams
+                    first = words[i]
+
+                    # Initialize first word node
+                    if first not in trie:
+                        trie[first] = {"__C": 0}
+                    trie[first]["__C"] += 1
+
+                    # Build n-grams of increasing depth
+                    current_node = trie[first]
+                    for d in range(1, depth):
+                        next_idx = i + d
+                        if next_idx >= len(words):
+                            break
+
+                        next_word = words[next_idx]
+
+                        # Initialize child node
+                        if next_word not in current_node:
+                            current_node[next_word] = {"__C": 0}
+
+                        current_node[next_word]["__C"] += 1
+                        current_node = current_node[next_word]
 
             line_num += 1
 
@@ -151,6 +178,9 @@ def main():
     parser.add_argument(
         '--ignore-case', action='store_true', default=True,
         help='Ignore case when tokenizing (default: True)')
+    parser.add_argument(
+        '--reverse', action='store_true',
+        help='Build reverse n-grams (words ending with each word instead of starting with it)')
 
     args = parser.parse_args()
 
@@ -165,7 +195,8 @@ def main():
         args.ignore_case,
         args.depth,
         args.start_line,
-        args.end_line
+        args.end_line,
+        args.reverse
     )
 
     # Trim by minimum count

@@ -78,6 +78,9 @@ def build_chunk(args_tuple):
     if config.get('ignore_case'):
         cmd.append('--ignore-case')
 
+    if config.get('reverse'):
+        cmd.append('--reverse')
+
     try:
         print(
             f"[Chunk {chunk_id}] Processing lines {start_line:,} to {end_line:,}...", file=sys.stderr)
@@ -233,6 +236,9 @@ Example:
         '--ignore-case', action='store_true', default=True,
         help='Ignore case when tokenizing (default: True)')
     parser.add_argument(
+        '--reverse', action='store_true',
+        help='Build reverse n-grams (words ending with each word instead of starting with it)')
+    parser.add_argument(
         '--temp-dir',
         help='Temporary directory for chunk files (default: system temp)')
     parser.add_argument(
@@ -288,6 +294,7 @@ Example:
         'min_count': args.min_count,
         'max_children_per_level': args.max_children_per_level,
         'ignore_case': args.ignore_case,
+        'reverse': args.reverse,
         'temp_dir': temp_dir,
     }
 
