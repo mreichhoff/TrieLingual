@@ -2019,3 +2019,81 @@ main.stats section p {
     font-style: italic;
     opacity: 0.85;
 }
+/* Anki integration styles */
+.anki-settings {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 800px;
+    padding: 20px;
+    font-size: 16px;
+}
+
+.anki-setup-section {
+    margin: 24px 0;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.anki-setup-section h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 20px;
+    color: #60a5fa;
+}
+
+.anki-setup-section p {
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+.anki-setup-section ol {
+    list-style-type: decimal;
+    padding-left: 24px;
+    line-height: 1.8;
+}
+
+.anki-setup-section ol li {
+    margin: 8px 0;
+}
+
+.anki-form-field {
+    margin: 16px 0;
+}
+
+.anki-form-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.anki-form-field select {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #eee;
+    margin-right: 8px;
+}
+
+.anki-form-field select:focus {
+    outline: none;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+.anki-form-field input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.anki-status {
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}

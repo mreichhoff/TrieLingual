@@ -3,7 +3,8 @@ import { initializeGraph } from "./graph.js";
 import { initializeCoverageChart, destroyCoverageChart } from "./coverage-chart.js";
 import { initializeSankeyDiagram, destroySankeyDiagram } from "./sankey-diagram.js";
 import { initializeSunburstDiagram, destroySunburstDiagram } from "./sunburst-diagram.js";
-import { getAuthenticatedUser, callGenerateSentences, callAnalyzeCollocation, callExplainEnglishText, callExplainText } from "./firebase.js"
+import { getAuthenticatedUser, callGenerateSentences, callAnalyzeCollocation, callExplainEnglishText, callExplainText } from "./firebase.js";
+import { getSettings as getAnkiSettings, addTrieLingualCards } from "./anki-ui.js";
 
 window.definitions = window.definitions || {};
 //TODO break this down further
@@ -34,6 +35,50 @@ const defaultWords = {
     'de-DE': ['arm', 'arbeit', 'beteiligung'],
     'es-ES': ['brazo', 'trabajo', 'participar'],
     'nb-NO': ['væpnet', 'jobb', 'delta']
+};
+const walkthroughText = {
+    'fr-FR': {
+        title: 'Learn French with TrieLingual',
+        heading: 'Discover French Word Connections',
+        intro: 'Enter a French word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in French.',
+        study: 'Click any word to view real French example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in French—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    },
+    'pt-BR': {
+        title: 'Learn Portuguese with TrieLingual',
+        heading: 'Discover Portuguese Word Connections',
+        intro: 'Enter a Portuguese word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in Portuguese.',
+        study: 'Click any word to view real Portuguese example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Portuguese—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    },
+    'it-IT': {
+        title: 'Learn Italian with TrieLingual',
+        heading: 'Discover Italian Word Connections',
+        intro: 'Enter an Italian word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in Italian.',
+        study: 'Click any word to view real Italian example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Italian—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    },
+    'de-DE': {
+        title: 'Learn German with TrieLingual',
+        heading: 'Discover German Word Connections',
+        intro: 'Enter a German word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in German.',
+        study: 'Click any word to view real German example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in German—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    },
+    'es-ES': {
+        title: 'Learn Spanish with TrieLingual',
+        heading: 'Discover Spanish Word Connections',
+        intro: 'Enter a Spanish word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in Spanish.',
+        study: 'Click any word to view real Spanish example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Spanish—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    },
+    'nb-NO': {
+        title: 'Learn Norwegian with TrieLingual',
+        heading: 'Discover Norwegian Word Connections',
+        intro: 'Enter a Norwegian word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in Norwegian.',
+        study: 'Click any word to view real Norwegian example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Norwegian—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    }
 };
 let languageOptions = {
     'French': { targetLang: 'fr-FR', urlPath: 'french' },
@@ -478,6 +523,36 @@ let clearAiLoading = function (container) {
     if (old) old.remove();
 };
 
+// Wrapper function to add cards either to Anki or local storage
+let addCardsWithAnkiSupport = async function (cards) {
+    const ankiSettings = getAnkiSettings();
+
+    if (ankiSettings.enabled && ankiSettings.testPassed && ankiSettings.deck) {
+        // Add to Anki
+        try {
+            const result = await addTrieLingualCards(cards, ankiSettings);
+            if (result.successCount > 0) {
+                // Also add to local storage for tracking
+                addCards(cards);
+                return { success: true, count: result.successCount, destination: 'Anki' };
+            } else {
+                // Fall back to local storage if all failed
+                addCards(cards);
+                return { success: false, error: 'Failed to add to Anki, added locally', destination: 'local' };
+            }
+        } catch (error) {
+            // Fall back to local storage on error
+            console.error('Anki error:', error);
+            addCards(cards);
+            return { success: false, error: error.message, destination: 'local' };
+        }
+    } else {
+        // Add to local storage
+        addCards(cards);
+        return { success: true, count: cards.length, destination: 'local' };
+    }
+};
+
 let createActionMenu = function (aiResponseContainer, holder, text, aList, examples) {
     // Create three-dot menu container
     let menuContainer = document.createElement('div');
@@ -588,16 +663,17 @@ let createActionMenu = function (aiResponseContainer, holder, text, aList, examp
                 </svg>
                 <span>${allSaved ? 'Saved' : 'Add to list'}</span>
             `;
-            saveItem.addEventListener('click', function (e) {
+            saveItem.addEventListener('click', async function (e) {
                 e.stopPropagation();
                 if (definitionCards.length) {
-                    addCards(definitionCards);
+                    const result = await addCardsWithAnkiSupport(definitionCards);
+                    const labelText = result.destination === 'Anki' ? 'Added to Anki' : 'Saved';
                     saveItem.innerHTML = `
                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                             <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
                             <path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                         </svg>
-                        <span>Saved</span>
+                        <span>${labelText}</span>
                     `;
                 }
                 dropdown.classList.remove('open');
@@ -665,16 +741,17 @@ let createActionMenu = function (aiResponseContainer, holder, text, aList, examp
                 </svg>
                 <span>${allSaved ? 'Saved' : 'Add to list'}</span>
             `;
-            saveItem.addEventListener('click', function (e) {
+            saveItem.addEventListener('click', async function (e) {
                 e.stopPropagation();
                 if (examples && examples.length) {
-                    addCards(examples);
+                    const result = await addCardsWithAnkiSupport(examples);
+                    const labelText = result.destination === 'Anki' ? 'Added to Anki' : 'Saved';
                     saveItem.innerHTML = `
                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                             <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
                             <path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                         </svg>
-                        <span>Saved</span>
+                        <span>${labelText}</span>
                     `;
                 }
                 dropdown.classList.remove('open');
@@ -1351,6 +1428,22 @@ let initialize = function () {
         if (value.targetLang === targetLang) {
             languageSelector.value = key;
             break;
+        }
+    }
+
+    // Update walkthrough text for the current language
+    if (walkthroughText[targetLang]) {
+        const walkthrough = walkthroughText[targetLang];
+        const titleEl = document.querySelector('.walkthrough-title');
+        const headingEl = document.querySelector('.walkthrough-heading');
+        const paragraphs = document.querySelectorAll('.walkthrough p');
+
+        if (titleEl) titleEl.textContent = walkthrough.title;
+        if (headingEl) headingEl.textContent = walkthrough.heading;
+        if (paragraphs.length >= 3) {
+            paragraphs[0].innerHTML = walkthrough.intro;
+            paragraphs[1].innerHTML = walkthrough.study;
+            paragraphs[2].innerHTML = walkthrough.colors;
         }
     }
 

@@ -4,6 +4,7 @@ import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
 import { initialize as statsInit } from "./stats.js";
 import { initialize as firebaseInit } from "./firebase.js";
+import { initialize as ankiInit } from "./anki-ui.js";
 
 //TODO: adding a new language involves changing index.html, base.js, and main.js. refactor
 let languageOptions = [
@@ -61,6 +62,7 @@ let init = function () {
         baseInit();
         statsInit();
         faqInit();
+        ankiInit();
     });
 };
 
@@ -108,6 +110,7 @@ let initWithMinimumDelay = function (minDelay) {
                 baseInit();
                 statsInit();
                 faqInit();
+                ankiInit();
             });
         }, delayTime);
     });
