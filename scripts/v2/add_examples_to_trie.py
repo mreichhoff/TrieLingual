@@ -5,7 +5,6 @@ Add example sentences to trie nodes.
 Takes a trie and augments each node with example sentences, preferring
 easier sentences (measured by average word frequency rank).
 """
-from lang_utils import tokenize
 import argparse
 import json
 import sys
@@ -14,7 +13,7 @@ from pathlib import Path
 
 # Add parent directory to path to import lang_utils
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
+from lang_utils import tokenize
 
 def get_word_frequencies(filename):
     """
