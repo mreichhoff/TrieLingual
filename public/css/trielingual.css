@@ -1579,7 +1579,7 @@ select {
 }
 
 .language-card[data-lang="de-DE"] .card-accent {
-    background: linear-gradient(90deg, #ffd300, #ffb700);
+    background: linear-gradient(90deg, #d4a700, #cc9500);
 }
 
 .language-card[data-lang="es-ES"] .card-accent {
@@ -1953,7 +1953,7 @@ main.stats section p {
 }
 
 .yellow {
-    background: linear-gradient(135deg, #ffd300 0%, #ffb700 100%);
+    background: linear-gradient(135deg, #d4a700 0%, #cc9500 100%);
 }
 
 .red {
