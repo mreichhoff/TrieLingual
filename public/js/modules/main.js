@@ -29,8 +29,8 @@ let languageOptions = [
         targetLang: 'es-ES'
     },
     {
-        element: document.getElementById('norwegian-language-card'),
-        targetLang: 'nb-NO'
+        element: document.getElementById('korean-language-card'),
+        targetLang: 'ko-KR'
     }
 ];
 const mainContainer = document.getElementById('main-container');
@@ -154,7 +154,7 @@ if (targetLang) {
                 'it-IT': 'italian',
                 'de-DE': 'german',
                 'es-ES': 'spanish',
-                'nb-NO': 'norwegian'
+                'ko-KR': 'korean'
             };
             const slug = langToSlugMap[targetLang];
             if (slug) {

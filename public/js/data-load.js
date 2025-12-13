@@ -5,7 +5,7 @@ const slugToLang = {
     'italian': 'it-IT',
     'german': 'de-DE',
     'spanish': 'es-ES',
-    'norwegian': 'nb-NO'
+    'korean': 'ko-KR'
 };
 
 function parseUrlPath() {

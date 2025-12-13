@@ -26,7 +26,7 @@ let punctuation = {
     'it-IT': new Set([".", ",", '\'', '’']),
     'de-DE': new Set([".", ",", '\'', '’']),
     'es-ES': new Set([".", ",", ":", "!", "?"]),
-    'nb-NO': new Set([".", ",", ":", "!", "?"])
+    'ko-KR': new Set([".", ",", ":", "!", "?"])
 };
 const defaultWords = {
     'fr-FR': ['bras', 'numéro', 'participer'],
@@ -34,7 +34,7 @@ const defaultWords = {
     'it-IT': ['braccio', 'lavoro', 'intervento'],
     'de-DE': ['arm', 'arbeit', 'beteiligung'],
     'es-ES': ['brazo', 'trabajo', 'participar'],
-    'nb-NO': ['væpnet', 'jobb', 'delta']
+    'ko-KR': ['나무', '일', '참여']
 };
 const walkthroughText = {
     'fr-FR': {
@@ -72,12 +72,12 @@ const walkthroughText = {
         study: 'Click any word to view real Spanish example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
         colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Spanish—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
     },
-    'nb-NO': {
-        title: 'Learn Norwegian with TrieLingual',
-        heading: 'Discover Norwegian Word Connections',
-        intro: 'Enter a Norwegian word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in Norwegian.',
-        study: 'Click any word to view real Norwegian example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
-        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Norwegian—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    'ko-KR': {
+        title: 'Learn Korean with TrieLingual',
+        heading: 'Discover Korean Word Connections',
+        intro: 'Enter a Korean word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in Korean.',
+        study: 'Click any word to view real Korean example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Korean—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
     }
 };
 let languageOptions = {
@@ -86,7 +86,7 @@ let languageOptions = {
     'Italian': { targetLang: 'it-IT', urlPath: 'italian' },
     'German': { targetLang: 'de-DE', urlPath: 'german' },
     'Spanish': { targetLang: 'es-ES', urlPath: 'spanish' },
-    'Norwegian': { targetLang: 'nb-NO', urlPath: 'norwegian' }
+    'Korean': { targetLang: 'ko-KR', urlPath: 'korean' }
 };
 
 const sentenceSources = [
@@ -1658,7 +1658,7 @@ function parseUrlPath() {
         'italian': 'it-IT',
         'german': 'de-DE',
         'spanish': 'es-ES',
-        'norwegian': 'nb-NO'
+        'korean': 'ko-KR'
     };
     const pathname = window.location.pathname || '';
     const parts = pathname.split('/').filter(p => p.length);

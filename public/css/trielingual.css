@@ -1586,8 +1586,8 @@ select {
     background: linear-gradient(90deg, #e65210, #ff8a00);
 }
 
-.language-card[data-lang="nb-NO"] .card-accent {
-    background: linear-gradient(90deg, #b4001d, #d42b31);
+.language-card[data-lang="ko-KR"] .card-accent {
+    background: linear-gradient(90deg, #5a189a, #7209b7);
 }
 
 
@@ -2019,6 +2019,7 @@ main.stats section p {
     font-style: italic;
     opacity: 0.85;
 }
+
 /* Anki integration styles */
 .anki-settings {
     margin-left: auto;
