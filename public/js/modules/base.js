@@ -125,17 +125,68 @@ const languageSelector = document.getElementById('language-selector');
 const menuButton = document.getElementById('menu-button');
 const menuContainer = document.getElementById('menu-container');
 const menuExitButton = document.getElementById('menu-exit-button');
+const voiceSelector = document.getElementById('voice-selector');
 
 let getTts = function () {
-    //use the first-encountered target voice for now
-    return speechSynthesis.getVoices().find(voice => voice.lang === targetLang);
+    const voices = speechSynthesis.getVoices();
+    const langVoices = voices.filter(voice => voice.lang === targetLang);
+
+    // Check localStorage for saved voice preference
+    const savedVoiceName = localStorage.getItem(`ttsVoice/${targetLang}`);
+    if (savedVoiceName) {
+        const savedVoice = langVoices.find(v => v.name === savedVoiceName);
+        if (savedVoice) return savedVoice;
+    }
+
+    // Fall back to first available voice for this language
+    return langVoices[0];
 };
+
+let populateVoiceSelector = function () {
+    if (!voiceSelector) return;
+
+    const voices = speechSynthesis.getVoices();
+    const langVoices = voices.filter(voice => voice.lang === targetLang);
+
+    if (!langVoices.length) {
+        voiceSelector.innerHTML = '<option>No voices available</option>';
+        voiceSelector.disabled = true;
+        return;
+    }
+
+    voiceSelector.disabled = false;
+    voiceSelector.innerHTML = '';
+
+    const savedVoiceName = localStorage.getItem(`ttsVoice/${targetLang}`);
+
+    langVoices.forEach(voice => {
+        const option = document.createElement('option');
+        option.value = voice.name;
+        option.textContent = voice.name;
+        if (voice.name === savedVoiceName) {
+            option.selected = true;
+        }
+        voiceSelector.appendChild(option);
+    });
+
+    // If no saved preference, select the first option
+    if (!savedVoiceName && langVoices.length > 0) {
+        voiceSelector.value = langVoices[0].name;
+    }
+};
+
+let saveVoicePreference = function (voiceName) {
+    localStorage.setItem(`ttsVoice/${targetLang}`, voiceName);
+    tts = getTts();
+};
+
 let tts = getTts();
 //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
 speechSynthesis.onvoiceschanged = function () {
     if (!tts) {
         tts = getTts();
     }
+    populateVoiceSelector();
 };
 
 // --- Search suggestions (character-level trie) ---
@@ -1648,6 +1699,13 @@ let initialize = function () {
             currentView = view;
         });
     });
+    if (voiceSelector) {
+        voiceSelector.addEventListener('change', function () {
+            saveVoicePreference(voiceSelector.value);
+        });
+        // Initialize voice selector after a short delay to ensure voices are loaded
+        setTimeout(populateVoiceSelector, 100);
+    }
 };
 
 // Parse URL path function (duplicated from data-load.js for use in popstate handler)
@@ -1847,6 +1905,7 @@ searchForm.addEventListener('submit', async function (event) {
     }
     // Render each known token in order
     known.forEach(w => renderWordInline(examplesList, w));
+
 });
 
 menuButton.addEventListener('click', function () {
