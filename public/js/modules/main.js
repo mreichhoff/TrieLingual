@@ -139,9 +139,7 @@ function revealApp(callback) {
     // hide landing immediately so it doesn't affect layout during animation
     landingContainer.style.display = 'none';
     // make sure main container is available for animation
-    mainContainer.style.display = '';
-    // force reflow so animations will run
-    void mainContainer.offsetWidth;
+    mainContainer.removeAttribute('style');
     mainContainer.classList.add('slide-in-right');
 
     const onEnd = function (e) {
