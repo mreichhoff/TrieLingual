@@ -1,5 +1,28 @@
 import { getStudyResults, getStudyList } from "./data-layer.js";
 import { getActiveGraph } from "./base.js";
+import { getAnkiSettings, invoke } from "./anki.js";
+
+// Helper to get level from frequency rank (matching graph.js logic)
+function getLevelForWord(word) {
+    if (window.freqs && window.freqs[word]) {
+        let freqRank = window.freqs[word].freq;
+        if (freqRank < 500) {
+            return 1;
+        } else if (freqRank < 1000) {
+            return 2;
+        } else if (freqRank < 2000) {
+            return 3;
+        } else if (freqRank < 4000) {
+            return 4;
+        } else if (freqRank < 7000) {
+            return 5;
+        } else {
+            return 6;
+        }
+    } else {
+        return 6;
+    }
+}
 
 //TODO move these to a central spot
 const mainContainer = document.getElementById('main-container');
@@ -210,7 +233,7 @@ let totalsByLevel = {};
 let updateTotalsByLevel = function () {
     totalsByLevel = {};
     Object.keys(trie).forEach(x => {
-        let level = trie[x]['__l'];
+        let level = getLevelForWord(x);
         if (!(level in totalsByLevel)) {
             totalsByLevel[level] = { seen: new Set(), total: 0, words: new Set() };
         }
@@ -218,7 +241,46 @@ let updateTotalsByLevel = function () {
         totalsByLevel[level].words.add(x);
     });
 }
-let createCardGraphs = function (studyList, legend) {
+// Extract words from Anki deck cards
+let getAnkiDeckWords = async function (deckName) {
+    if (!deckName) return new Set();
+
+    try {
+        // Get all note IDs in the deck
+        const noteIds = await invoke('findNotes', { query: `deck:"${deckName}"` });
+        if (!noteIds || !noteIds.length) return new Set();
+
+        // Get note info for all notes
+        const notesInfo = await invoke('notesInfo', { notes: noteIds });
+        if (!notesInfo) return new Set();
+
+        const words = new Set();
+        notesInfo.forEach(note => {
+            // Extract words from the Front field (target language)
+            if (note.fields && note.fields.Front && note.fields.Front.value) {
+                const text = note.fields.Front.value;
+                // Remove HTML tags
+                const cleaned = text.replace(/<[^>]*>/g, '');
+                // Split into tokens
+                const tokens = cleaned.split(/\s+/).filter(t => t.length > 0);
+                tokens.forEach(token => {
+                    const normalized = token.toLowerCase();
+                    // Only count words that exist in our trie
+                    if (trie[normalized]) {
+                        words.add(normalized);
+                    }
+                });
+            }
+        });
+
+        return words;
+    } catch (error) {
+        console.error('Failed to load Anki deck words:', error);
+        return new Set();
+    }
+};
+
+let createCardGraphs = async function (studyList, legend) {
     let studyListWords = new Set();
     Object.keys(studyList).forEach(x => {
         //TODO: object.entries likely better
@@ -226,9 +288,16 @@ let createCardGraphs = function (studyList, legend) {
             studyListWords.add(studyList[x].target[i].toLowerCase());
         }
     });
+    // Add Anki deck words if integration is enabled
+    const ankiSettings = getAnkiSettings();
+    if (ankiSettings.enabled && ankiSettings.testPassed && ankiSettings.deck) {
+        const ankiWords = await getAnkiDeckWords(ankiSettings.deck);
+        ankiWords.forEach(word => studyListWords.add(word));
+    }
+
     studyListWords.forEach(x => {
         if (trie[x]) {
-            let level = trie[x]['__l'];
+            let level = getLevelForWord(x);
             totalsByLevel[level].seen.add(x);
         }
     });
@@ -465,7 +534,7 @@ let createStudyResultGraphs = function (results) {
 let initialize = function () {
     lastLevelUpdatePrefix = getActiveGraph().prefix;
     updateTotalsByLevel();
-    statsShow.addEventListener('click', function () {
+    statsShow.addEventListener('click', async function () {
         let activeGraph = getActiveGraph();
         if (activeGraph.prefix !== lastLevelUpdatePrefix) {
             lastLevelUpdatePrefix = activeGraph.prefix;
@@ -474,7 +543,7 @@ let initialize = function () {
         mainContainer.style.display = 'none';
         menuContainer.style.display = 'none';
         statsContainer.removeAttribute('style');
-        createCardGraphs(getStudyList(), activeGraph.legend);
+        await createCardGraphs(getStudyList(), activeGraph.legend);
         createStudyResultGraphs(getStudyResults(), activeGraph.legend);
     });
 

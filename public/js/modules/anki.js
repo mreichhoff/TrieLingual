@@ -163,6 +163,7 @@ async function addTrieLingualCards(cards, settings) {
 export {
     getAnkiSettings,
     saveAnkiSettings,
+    invoke,
     testConnection,
     getDeckNames,
     getModelNames,
