@@ -11,6 +11,6 @@
   <rect width="512" height="512" rx="115" fill="url(#bgGradient)"/>
   
   <!-- Title text centered - two lines -->
-  <text x="256" y="200" font-family="Inter, system-ui, sans-serif" font-size="160" font-weight="800" fill="#6de200" text-anchor="middle" letter-spacing="1">Trie</text>
-  <text x="256" y="360" font-family="Inter, system-ui, sans-serif" font-size="140" font-weight="800" fill="#6de200" text-anchor="middle" letter-spacing="-1">Lingual</text>
+  <text x="256" y="200" font-family="Inter, system-ui, sans-serif" font-size="130" font-weight="800" fill="#6de200" text-anchor="middle" letter-spacing="0">Trie</text>
+  <text x="256" y="360" font-family="Inter, system-ui, sans-serif" font-size="130" font-weight="800" fill="#6de200" text-anchor="middle" letter-spacing="-2">Lingual</text>
 </svg>
