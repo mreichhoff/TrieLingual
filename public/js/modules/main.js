@@ -1,5 +1,5 @@
 import { initialize as dataInit } from "./data-layer.js";
-import { initialize as baseInit } from "./base.js";
+import { initialize as baseInit, walkthroughText } from "./base.js";
 import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
 import { initialize as statsInit } from "./stats.js";
@@ -75,6 +75,23 @@ function setupWordlist(data) {
     window.freqs = freqs;
 }
 
+function updateWalkthroughText() {
+    if (walkthroughText[targetLang]) {
+        const walkthrough = walkthroughText[targetLang];
+        const titleEl = document.querySelector('.walkthrough-title');
+        const headingEl = document.querySelector('.walkthrough-heading');
+        const paragraphs = document.querySelectorAll('.walkthrough p');
+
+        if (titleEl) titleEl.textContent = walkthrough.title;
+        if (headingEl) headingEl.textContent = walkthrough.heading;
+        if (paragraphs.length >= 3) {
+            paragraphs[0].innerHTML = walkthrough.intro;
+            paragraphs[1].innerHTML = walkthrough.study;
+            paragraphs[2].innerHTML = walkthrough.colors;
+        }
+    }
+}
+
 let initWithMinimumDelay = function (minDelay) {
     const startTime = Date.now();
     const promise = Promise.all(
@@ -103,6 +120,7 @@ let initWithMinimumDelay = function (minDelay) {
         const delayTime = Math.max(0, remaining);
 
         setTimeout(() => {
+            updateWalkthroughText();
             revealApp(() => {
                 firebaseInit();
                 dataInit();

@@ -1489,22 +1489,6 @@ let initialize = function () {
         }
     }
 
-    // Update walkthrough text for the current language
-    if (walkthroughText[targetLang]) {
-        const walkthrough = walkthroughText[targetLang];
-        const titleEl = document.querySelector('.walkthrough-title');
-        const headingEl = document.querySelector('.walkthrough-heading');
-        const paragraphs = document.querySelectorAll('.walkthrough p');
-
-        if (titleEl) titleEl.textContent = walkthrough.title;
-        if (headingEl) headingEl.textContent = walkthrough.heading;
-        if (paragraphs.length >= 3) {
-            paragraphs[0].innerHTML = walkthrough.intro;
-            paragraphs[1].innerHTML = walkthrough.study;
-            paragraphs[2].innerHTML = walkthrough.colors;
-        }
-    }
-
     // Build the character-level search trie from the top-level words in `trie`
     try {
         if (typeof trie === 'object' && trie) {
@@ -1930,4 +1914,4 @@ let switchLanguage = function () {
 }
 languageSelector.addEventListener('change', switchLanguage);
 
-export { initialize, makeSentenceNavigable, getActiveGraph, joinTokens, setupExamples };
+export { initialize, makeSentenceNavigable, getActiveGraph, joinTokens, setupExamples, walkthroughText, languageOptions as languageOptionsMap };
