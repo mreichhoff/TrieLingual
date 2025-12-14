@@ -1,7 +1,8 @@
 import { Chart, registerables } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
 
 // Register Chart.js components
-Chart.register(...registerables);
+Chart.register(...registerables, zoomPlugin);
 
 let chart = null;
 
@@ -92,8 +93,8 @@ let initializeCoverageChart = function (container, focusWord) {
         xMax = Math.min(xMax, focusRank + buffer);
     }
 
-    // Filter data to the view window for better performance
-    const visibleData = coverageData.filter(d => d.rank >= xMin && d.rank <= xMax);
+    // Use all data for zoom plugin to work properly
+    const visibleData = coverageData;
 
     // Create chart
     const ctx = canvas.getContext('2d');
@@ -187,6 +188,28 @@ let initializeCoverageChart = function (container, focusWord) {
                         afterLabel: function (context) {
                             const rank = context.parsed.x;
                             return `\nLearning the top ${rank} words gives you ${context.parsed.y.toFixed(2)}% understanding`;
+                        }
+                    }
+                },
+                zoom: {
+                    zoom: {
+                        wheel: {
+                            enabled: true,
+                            speed: 0.1
+                        },
+                        pinch: {
+                            enabled: true
+                        },
+                        mode: 'x'
+                    },
+                    pan: {
+                        enabled: true,
+                        mode: 'x'
+                    },
+                    limits: {
+                        x: {
+                            min: 0,
+                            max: window.wordlist ? window.wordlist.length : 10000
                         }
                     }
                 }
