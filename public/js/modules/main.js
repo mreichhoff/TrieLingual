@@ -140,16 +140,7 @@ function revealApp(callback) {
     landingContainer.style.display = 'none';
     // make sure main container is available for animation
     mainContainer.removeAttribute('style');
-    mainContainer.classList.add('slide-in-right');
-
-    const onEnd = function (e) {
-        if (e.target !== mainContainer) return;
-        mainContainer.removeEventListener('animationend', onEnd);
-        mainContainer.classList.remove('slide-in-right');
-        if (typeof callback === 'function') callback();
-    };
-
-    mainContainer.addEventListener('animationend', onEnd);
+    if (typeof callback === 'function') callback();
 }
 
 if (targetLang) {
