@@ -1,0 +1,16 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#071024;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1e3a5f;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" rx="115" fill="url(#bgGradient)"/>
+  
+  <!-- Title text centered - two lines -->
+  <text x="256" y="200" font-family="Inter, system-ui, sans-serif" font-size="160" font-weight="800" fill="#6de200" text-anchor="middle" letter-spacing="1">Trie</text>
+  <text x="256" y="360" font-family="Inter, system-ui, sans-serif" font-size="140" font-weight="800" fill="#6de200" text-anchor="middle" letter-spacing="-1">Lingual</text>
+</svg>
