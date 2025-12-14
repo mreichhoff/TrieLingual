@@ -344,7 +344,7 @@ a {
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.08);
     color: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 0;
     padding: 4px;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -1193,7 +1193,7 @@ p.target-example {
     height: 36px;
     border-radius: 8px;
     color: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 0;
     padding: 4px;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
