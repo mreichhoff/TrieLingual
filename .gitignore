@@ -7,3 +7,12 @@ __pycache__
 *debug.log
 .firebaserc
 *bundle.js
+# Ignore localized data files, other than French, which
+# provides an example for testing. Anyone can build the
+# other localized data files from the source data and the
+# scripts in the /scripts directory.
+public/data/es-ES
+public/data/pt-BR
+public/data/de-DE
+public/data/ko-KR
+public/data/it-IT

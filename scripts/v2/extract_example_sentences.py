@@ -9,7 +9,6 @@ Output format matches public/data/{lang}/sentences.json:
 [{"t": ["word1", "word2", ...], "b": "Base language sentence"}, ...]
 """
 
-from lang_utils import tokenize
 import argparse
 import json
 import sys
@@ -19,6 +18,7 @@ from collections import defaultdict
 
 # Add parent directory to path to import lang_utils
 sys.path.insert(0, str(Path(__file__).parent.parent))
+from lang_utils import tokenize
 
 
 def calculate_sentence_difficulty(words, word_frequencies):
