@@ -117,20 +117,18 @@ let initWithMinimumDelay = function (minDelay) {
 };
 
 function revealApp(callback) {
+    // hide landing immediately so it doesn't affect layout during animation
+    landingContainer.style.display = 'none';
     // make sure main container is available for animation
     mainContainer.style.display = '';
     // force reflow so animations will run
     void mainContainer.offsetWidth;
-    landingContainer.classList.add('fade-out');
     mainContainer.classList.add('slide-in-right');
 
     const onEnd = function (e) {
         if (e.target !== mainContainer) return;
         mainContainer.removeEventListener('animationend', onEnd);
-        landingContainer.classList.remove('fade-out');
         mainContainer.classList.remove('slide-in-right');
-        // hide landing after animation
-        landingContainer.style.display = 'none';
         if (typeof callback === 'function') callback();
     };
 
