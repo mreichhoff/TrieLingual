@@ -127,9 +127,16 @@ const menuContainer = document.getElementById('menu-container');
 const menuExitButton = document.getElementById('menu-exit-button');
 const voiceSelector = document.getElementById('voice-selector');
 
+function voiceMatcher(voice) {
+    if(!voice || !voice.lang) {
+        return false;
+    }
+    return voice.lang.replace('_', '-').startsWith(targetLang.substring(0, 3));
+}
+
 let getTts = function () {
     const voices = speechSynthesis.getVoices();
-    const langVoices = voices.filter(voice => voice.lang === targetLang);
+    const langVoices = voices.filter(voice => voiceMatcher(voice));
 
     // Check localStorage for saved voice preference
     const savedVoiceName = localStorage.getItem(`ttsVoice/${targetLang}`);
@@ -146,7 +153,7 @@ let populateVoiceSelector = function () {
     if (!voiceSelector) return;
 
     const voices = speechSynthesis.getVoices();
-    const langVoices = voices.filter(voice => voice.lang === targetLang);
+    const langVoices = voices.filter(voice => voiceMatcher(voice));
 
     if (!langVoices.length) {
         voiceSelector.innerHTML = '<option>No voices available</option>';
