@@ -128,7 +128,7 @@ const menuExitButton = document.getElementById('menu-exit-button');
 const voiceSelector = document.getElementById('voice-selector');
 
 function voiceMatcher(voice) {
-    if(!voice || !voice.lang) {
+    if (!voice || !voice.lang) {
         return false;
     }
     return voice.lang.replace('_', '-').startsWith(targetLang.substring(0, 3));
@@ -185,15 +185,6 @@ let populateVoiceSelector = function () {
 let saveVoicePreference = function (voiceName) {
     localStorage.setItem(`ttsVoice/${targetLang}`, voiceName);
     tts = getTts();
-};
-
-let tts = getTts();
-//TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
-speechSynthesis.onvoiceschanged = function () {
-    if (!tts) {
-        tts = getTts();
-    }
-    populateVoiceSelector();
 };
 
 // --- Search suggestions (character-level trie) ---
@@ -1479,7 +1470,7 @@ let updateGraph = function (value) {
     }
     return result;
 };
-
+let tts = null;
 let initialize = function () {
     //TODO: make specialized tries
     for (const [key, value] of Object.entries(languageOptions)) {
@@ -1488,6 +1479,14 @@ let initialize = function () {
             break;
         }
     }
+    tts = getTts();
+    //TTS voice option loading appears to differ in degree of asynchronicity by browser...being defensive
+    speechSynthesis.onvoiceschanged = function () {
+        if (!tts) {
+            tts = getTts();
+        }
+        populateVoiceSelector();
+    };
 
     // Build the character-level search trie from the top-level words in `trie`
     try {

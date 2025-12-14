@@ -56,6 +56,7 @@ let init = function () {
                 .then(data => window.invertedTrie = data)
         ]
     ).then(_ => {
+        updateWalkthroughText();
         firebaseInit();
         dataInit();
         studyModeInit();
