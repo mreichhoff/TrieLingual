@@ -1,6 +1,10 @@
 import { addCards, getCardCount, inStudyList, initialize as dataInit } from "./data-layer.js";
 import { initializeGraph } from "./graph.js";
-import { getAuthenticatedUser, callGenerateSentences, callAnalyzeCollocation, callExplainEnglishText, callExplainText } from "./firebase.js"
+import { initializeCoverageChart, destroyCoverageChart } from "./coverage-chart.js";
+import { initializeSankeyDiagram, destroySankeyDiagram } from "./sankey-diagram.js";
+import { initializeSunburstDiagram, destroySunburstDiagram } from "./sunburst-diagram.js";
+import { getAuthenticatedUser, callGenerateSentences, callAnalyzeCollocation, callExplainEnglishText, callExplainText } from "./firebase.js";
+import { getSettings as getAnkiSettings, addTrieLingualCards } from "./anki-ui.js";
 
 window.definitions = window.definitions || {};
 //TODO break this down further
@@ -13,6 +17,7 @@ let currentRoot = null;
 let currentNgram = null;
 
 let subtries = {};
+let invertedSubtries = {};
 
 let freqLegend = ['Top500', 'Top1k', 'Top2k', 'Top4k', 'Top7k', 'Top10k'];
 let punctuation = {
@@ -21,7 +26,7 @@ let punctuation = {
     'it-IT': new Set([".", ",", '\'', '’']),
     'de-DE': new Set([".", ",", '\'', '’']),
     'es-ES': new Set([".", ",", ":", "!", "?"]),
-    'nb-NO': new Set([".", ",", ":", "!", "?"])
+    'ko-KR': new Set([".", ",", ":", "!", "?"])
 };
 const defaultWords = {
     'fr-FR': ['bras', 'numéro', 'participer'],
@@ -29,7 +34,51 @@ const defaultWords = {
     'it-IT': ['braccio', 'lavoro', 'intervento'],
     'de-DE': ['arm', 'arbeit', 'beteiligung'],
     'es-ES': ['brazo', 'trabajo', 'participar'],
-    'nb-NO': ['væpnet', 'jobb', 'delta']
+    'ko-KR': ['나무', '일', '참여']
+};
+const walkthroughText = {
+    'fr-FR': {
+        title: 'Learn French with TrieLingual',
+        heading: 'Discover French Word Connections',
+        intro: 'Enter a French word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in French.',
+        study: 'Click any word to view real French example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in French—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    },
+    'pt-BR': {
+        title: 'Learn Portuguese with TrieLingual',
+        heading: 'Discover Portuguese Word Connections',
+        intro: 'Enter a Portuguese word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in Portuguese.',
+        study: 'Click any word to view real Portuguese example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Portuguese—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    },
+    'it-IT': {
+        title: 'Learn Italian with TrieLingual',
+        heading: 'Discover Italian Word Connections',
+        intro: 'Enter an Italian word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in Italian.',
+        study: 'Click any word to view real Italian example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Italian—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    },
+    'de-DE': {
+        title: 'Learn German with TrieLingual',
+        heading: 'Discover German Word Connections',
+        intro: 'Enter a German word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in German.',
+        study: 'Click any word to view real German example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in German—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    },
+    'es-ES': {
+        title: 'Learn Spanish with TrieLingual',
+        heading: 'Discover Spanish Word Connections',
+        intro: 'Enter a Spanish word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in Spanish.',
+        study: 'Click any word to view real Spanish example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Spanish—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    },
+    'ko-KR': {
+        title: 'Learn Korean with TrieLingual',
+        heading: 'Discover Korean Word Connections',
+        intro: 'Enter a Korean word above to see how it connects to others. <strong>Boxes</strong> represent words, and <strong>lines</strong> show which words commonly follow in Korean.',
+        study: 'Click any word to view real Korean example sentences. Build your study list by adding sentences you want to master, then export them to Anki or your favorite flashcard app.',
+        colors: 'Zoom, drag, and rearrange the graph freely. Colors indicate word frequency in Korean—find more at <a class="faq-link" id="show-general-faq">the FAQ</a>.'
+    }
 };
 let languageOptions = {
     'French': { targetLang: 'fr-FR', urlPath: 'french' },
@@ -37,8 +86,15 @@ let languageOptions = {
     'Italian': { targetLang: 'it-IT', urlPath: 'italian' },
     'German': { targetLang: 'de-DE', urlPath: 'german' },
     'Spanish': { targetLang: 'es-ES', urlPath: 'spanish' },
-    'Norwegian': { targetLang: 'nb-NO', urlPath: 'norwegian' }
+    'Korean': { targetLang: 'ko-KR', urlPath: 'korean' }
 };
+
+const sentenceSources = [
+    { display: 'Tatoeba', url: 'https://tatoeba.org/' },
+    { display: 'OpenSubtitles', url: 'https://www.opensubtitles.org/' },
+    { display: 'AI 🤖' },
+    { display: 'User 👑' }
+];
 
 //TODO: make specialized tries per language
 let graphOptions = {
@@ -270,7 +326,7 @@ let runTextToSpeech = function (text, anchors) {
 };
 
 // Render a single-word block (header + definitions + examples) appended to a container
-let renderWordInline = function (container, word) {
+let renderWordInline = async function (container, word) {
     if (!container || !word || !trie[word]) return;
     let examples = findExamples([word]);
 
@@ -312,7 +368,7 @@ let renderWordInline = function (container, word) {
     item.appendChild(definitionHeading);
     let definitionHolder = document.createElement('ul');
     definitionHolder.className = 'definition';
-    setupDefinitions([word], definitionHolder, true);
+    await setupDefinitions([word], definitionHolder, true);
     defToggle.addEventListener('click', function () {
         const isOpen = defToggle.getAttribute('aria-expanded') === 'true';
         if (isOpen) {
@@ -411,6 +467,29 @@ let renderAISentences = function (container, sentences, headingText, blockClass)
         baseP.className = 'base-example example-line';
         baseP.textContent = s.englishTranslation;
         li.appendChild(baseP);
+
+        // Add AI source tag and difficulty badge
+        let tagsContainer = document.createElement('div');
+        tagsContainer.className = 'definition-tags';
+
+        // Source badge
+        let sourceSpan = document.createElement('span');
+        sourceSpan.className = 'tag-badge';
+        sourceSpan.textContent = sentenceSources[2].display; // 'AI 🤖'
+        tagsContainer.appendChild(sourceSpan);
+
+        // Difficulty badge
+        const difficulty = calculateDifficulty(tokens);
+        if (difficulty.level !== 'unknown') {
+            let diffSpan = document.createElement('span');
+            diffSpan.className = 'tag-badge difficulty-' + difficulty.level;
+            diffSpan.textContent = difficulty.level.charAt(0).toUpperCase() + difficulty.level.slice(1);
+            diffSpan.title = `Average word rank: ${difficulty.avgRank}`;
+            tagsContainer.appendChild(diffSpan);
+        }
+
+        li.appendChild(tagsContainer);
+
         list.appendChild(li);
     });
     block.appendChild(list);
@@ -442,6 +521,36 @@ let clearAiLoading = function (container) {
     if (!container) return;
     const old = container.querySelector('.ai-loading-block');
     if (old) old.remove();
+};
+
+// Wrapper function to add cards either to Anki or local storage
+let addCardsWithAnkiSupport = async function (cards) {
+    const ankiSettings = getAnkiSettings();
+
+    if (ankiSettings.enabled && ankiSettings.testPassed && ankiSettings.deck) {
+        // Add to Anki
+        try {
+            const result = await addTrieLingualCards(cards, ankiSettings);
+            if (result.successCount > 0) {
+                // Also add to local storage for tracking
+                addCards(cards);
+                return { success: true, count: result.successCount, destination: 'Anki' };
+            } else {
+                // Fall back to local storage if all failed
+                addCards(cards);
+                return { success: false, error: 'Failed to add to Anki, added locally', destination: 'local' };
+            }
+        } catch (error) {
+            // Fall back to local storage on error
+            console.error('Anki error:', error);
+            addCards(cards);
+            return { success: false, error: error.message, destination: 'local' };
+        }
+    } else {
+        // Add to local storage
+        addCards(cards);
+        return { success: true, count: cards.length, destination: 'local' };
+    }
 };
 
 let createActionMenu = function (aiResponseContainer, holder, text, aList, examples) {
@@ -554,16 +663,17 @@ let createActionMenu = function (aiResponseContainer, holder, text, aList, examp
                 </svg>
                 <span>${allSaved ? 'Saved' : 'Add to list'}</span>
             `;
-            saveItem.addEventListener('click', function (e) {
+            saveItem.addEventListener('click', async function (e) {
                 e.stopPropagation();
                 if (definitionCards.length) {
-                    addCards(definitionCards);
+                    const result = await addCardsWithAnkiSupport(definitionCards);
+                    const labelText = result.destination === 'Anki' ? 'Added to Anki' : 'Saved';
                     saveItem.innerHTML = `
                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                             <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
                             <path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                         </svg>
-                        <span>Saved</span>
+                        <span>${labelText}</span>
                     `;
                 }
                 dropdown.classList.remove('open');
@@ -631,16 +741,17 @@ let createActionMenu = function (aiResponseContainer, holder, text, aList, examp
                 </svg>
                 <span>${allSaved ? 'Saved' : 'Add to list'}</span>
             `;
-            saveItem.addEventListener('click', function (e) {
+            saveItem.addEventListener('click', async function (e) {
                 e.stopPropagation();
                 if (examples && examples.length) {
-                    addCards(examples);
+                    const result = await addCardsWithAnkiSupport(examples);
+                    const labelText = result.destination === 'Anki' ? 'Added to Anki' : 'Saved';
                     saveItem.innerHTML = `
                         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                             <path d="M6 2h9a2 2 0 012 2v14l-5-2-5 2V4a2 2 0 012-2z" fill="currentColor" fill-opacity="0.75"></path>
                             <path d="M9 12l2 2 4-4" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
                         </svg>
-                        <span>Saved</span>
+                        <span>${labelText}</span>
                     `;
                 }
                 dropdown.classList.remove('open');
@@ -788,14 +899,14 @@ let createActionMenu = function (aiResponseContainer, holder, text, aList, examp
     menuContainer.appendChild(dropdown);
     holder.appendChild(menuContainer);
 };
-let setupDefinitions = function (words, definitionHolder, shown) {
+let setupDefinitions = async function (words, definitionHolder, shown) {
     if (!words) {
         return;
     }
-    words.forEach(word => {
-        let wordDefinitions = definitions[word];
+    for (const word of words) {
+        let wordDefinitions = await getDefinitionsForWord(word);
         if (!wordDefinitions || !wordDefinitions.length) {
-            return;
+            continue;
         }
         wordDefinitions.forEach(sense => {
             let definitionItem = document.createElement('li');
@@ -870,7 +981,7 @@ let setupDefinitions = function (words, definitionHolder, shown) {
 
             definitionHolder.appendChild(definitionItem);
         });
-    });
+    }
 };
 let findExamples = function (ngram) {
     if (ngram.length === 1) {
@@ -881,6 +992,7 @@ let findExamples = function (ngram) {
         for (let i = 0; i < sentences.length; i++) {
             if (sentences[i].t.map(x => x.toLowerCase()).includes(targetWord)) {
                 if (sentences[i].b) {
+                    sentences[i].s = 0; // assume tatoeba and thus higher quality
                     examples.push(sentences[i]);
                     if (examples.length === maxExamples) {
                         break;
@@ -890,24 +1002,79 @@ let findExamples = function (ngram) {
         }
         return examples;
     } else {
-        let curr = subtries[ngram[0]];
-        for (let i = 1; i < ngram.length; i++) {
+        // In inverted mode, use invertedSubtries with reversed ngram
+        const isInverted = (typeof window.currentMode !== 'undefined' && window.currentMode === 'inverted');
+        const subtreeData = isInverted ? invertedSubtries : subtries;
+
+        // For inverted mode, reverse the ngram to match the inverted subtrie structure
+        const searchNgram = isInverted ? [...ngram].reverse() : ngram;
+
+        let curr = subtreeData[searchNgram[0]];
+        for (let i = 1; i < searchNgram.length; i++) {
             if (!curr) {
                 return [];
             }
-            curr = curr[ngram[i]];
+            curr = curr[searchNgram[i]];
         }
         if (!curr.__e) {
             return [];
         }
         return curr.__e.map(x => {
-            return { t: x[0], b: x[1] };
+            let targetTokens = x[0];
+            if (typeof targetTokens === 'string') {
+                targetTokens = targetTokens.split(' ');
+            }
+            return { t: targetTokens, b: x[1], s: x[2] };
         });
     }
 };
 let isPunctuation = function (token) {
     return punctuation[targetLang].has(token);
 };
+
+// Normalize a word for trie/frequency lookup by lowercasing and removing leading/trailing punctuation
+let normalizeWord = function (word) {
+    return word.toLowerCase().replace(/^[.,!?:;'"'']+|[.,!?:;'"'']+$/g, '');
+};
+
+// Calculate difficulty based on average word frequency rank
+// Returns: { level: 'easy'|'medium'|'hard'|'expert', avgRank: number }
+let calculateDifficulty = function (tokens) {
+    if (!tokens || !tokens.length || !window.freqs) {
+        return { level: 'unknown', avgRank: null };
+    }
+    const contentWords = tokens.filter(t => !isPunctuation(t));
+    if (!contentWords.length) {
+        return { level: 'unknown', avgRank: null };
+    }
+    let totalRank = 0;
+    let knownCount = 0;
+    contentWords.forEach(word => {
+        const normalized = normalizeWord(word);
+        if (window.freqs[normalized]) {
+            totalRank += window.freqs[normalized].freq;
+            knownCount++;
+        }
+    });
+    if (knownCount === 0) {
+        return { level: 'unknown', avgRank: null };
+    }
+    const avgRank = totalRank / knownCount;
+    // Map average rank to difficulty levels
+    // Lower rank = more common words = easier
+    let level;
+    if (avgRank < 1000) {
+        level = 'easy';
+    } else if (avgRank < 3000) {
+        level = 'medium';
+    } else if (avgRank < 6000) {
+        level = 'hard';
+    } else {
+        level = 'expert';
+    }
+    return { level, avgRank: Math.round(avgRank) };
+};
+
 let joinTokens = function (tokens) {
     let result = '';
     tokens.forEach((x, index) => {
@@ -937,10 +1104,47 @@ let setupExampleElements = function (examples, exampleList) {
         baseHolder.textContent = examples[i].b;
         baseHolder.className = 'base-example example-line';
         exampleHolder.appendChild(baseHolder);
+
+        // Add source tag and difficulty badge
+        if (typeof examples[i].s === 'number' && examples[i].s < sentenceSources.length) {
+            let tagsContainer = document.createElement('div');
+            tagsContainer.className = 'definition-tags';
+
+            // Source badge
+            let sourceSpan = document.createElement('span');
+            sourceSpan.className = 'tag-badge';
+            const source = sentenceSources[examples[i].s];
+            if (source.url) {
+                let sourceLink = document.createElement('a');
+                sourceLink.href = source.url;
+                sourceLink.target = '_blank';
+                sourceLink.rel = 'noopener noreferrer';
+                sourceLink.textContent = source.display;
+                sourceLink.style.color = 'inherit';
+                sourceLink.style.textDecoration = 'none';
+                sourceSpan.appendChild(sourceLink);
+            } else {
+                sourceSpan.textContent = source.display;
+            }
+            tagsContainer.appendChild(sourceSpan);
+
+            // Difficulty badge
+            const difficulty = calculateDifficulty(examples[i].t);
+            if (difficulty.level !== 'unknown') {
+                let diffSpan = document.createElement('span');
+                diffSpan.className = 'tag-badge difficulty-' + difficulty.level;
+                diffSpan.textContent = difficulty.level.charAt(0).toUpperCase() + difficulty.level.slice(1);
+                diffSpan.title = `Average word rank: ${difficulty.avgRank}`;
+                tagsContainer.appendChild(diffSpan);
+            }
+
+            exampleHolder.appendChild(tagsContainer);
+        }
+
         exampleList.appendChild(exampleHolder);
     }
 };
-let setupExamples = function (words) {
+let setupExamples = async function (words) {
     currentExamples = {};
     //TODO this mixes markup modification and example finding
     //refactor needed
@@ -956,13 +1160,9 @@ let setupExamples = function (words) {
     let item = document.createElement('li');
     let wordHolder = document.createElement('h2');
     wordHolder.classList.add('word-header');
+    wordHolder.innerText = words.join(' ');
     let aiContainer = document.createElement('div');
     aiContainer.style.display = 'none';
-    for (let i = 0; i < words.length; i++) {
-        let wordAnchor = document.createElement('a');
-        wordAnchor.innerText = `${words[i]} `;
-        wordHolder.appendChild(wordAnchor);
-    }
     createActionMenu(aiContainer, wordHolder, words, [], examples);
     item.appendChild(wordHolder);
     item.appendChild(aiContainer);
@@ -987,7 +1187,7 @@ let setupExamples = function (words) {
 
         let definitionHolder = document.createElement('ul');
         definitionHolder.className = 'definition';
-        setupDefinitions(words, definitionHolder, words.length === 1);
+        await setupDefinitions(words, definitionHolder, words.length === 1);
         defToggle.addEventListener('click', function () {
             const isOpen = defToggle.getAttribute('aria-expanded') === 'true';
             if (isOpen) {
@@ -1112,27 +1312,112 @@ let nodeTapHandler = function (evt) {
     setupExamples(evt.target.data('path'));
 };
 let edgeTapHandler = function () { };
-let updateGraph = function (value) {
-    const oldGraph = document.getElementById('graph');
-    if (oldGraph) {
-        oldGraph.remove();
-    }
-    let nextGraph = document.createElement("div");
-    nextGraph.id = 'graph';
-    // Insert the new graph into the #graph-area before the legend so it sits above it.
-    const graphArea = document.getElementById('graph-area');
-    const graphLegend = document.getElementById('graph-legend');
-    graphArea.insertBefore(nextGraph, graphLegend);
 
+// TODO: put the number of partitions in a per-language config
+const numPartitions = 10000;
+const numDefinitionPartitions = 100;
+
+function getPartition(word) {
+    let hashValue = 0;
+    const prime = 31; // a prime number to reduce hotspots
+    for (let i = 0; i < word.length; i++) {
+        hashValue = (hashValue * prime + word.charCodeAt(i)) % numPartitions;
+    }
+    return hashValue;
+};
+
+function getDefinitionPartition(word) {
+    let hashValue = 0;
+    const prime = 31;
+    for (let i = 0; i < word.length; i++) {
+        hashValue = (hashValue * prime + word.charCodeAt(i)) % numDefinitionPartitions;
+    }
+    return hashValue;
+};
+
+let getDefinitionsForWord = async function (word) {
+    // Check if definitions already loaded in window.definitions
+    if (window.definitions && window.definitions[word]) {
+        return window.definitions[word];
+    }
+
+    // Fetch the partition containing this word's definitions
+    const partition = getDefinitionPartition(word);
+    try {
+        const response = await fetch(`/data/${targetLang}/definitions/${partition}.json`);
+        if (!response.ok) {
+            return [];
+        }
+        const partitionData = await response.json();
+
+        // Cache the entire partition in window.definitions
+        Object.assign(window.definitions, partitionData);
+
+        // Return definitions for the requested word
+        return window.definitions[word] || [];
+    } catch (error) {
+        console.error(`Failed to load definition partition ${partition}:`, error);
+        return [];
+    }
+};
+
+let updateGraph = function (value) {
     let result = null;
     if (value && trie[value]) {
-        result = fetch(`/data/${targetLang}/subtries/${value}.json`)
-            .then(response => response.json())
-            .then(function (data) {
-                subtries[value] = data;
-            });
-        initializeGraph(value, nextGraph, nodeTapHandler, edgeTapHandler);
+        result = Promise.all([
+            fetch(`/data/${targetLang}/subtries/${getPartition(value)}.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    subtries[value] = data[value];
+                }),
+            fetch(`/data/${targetLang}/inverted-subtries/${getPartition(value)}.json`)
+                .then(response => response.json())
+                .then(function (data) {
+                    invertedSubtries[value] = data[value];
+                })]);
         currentRoot = value;
+
+        // Check which view is active
+        const coverageContainer = document.getElementById('coverage-chart-container');
+        const sankeyContainer = document.getElementById('sankey-container');
+        const sunburstContainer = document.getElementById('sunburst-container');
+
+        if (coverageContainer && coverageContainer.style.display !== 'none') {
+            // Update coverage chart if it's the active view
+            initializeCoverageChart(coverageContainer, value);
+        } else if (sunburstContainer && sunburstContainer.style.display !== 'none') {
+            // Wait for subtrie to load, then render sunburst
+            result.then(() => {
+                initializeSunburstDiagram(sunburstContainer, value, subtries[value]);
+            });
+        } else if (sankeyContainer && sankeyContainer.style.display !== 'none') {
+            // Wait for both subtries to load, then render Sankey
+            result.then(() => {
+                let options = { maxDepth: 2, direction: 'both' };
+                if (window.currentMode === 'sankey-outgoing') {
+                    options = { maxDepth: 5, direction: 'outgoing' };
+                } else if (window.currentMode === 'inverted') {
+                    // sankey-incoming uses 'inverted' mode for proper path reversal in findExamples
+                    options = { maxDepth: 5, direction: 'incoming' };
+                }
+                initializeSankeyDiagram(sankeyContainer, value, subtries[value], invertedSubtries[value], options);
+            });
+        } else {
+            const oldGraph = document.getElementById('graph');
+            if (oldGraph) {
+                oldGraph.remove();
+            }
+            let nextGraph = document.createElement("div");
+            nextGraph.id = 'graph';
+            // Insert the new graph into the #graph-area before the legend so it sits above it.
+            const graphArea = document.getElementById('graph-area');
+            const graphLegend = document.getElementById('graph-legend');
+            graphArea.insertBefore(nextGraph, graphLegend);
+            // Pass mode and inverted trie data if in inverted mode
+            const mode = (typeof window.currentMode !== 'undefined' && window.currentMode === 'inverted') ? 'inverted' : 'normal';
+            const invertedData = (mode === 'inverted' && window.invertedTrie && window.invertedTrie[value]) ? window.invertedTrie[value] : null;
+            initializeGraph(value, nextGraph, nodeTapHandler, edgeTapHandler, mode, invertedData);
+        }
     }
     return result;
 };
@@ -1143,6 +1428,22 @@ let initialize = function () {
         if (value.targetLang === targetLang) {
             languageSelector.value = key;
             break;
+        }
+    }
+
+    // Update walkthrough text for the current language
+    if (walkthroughText[targetLang]) {
+        const walkthrough = walkthroughText[targetLang];
+        const titleEl = document.querySelector('.walkthrough-title');
+        const headingEl = document.querySelector('.walkthrough-heading');
+        const paragraphs = document.querySelectorAll('.walkthrough p');
+
+        if (titleEl) titleEl.textContent = walkthrough.title;
+        if (headingEl) headingEl.textContent = walkthrough.heading;
+        if (paragraphs.length >= 3) {
+            paragraphs[0].innerHTML = walkthrough.intro;
+            paragraphs[1].innerHTML = walkthrough.study;
+            paragraphs[2].innerHTML = walkthrough.colors;
         }
     }
 
@@ -1233,6 +1534,120 @@ let initialize = function () {
             location.reload();
         }
     });
+
+    // Setup view switcher for different graph visualizations
+    const viewButtons = document.querySelectorAll('.view-button');
+    const coverageContainer = document.getElementById('coverage-chart-container');
+    const graphLegend = document.getElementById('graph-legend');
+
+    let currentView = 'trie';
+    window.currentMode = 'normal'; // 'normal' or 'inverted' - make global for updateGraph access
+
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            const graphContainer = document.getElementById('graph');
+            const view = this.getAttribute('data-view');
+            if (view === currentView) return;
+
+            // Update button states
+            viewButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+            this.scrollIntoView();
+
+            // Get containers
+            const sankeyContainer = document.getElementById('sankey-container');
+            const sunburstContainer = document.getElementById('sunburst-container');
+
+            // Switch views
+            if (view === 'coverage') {
+                // Hide trie graph and legend
+                graphContainer.style.display = 'none';
+                graphLegend.style.display = 'none';
+                sankeyContainer.style.display = 'none';
+                destroySankeyDiagram(sankeyContainer);
+                sunburstContainer.style.display = 'none';
+                destroySunburstDiagram(sunburstContainer);
+                // Show coverage chart focused on current root word
+                coverageContainer.removeAttribute('style');
+                window.currentMode = 'normal';
+            } else if (view === 'sunburst') {
+                // Hide other views
+                graphContainer.style.display = 'none';
+                graphLegend.style.display = 'none';
+                coverageContainer.style.display = 'none';
+                destroyCoverageChart(coverageContainer);
+                sankeyContainer.style.display = 'none';
+                destroySankeyDiagram(sankeyContainer);
+                // Show sunburst
+                sunburstContainer.removeAttribute('style');
+                window.currentMode = 'normal';
+            } else if (view === 'trie') {
+                // Clean up coverage chart and sankey
+                destroyCoverageChart();
+                destroySankeyDiagram(sankeyContainer);
+                destroySunburstDiagram(sunburstContainer);
+                coverageContainer.style.display = 'none';
+                sankeyContainer.style.display = 'none';
+                sunburstContainer.style.display = 'none';
+                // Show trie graph and legend
+                graphContainer.removeAttribute('style');
+                graphLegend.removeAttribute('style');
+                window.currentMode = 'normal';
+            } else if (view === 'inverted') {
+                // Clean up coverage chart and sankey
+                destroyCoverageChart();
+                destroySankeyDiagram(sankeyContainer);
+                destroySunburstDiagram(sunburstContainer);
+                coverageContainer.style.display = 'none';
+                sankeyContainer.style.display = 'none';
+                sunburstContainer.style.display = 'none';
+                // Show inverted trie graph and legend
+                graphContainer.removeAttribute('style');
+                graphLegend.removeAttribute('style');
+                window.currentMode = 'inverted';
+            } else if (view === 'sankey') {
+                // Clean up coverage chart
+                destroyCoverageChart();
+                destroySunburstDiagram(sunburstContainer);
+                coverageContainer.style.display = 'none';
+                sunburstContainer.style.display = 'none';
+                // Hide graph and legend
+                graphContainer.style.display = 'none';
+                graphLegend.style.display = 'none';
+                // Show sankey
+                sankeyContainer.removeAttribute('style');
+                window.currentMode = 'sankey';
+            } else if (view === 'sankey-outgoing') {
+                // Clean up coverage chart
+                destroyCoverageChart();
+                destroySunburstDiagram(sunburstContainer);
+                coverageContainer.style.display = 'none';
+                sunburstContainer.style.display = 'none';
+                // Hide graph and legend
+                graphContainer.style.display = 'none';
+                graphLegend.style.display = 'none';
+                // Show sankey
+                sankeyContainer.removeAttribute('style');
+                window.currentMode = 'sankey-outgoing';
+            } else if (view === 'sankey-incoming') {
+                // Clean up coverage chart
+                destroyCoverageChart();
+                destroySunburstDiagram(sunburstContainer);
+                coverageContainer.style.display = 'none';
+                sunburstContainer.style.display = 'none';
+                // Hide graph and legend
+                graphContainer.style.display = 'none';
+                graphLegend.style.display = 'none';
+                // Show sankey
+                sankeyContainer.removeAttribute('style');
+                // Use 'inverted' mode for incoming Sankey so findExamples reverses paths
+                window.currentMode = 'inverted';
+            }
+            updateGraph(currentRoot);
+
+            currentView = view;
+        });
+    });
 };
 
 // Parse URL path function (duplicated from data-load.js for use in popstate handler)
@@ -1243,7 +1658,7 @@ function parseUrlPath() {
         'italian': 'it-IT',
         'german': 'de-DE',
         'spanish': 'es-ES',
-        'norwegian': 'nb-NO'
+        'korean': 'ko-KR'
     };
     const pathname = window.location.pathname || '';
     const parts = pathname.split('/').filter(p => p.length);
@@ -1278,7 +1693,7 @@ let makeSentenceNavigable = function (tokens, container, noExampleChange) {
             }
             a.textContent = word + separator;
             a.addEventListener('click', function () {
-                let cleanWord = word.toLowerCase();
+                let cleanWord = normalizeWord(word);
                 if (trie[cleanWord]) {
                     let updated = false;
                     if (currentRoot && currentRoot !== word) {
@@ -1330,6 +1745,29 @@ searchForm.addEventListener('submit', async function (event) {
                 baseP.className = 'base-example example-line';
                 baseP.textContent = value;
                 item.appendChild(baseP);
+
+                // Add User source tag and difficulty badge
+                let tagsContainer = document.createElement('div');
+                tagsContainer.className = 'definition-tags';
+
+                // Source badge
+                let sourceSpan = document.createElement('span');
+                sourceSpan.className = 'tag-badge';
+                sourceSpan.textContent = sentenceSources[3].display; // 'User 👑'
+                tagsContainer.appendChild(sourceSpan);
+
+                // Difficulty badge
+                const difficulty = calculateDifficulty(aiTokens);
+                if (difficulty.level !== 'unknown') {
+                    let diffSpan = document.createElement('span');
+                    diffSpan.className = 'tag-badge difficulty-' + difficulty.level;
+                    diffSpan.textContent = difficulty.level.charAt(0).toUpperCase() + difficulty.level.slice(1);
+                    diffSpan.title = `Average word rank: ${difficulty.avgRank}`;
+                    tagsContainer.appendChild(diffSpan);
+                }
+
+                item.appendChild(tagsContainer);
+
                 examplesList.appendChild(item);
             }
         } catch (err) {
@@ -1358,6 +1796,29 @@ searchForm.addEventListener('submit', async function (event) {
                 baseP.className = 'base-example example-line';
                 baseP.textContent = data.englishTranslation;
                 item.appendChild(baseP);
+
+                // Add User source tag and difficulty badge
+                let tagsContainer = document.createElement('div');
+                tagsContainer.className = 'definition-tags';
+
+                // Source badge
+                let sourceSpan = document.createElement('span');
+                sourceSpan.className = 'tag-badge';
+                sourceSpan.textContent = sentenceSources[3].display; // 'User 👑'
+                tagsContainer.appendChild(sourceSpan);
+
+                // Difficulty badge
+                const difficulty = calculateDifficulty(tokens);
+                if (difficulty.level !== 'unknown') {
+                    let diffSpan = document.createElement('span');
+                    diffSpan.className = 'tag-badge difficulty-' + difficulty.level;
+                    diffSpan.textContent = difficulty.level.charAt(0).toUpperCase() + difficulty.level.slice(1);
+                    diffSpan.title = `Average word rank: ${difficulty.avgRank}`;
+                    tagsContainer.appendChild(diffSpan);
+                }
+
+                item.appendChild(tagsContainer);
+
                 examplesList.appendChild(item);
             }
         } catch (err) {
@@ -1403,4 +1864,4 @@ let switchLanguage = function () {
 }
 languageSelector.addEventListener('change', switchLanguage);
 
-export { initialize, makeSentenceNavigable, getActiveGraph, joinTokens };
+export { initialize, makeSentenceNavigable, getActiveGraph, joinTokens, setupExamples };

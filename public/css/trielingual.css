@@ -5,7 +5,7 @@ html {
 :root {
     /* app background gradient -- overridden in light-mode media query */
     --app-bg: linear-gradient(180deg, #071024, #121212);
-    --header-height: 50px;
+    --header-height: 52px;
 }
 
 body {
@@ -50,7 +50,8 @@ a {
 #container {
     display: flex;
     width: 100%;
-    height: calc(100% - var(--header-height));
+    /* -1px = mistakes were made */
+    height: calc(100% - var(--header-height) - 1px);
 }
 
 /* Animation helpers for transitioning from landing -> main app */
@@ -341,19 +342,20 @@ a {
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.95);
-    color: #111;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.9);
     border: 0;
     padding: 4px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
     flex: 0 0 auto;
 }
 
 #menu-button:hover {
-    background: rgba(255, 255, 255, 1);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 #menu-button:active {
@@ -446,6 +448,66 @@ h2 span {
     color: #999;
 }
 
+/* View switcher for graph visualizations */
+#view-switcher {
+    display: flex;
+    gap: 8px;
+    padding: 6px 12px;
+    white-space: nowrap;
+    overflow: scroll;
+    scrollbar-width: none;
+    height: 34px;
+}
+
+.view-button {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.view-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(96, 165, 250, 0.5);
+}
+
+.view-button.active {
+    background: linear-gradient(180deg, rgba(96, 165, 250, 0.3), rgba(96, 165, 250, 0.2));
+    color: #fff;
+    border-color: rgba(96, 165, 250, 0.6);
+    box-shadow: 0 2px 8px rgba(96, 165, 250, 0.3);
+}
+
+/* Coverage chart container */
+#coverage-chart-container {
+    width: 100%;
+    height: calc(100% - 50px);
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+#sankey-container {
+    width: 100%;
+    height: calc(100% - 50px);
+}
+
+#sunburst-container {
+    width: 100%;
+    height: calc(100% - 50px);
+}
+
+#coverage-chart-canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 /*TODO: use classes to make this sane again*/
 #examples {
     margin-top: 0;
@@ -480,7 +542,37 @@ h2 span {
     background: rgba(100, 150, 255, 0.15);
     color: rgba(238, 238, 238, 0.85);
     border: 1px solid rgba(100, 150, 255, 0.25);
+    border-left: 3px solid rgba(100, 150, 255, 0.5);
     line-height: 1.4;
+}
+
+/* Difficulty badge variants */
+.tag-badge.difficulty-easy {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.25);
+    border-left-color: rgba(34, 197, 94, 0.6);
+    color: rgba(187, 247, 208, 0.95);
+}
+
+.tag-badge.difficulty-medium {
+    background: rgba(234, 179, 8, 0.15);
+    border-color: rgba(234, 179, 8, 0.25);
+    border-left-color: rgba(234, 179, 8, 0.6);
+    color: rgba(254, 240, 138, 0.95);
+}
+
+.tag-badge.difficulty-hard {
+    background: rgba(249, 115, 22, 0.15);
+    border-color: rgba(249, 115, 22, 0.25);
+    border-left-color: rgba(249, 115, 22, 0.6);
+    color: rgba(254, 215, 170, 0.95);
+}
+
+.tag-badge.difficulty-expert {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.25);
+    border-left-color: rgba(239, 68, 68, 0.6);
+    color: rgba(254, 202, 202, 0.95);
 }
 
 /* Part of speech badge (placed inline before definition) */
@@ -528,7 +620,7 @@ h2 span {
     margin: 12px 0 6px 0;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    opacity: 0.7;
+    opacity: 0.8;
     color: rgba(238, 238, 238, 0.8);
 }
 
@@ -573,7 +665,7 @@ h2 span {
     font-size: 15px;
     margin-bottom: 12px;
     padding: 4px 8px;
-    background: rgba(100, 150, 255, 0.1);
+    background: rgba(100, 150, 255, 0.05);
     border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 3px 3px 3px #3333;
@@ -1027,7 +1119,7 @@ p.target-example {
 
 .sentence-container a {
     padding: 2px 6px;
-    background-color: rgba(100, 150, 255, 0.2);
+    background-color: rgba(100, 150, 255, 0.15);
     border-radius: 3px;
     cursor: pointer;
     transition: background-color 200ms, transform 100ms;
@@ -1046,7 +1138,7 @@ p.target-example {
     border-left: 4px solid #6de200;
     border-radius: 8px;
     padding: 20px 18px;
-    margin: 16px 0 !important;
+    margin: 16px 0;
 }
 
 .walkthrough-heading {
@@ -1100,16 +1192,23 @@ p.target-example {
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    color: #111;
+    color: rgba(255, 255, 255, 0.9);
     border: 0;
     padding: 4px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     transition: transform 120ms ease, box-shadow 120ms ease, background 120ms ease;
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .icon-button {
     flex: 0 0 auto;
+}
+
+.icon-button:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .icon-button:active {
@@ -1123,13 +1222,15 @@ p.target-example {
     fill: currentColor;
 }
 
-.icon-button.listen {
-    background: linear-gradient(180deg, #ffffff, #f1f4f8);
+.icon-button.save {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: rgba(187, 247, 208, 0.95);
 }
 
-.icon-button.save {
-    background: linear-gradient(180deg, #ffffff, #f7fff2);
-    color: #0a6f3a;
+.icon-button.save:hover {
+    background: rgba(34, 197, 94, 0.25);
+    border-color: rgba(34, 197, 94, 0.4);
 }
 
 /* Three-dot action menu */
@@ -1137,10 +1238,6 @@ p.target-example {
     position: relative;
     display: inline-block;
     margin-left: auto;
-}
-
-.icon-button.menu-toggle {
-    background: linear-gradient(180deg, #ffffff, #f1f4f8);
 }
 
 .action-menu-dropdown {
@@ -1224,7 +1321,7 @@ h2 .text-button {
     margin-bottom: 8px;
     font-size: 15px;
     padding: 10px 12px;
-    background-color: rgba(100, 150, 255, 0.2);
+    background-color: rgba(100, 150, 255, 0.1);
     border-left: 3px solid #6de200;
     border-radius: 4px;
     line-height: 1.6;
@@ -1482,15 +1579,15 @@ select {
 }
 
 .language-card[data-lang="de-DE"] .card-accent {
-    background: linear-gradient(90deg, #ffd300, #ffb700);
+    background: linear-gradient(90deg, #d4a700, #cc9500);
 }
 
 .language-card[data-lang="es-ES"] .card-accent {
     background: linear-gradient(90deg, #e65210, #ff8a00);
 }
 
-.language-card[data-lang="nb-NO"] .card-accent {
-    background: linear-gradient(90deg, #b4001d, #d42b31);
+.language-card[data-lang="ko-KR"] .card-accent {
+    background: linear-gradient(90deg, #5a189a, #7209b7);
 }
 
 
@@ -1567,6 +1664,11 @@ select {
 }
 
 @media (max-width:664px) {
+    .walkthrough {
+        padding: 4px 18px;
+        margin: 0;
+    }
+
     #container {
         display: block;
     }
@@ -1589,9 +1691,12 @@ select {
 
     #graph {
         width: 100%;
-        height: 100%;
         min-height: 0;
         flex: 1 1 auto;
+    }
+
+    #coverage-chart-container {
+        padding: 6px;
     }
 
     h1 {
@@ -1848,7 +1953,7 @@ main.stats section p {
 }
 
 .yellow {
-    background: linear-gradient(135deg, #ffd300 0%, #ffb700 100%);
+    background: linear-gradient(135deg, #d4a700 0%, #cc9500 100%);
 }
 
 .red {
@@ -1913,4 +2018,83 @@ main.stats section p {
 .ai-translation {
     font-style: italic;
     opacity: 0.85;
+}
+
+/* Anki integration styles */
+.anki-settings {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 800px;
+    padding: 20px;
+    font-size: 16px;
+}
+
+.anki-setup-section {
+    margin: 24px 0;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.anki-setup-section h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-size: 20px;
+    color: #60a5fa;
+}
+
+.anki-setup-section p {
+    line-height: 1.6;
+    opacity: 0.9;
+}
+
+.anki-setup-section ol {
+    list-style-type: decimal;
+    padding-left: 24px;
+    line-height: 1.8;
+}
+
+.anki-setup-section ol li {
+    margin: 8px 0;
+}
+
+.anki-form-field {
+    margin: 16px 0;
+}
+
+.anki-form-field label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.anki-form-field select {
+    width: 100%;
+    max-width: 400px;
+    padding: 10px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    color: #eee;
+    margin-right: 8px;
+}
+
+.anki-form-field select:focus {
+    outline: none;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+}
+
+.anki-form-field input[type="checkbox"] {
+    margin-right: 8px;
+    cursor: pointer;
+}
+
+.anki-status {
+    margin-top: 12px;
+    font-size: 14px;
+    font-weight: 500;
 }

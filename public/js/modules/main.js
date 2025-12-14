@@ -4,6 +4,7 @@ import { initialize as faqInit } from "./faq.js";
 import { initialize as studyModeInit } from "./study-mode.js";
 import { initialize as statsInit } from "./stats.js";
 import { initialize as firebaseInit } from "./firebase.js";
+import { initialize as ankiInit } from "./anki-ui.js";
 
 //TODO: adding a new language involves changing index.html, base.js, and main.js. refactor
 let languageOptions = [
@@ -28,8 +29,8 @@ let languageOptions = [
         targetLang: 'es-ES'
     },
     {
-        element: document.getElementById('norwegian-language-card'),
-        targetLang: 'nb-NO'
+        element: document.getElementById('korean-language-card'),
+        targetLang: 'ko-KR'
     }
 ];
 const mainContainer = document.getElementById('main-container');
@@ -47,9 +48,12 @@ let init = function () {
             window.definitionsFetch
                 .then(response => response.json())
                 .then(data => window.definitions = data),
-            // window.invertedTrieFetch
-            //     .then(response => response.json())
-            //     .then(data => window.invertedTrie = data)
+            window.wordlistFetch
+                .then(response => response.json())
+                .then(data => setupWordlist(data)),
+            window.invertedTrieFetch
+                .then(response => response.json())
+                .then(data => window.invertedTrie = data)
         ]
     ).then(_ => {
         firebaseInit();
@@ -58,8 +62,18 @@ let init = function () {
         baseInit();
         statsInit();
         faqInit();
+        ankiInit();
     });
 };
+
+function setupWordlist(data) {
+    let freqs = {};
+    window.wordlist = data;
+    for (let i = 0; i < window.wordlist.length; i++) {
+        freqs[window.wordlist[i][0]] = { freq: i, count: window.wordlist[i][1] };
+    }
+    window.freqs = freqs;
+}
 
 let initWithMinimumDelay = function (minDelay) {
     const startTime = Date.now();
@@ -74,6 +88,12 @@ let initWithMinimumDelay = function (minDelay) {
             window.definitionsFetch
                 .then(response => response.json())
                 .then(data => window.definitions = data),
+            window.wordlistFetch
+                .then(response => response.json())
+                .then(data => setupWordlist(data)),
+            window.invertedTrieFetch
+                .then(response => response.json())
+                .then(data => window.invertedTrie = data)
         ]
     );
 
@@ -90,6 +110,7 @@ let initWithMinimumDelay = function (minDelay) {
                 baseInit();
                 statsInit();
                 faqInit();
+                ankiInit();
             });
         }, delayTime);
     });
@@ -133,7 +154,7 @@ if (targetLang) {
                 'it-IT': 'italian',
                 'de-DE': 'german',
                 'es-ES': 'spanish',
-                'nb-NO': 'norwegian'
+                'ko-KR': 'korean'
             };
             const slug = langToSlugMap[targetLang];
             if (slug) {
@@ -143,7 +164,8 @@ if (targetLang) {
             window.trieFetch = fetch(`/data/${targetLang}/trie.json`);
             window.sentencesFetch = fetch(`/data/${targetLang}/sentences.json`);
             window.definitionsFetch = fetch(`/data/${targetLang}/definitions.json`);
-            // window.invertedTrieFetch = fetch(`/data/${targetLang}/inverted-trie.json`);
+            window.wordlistFetch = fetch(`/data/${targetLang}/wordlist.json`);
+            window.invertedTrieFetch = fetch(`/data/${targetLang}/inverted-trie.json`);
 
             // Enforce minimum 0.5 second animation delay before showing app
             initWithMinimumDelay(500);

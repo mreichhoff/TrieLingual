@@ -60,6 +60,7 @@ let addCards = function (examples) {
     //update it whenever it changes
     saveStudyList(newKeys);
     callbacks[dataTypes.studyList].forEach(x => x(studyList));
+    return newCards;
 };
 
 let inStudyList = function (tokens) {

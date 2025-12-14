@@ -53,10 +53,10 @@
                     <p class="language-name"><span class="language-flag" aria-hidden="true">🇪🇸</span> Spanish</p>
                     <p class="language-nickname">(espárbol)</p>
                 </div>
-                <div id="norwegian-language-card" class="language-card red" data-lang="nb-NO">
+                <div id="korean-language-card" class="language-card purple" data-lang="ko-KR">
                     <div class="card-accent" aria-hidden="true"></div>
-                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇳🇴</span> Norwegian</p>
-                    <p class="language-nickname">(Nortreegian)</p>
+                    <p class="language-name"><span class="language-flag" aria-hidden="true">🇰🇷</span> Korean</p>
+                    <p class="language-nickname">(나무말)</p>
                 </div>
             </section>
         </main>
@@ -180,7 +180,19 @@
                 <!-- legend moved to graph-area so it sits below the visualization -->
             </div>
             <div id="graph-area">
+                <div id="view-switcher">
+                    <button class="view-button active" data-view="trie">Trie</button>
+                    <button class="view-button" data-view="sunburst">Sunburst</button>
+                    <button class="view-button" data-view="inverted">Inverted</button>
+                    <button class="view-button" data-view="coverage">Coverage</button>
+                    <button class="view-button" data-view="sankey">Flow</button>
+                    <button class="view-button" data-view="sankey-outgoing">Outgoing</button>
+                    <button class="view-button" data-view="sankey-incoming">Incoming</button>
+                </div>
                 <div id="graph"></div>
+                <div id="sankey-container" style="display: none;"></div>
+                <div id="sunburst-container" style="display: none;"></div>
+                <div id="coverage-chart-container" style="display: none;"></div>
                 <div id="graph-legend">
                     <div>
                         The color of a word indicates its frequency.
@@ -419,11 +431,14 @@
                     <option>Italian</option>
                     <option>German</option>
                     <option>Spanish</option>
-                    <option>Norwegian</option>
+                    <option>Korean</option>
                 </select>
             </div>
             <div class="menu-item menu-item-clickable" id="stats-show">
                 View study stats
+            </div>
+            <div class="menu-item menu-item-clickable" id="anki-settings-show">
+                Anki integration
             </div>
             <div class="menu-item menu-item-clickable" id="exportStudyListButton" style="display:none">
                 Export study list
@@ -433,6 +448,77 @@
                         href="https://github.com/mreichhoff/TrieLingual/blob/main/README.md">GitHub
                         for more information.</a></span>
             </div>
+        </main>
+    </div>
+    <div id="anki-settings-container" style="display:none">
+        <header class="header">
+            <div class="exit-container"><i id="anki-settings-exit-button" class="exit-arrow"></i></div>
+            <h1 class="main-header">TrieLingual</h1>
+            <div class="stats-container"></div>
+        </header>
+        <main class="anki-settings">
+            <section>
+                <h2>Anki Integration</h2>
+                <p>Connect TrieLingual to Anki using the AnkiConnect add-on to sync your study cards directly.</p>
+
+                <div class="anki-setup-section">
+                    <h3>1. Setup</h3>
+                    <p>First, install the AnkiConnect add-on in Anki:</p>
+                    <ol>
+                        <li>Open Anki</li>
+                        <li>Go to Tools → Add-ons → Get Add-ons...</li>
+                        <li>Enter code: <strong>2055492159</strong></li>
+                        <li>Restart Anki</li>
+                        <li>Go to Tools → Add-ons, select AnkiConnect, and click Config</li>
+                        <li>Add <code>https://trielingual.com</code> to the <code>webCorsOriginList</code> array</li>
+                        <li>Keep Anki running in the background</li>
+                    </ol>
+                </div>
+
+                <div class="anki-setup-section">
+                    <h3>2. Test Connection</h3>
+                    <button id="anki-test-connection" class="primary-button">Test Connection</button>
+                    <p id="anki-connection-status" class="anki-status"></p>
+                </div>
+
+                <div id="anki-config-section" class="anki-setup-section" style="display:none">
+                    <h3>3. Configure</h3>
+
+                    <div class="anki-form-field">
+                        <label for="anki-deck-select">Deck:</label>
+                        <select id="anki-deck-select">
+                            <option value="">Select a deck...</option>
+                        </select>
+                        <button id="anki-refresh-decks" class="link-button">Refresh</button>
+                    </div>
+
+                    <div class="anki-form-field">
+                        <label for="anki-model-select">Note Type:</label>
+                        <select id="anki-model-select">
+                            <option value="Basic">Basic</option>
+                        </select>
+                    </div>
+
+                    <div class="anki-form-field">
+                        <label>
+                            <input type="checkbox" id="anki-enable-checkbox">
+                            Enable Anki integration (cards will be added to Anki instead of local study list)
+                        </label>
+                    </div>
+
+                    <button id="anki-save-settings" class="primary-button">Save Settings</button>
+                    <p id="anki-save-status" class="anki-status"></p>
+                </div>
+
+                <div id="anki-integration-active" class="anki-setup-section" style="display:none">
+                    <h3>Status</h3>
+                    <p class="anki-status" style="color: #22c55e;">✓ Anki integration is active</p>
+                    <p>Deck: <strong id="anki-current-deck"></strong></p>
+                    <p>Note Type: <strong id="anki-current-model"></strong></p>
+                    <p>Cards will be added directly to Anki when you click "Add to list"</p>
+                    <button id="anki-disable-button" class="link-button">Disable integration</button>
+                </div>
+            </section>
         </main>
     </div>
     <script type="module" src="/js/bundle.js"></script>

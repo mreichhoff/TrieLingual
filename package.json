@@ -1,7 +1,17 @@
 {
     "private": true,
     "dependencies": {
+        "chart.js": "^4.5.1",
+        "chartjs-plugin-zoom": "^2.2.0",
         "cytoscape": "^3.33.1",
+        "d3-array": "^3.2.4",
+        "d3-hierarchy": "^3.1.2",
+        "d3-sankey": "^0.12.3",
+        "d3-scale": "^4.0.2",
+        "d3-scale-chromatic": "^3.1.0",
+        "d3-selection": "^3.0.0",
+        "d3-shape": "^3.2.0",
+        "d3-zoom": "^3.0.0",
         "firebase": "^12.6.0"
     },
     "jshintConfig": {
