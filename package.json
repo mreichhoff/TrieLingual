@@ -2,6 +2,7 @@
     "private": true,
     "dependencies": {
         "chart.js": "^4.5.1",
+        "chartjs-plugin-zoom": "^2.2.0",
         "cytoscape": "^3.33.1",
         "d3-array": "^3.2.4",
         "d3-hierarchy": "^3.1.2",
